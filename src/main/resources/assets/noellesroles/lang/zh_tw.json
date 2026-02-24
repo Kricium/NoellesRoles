@@ -1,0 +1,351 @@
+{
+  "announcement.goals.morphling": "你可以變成任何一名活着的乘客，同時你也可以偽装成尸體。",
+  "announcement.role.morphling": "化形者",
+  "announcement.win.morphling": "殺手勝利！",
+
+  "announcement.goals.awesome_binglus": "你有超多便條，隨便寫吧",
+  "announcement.role.awesome_binglus": "超級賓格魯斯",
+  "announcement.win.awesome_binglus": "乘客勝利！",
+
+  "announcement.goals.conductor": "你可以使用  萬能鑰匙打開列車上的所有門！",
+  "announcement.role.conductor": "列車長",
+  "announcement.win.conductor": "乘客勝利！",
+
+  "announcement.goals.the_insane_damned_paranoid_killer": "我聽得到死者的哀嚎。",
+  "announcement.role.the_insane_damned_paranoid_killer": "亡語殺手",
+  "announcement.win.the_insane_damned_paranoid_killer": "殺手勝利！",
+
+  "announcement.goals.bartender": "你可以購買上等佳釀，恢復情緒值！還能看出喝過酒的其他乘客。",
+  "announcement.role.bartender": "酒保",
+  "announcement.win.bartender": "乘客勝利！",
+
+  "announcement.goals.phantom": "化為隱形，但是要小心他們還能觸碰到你！",
+  "announcement.role.phantom": "幽靈",
+  "announcement.win.phantom": "殺手勝利！",
+
+  "announcement.goals.noisemaker": "你會在死亡時向所有人暴露你的位置。",
+  "announcement.role.noisemaker": "大嗓門",
+  "announcement.win.noisemaker": "乘客勝利！",
+  "noellesroles.noisemaker.death_scream": "§c遠處傳來一聲淒厲的慘叫...",
+
+  "announcement.goals.voodoo": "選擇一名玩家，在你死時與你一起同歸於盡。",
+  "announcement.role.voodoo": "巫毒師",
+  "announcement.win.voodoo": "乘客勝利！",
+  "hud.voodoo.natural_death_disabled": "巫毒死亡必須由其他玩家觸發，才可生效！",
+
+  "announcement.goals.swapper": "指定任意兩名玩家交換位置。",
+  "announcement.role.swapper": "交換者",
+  "announcement.win.swapper": "殺手勝利！",
+
+  "announcement.goals.coroner": "從屍體上獲取死者身份、姓名、死因以及死亡時間。",
+  "announcement.role.coroner": "驗屍官",
+  "announcement.win.coroner": "乘客勝利！",
+  "hud.coroner.sanity_requirements": "情緒值低於50%不可驗屍！",
+
+  "announcement.goals.vulture": "吃掉一半玩家的屍體即可獲勝！",
+  "announcement.role.vulture": "禿鷲",
+  "announcement.win.vulture": "禿鷲勝利",
+  "game.win.vulture": "媽媽，我吃飽了！",
+  "hud.vulture.eat": "按 %s 吃掉屍體!",
+
+  "announcement.goals.recaller": "儲存一個位置，可以花費金幣傳送回去！",
+  "announcement.role.recaller": "回溯者",
+  "announcement.win.recaller": "乘客勝利！",
+
+  "announcement.goals.time_keeper": "你可以看到本場遊戲剩餘時間，並且能使用金幣減少遊戲時間！",
+  "announcement.role.time_keeper": "計時員",
+  "announcement.win.time_keeper": "乘客勝利！",
+
+  "announcement.goals.undercover": "你沒有情緒值，且殺手會誤以為你是同夥。",
+  "announcement.role.undercover": "臥底",
+  "announcement.win.undercover": "乘客勝利!",
+
+  "announcement.goals.toxicologist": "你可以看到誰中毒了，並且你還可以使用解毒劑救治他！",
+  "announcement.role.toxicologist": "毒理學家",
+  "announcement.win.toxicologist": "乘客勝利！",
+
+  "item.noellesroles.master_key": "萬能鑰匙",
+  "item.noellesroles.neutral_master_key": "中立萬能鑰匙",
+  "item.noellesroles.defense_vial": "防禦藥劑",
+  "item.noellesroles.defense_vial.tooltip": "右鍵點擊飲品托盤使用\n清除托盤上的所有毒藥\n飲用被防禦飲品的人可額外承受一擊。",
+
+  "item.noellesroles.fine_drink": "上等佳釀",
+  "item.noellesroles.fine_drink.tooltip": "飲用後恢復滿情緒值\n可放入餐盤供他人取用",
+
+  "item.noellesroles.iron_man_vial": "鐵人藥劑",
+  "item.noellesroles.iron_man_vial.tooltip": "對3格內的玩家使用\n使目標獲得護甲buff\n可抵禦一次致命傷害",
+
+  "death_reason.noellesroles.voodoo": "巫毒魔法。",
+
+  "hud.swapper.first_player_selection": "選擇第 1 個要交換的玩家",
+  "hud.swapper.second_player_selection": "選擇第 2 個要交換的玩家",
+
+  "tip.phantom": "使用 %s 隱身！",
+  "tip.phantom.active": "隱身將會在 %s 秒後結束！",
+  "tip.morphling": "打開背包進行變形！",
+  "tip.morphling.active": "你的變形將會在 %s 秒後結束！",
+  "tip.morphling.corpse_active": "屍體偽裝中（按G關閉）",
+  "tip.morphling.corpse_hint": "按G開啟屍體偽裝",
+  "tip.recaller.place": "使用 %s 儲存你的位置！",
+  "tip.recaller.teleport": "使用 %s 傳送！",
+  "tip.vulture": "已吃掉 %s/%s 具屍體。",
+  "tip.recaller.not_enough_money": "傳送需要 100 金幣\uE781。",
+  "tip.noellesroles.cooldown": "技能將在 %s秒 後可用",
+
+  "announcement.goals.professor": "使用鐵人藥劑保護其他玩家！",
+  "announcement.role.professor": "教授",
+  "announcement.win.professor": "乘客勝利！",
+
+  "announcement.goals.jester": "被無辜者用槍擊中即可化為3分鐘的瘋魔模式！",
+  "announcement.role.jester": "小丑",
+  "announcement.win.jester": "小丑勝利！",
+  "game.win.jester": "你聽見了嗎？那是為你那愚蠢的正義響起的嘲笑聲。",
+
+  "announcement.goals.corrupt_cop": "殺光所有人即可獲勝！你存活時，殺手和乘客都無法獲勝。",
+  "announcement.role.corrupt_cop": "黑警",
+  "announcement.win.corrupt_cop": "黑警勝利！",
+  "game.win.corrupt_cop": "正義已經得到伸張……以我的方式。",
+
+  "announcement.goals.pathogen": "感染所有存活玩家即可獲勝！",
+  "announcement.role.pathogen": "病原體",
+  "announcement.win.pathogen": "病原體勝利！",
+  "game.win.pathogen": "感染已經擴散到了每一個角落……",
+  "tip.pathogen.infect": "按 %s 鍵以感染 %s",
+  "tip.pathogen.compass": "%s %s米%s",
+  "tip.pathogen.no_target": "你的視距範圍內沒有目標了",
+
+  "announcement.goals.bomber": "在玩家身上放置炸彈！你無法購買一般的武器。你可以透視看到攜帶定時炸彈的玩家。",
+  "announcement.role.bomber": "炸彈客",
+  "announcement.win.bomber": "殺手勝利！",
+
+  "item.noellesroles.timed_bomb": "定時炸彈",
+  "item.noellesroles.timed_bomb.tooltip": "右鍵點擊玩家傳遞炸彈\n10秒後炸彈開始滴滴聲\n可傳遞給其他玩家（3秒冷卻）\n滴滴聲15秒後爆炸",
+
+  "death_reason.noellesroles.bomb": "炸成碎片。",
+
+  "death_reason.noellesroles.assassinated": "身份被刺客識破而亡",
+  "death_reason.noellesroles.assassin_misfire": "刺客誤判而亡",
+  "death_reason.noellesroles.jester_timeout": "小丑瘋魔時間耗盡而亡",
+
+  "tip.bomber.bomb_warning": "你的身上有一個炸彈！%s秒後會爆炸！你必須將他傳遞給別人！",
+
+  "subtitles.noellesroles.item.bomb.beep": "炸彈滴滴聲",
+  "subtitles.noellesroles.item.bomb.explode": "炸彈爆炸",
+
+  "announcement.goals.assassin": "用你的毒辣眼光識破玩家的真實身份！猜對—砰！猜錯—也砰！",
+  "announcement.role.assassin": "刺客",
+  "announcement.win.assassin": "殺手勝利！",
+
+  "hud.assassin.select_target": "選擇你的目標——不要犯錯！",
+  "hud.assassin.guess_role": "猜猜 %s 是什麼身份？（不許反悔）",
+  "hud.assassin.guesses_remaining": "剩餘猜測次數：%s/%s",
+  "hud.assassin.cooldown": "冷卻中：%s秒",
+  "hud.assassin.press_key_hint": "按 [%s] 鍵打開刺客菜單",
+  "hud.assassin.on_cooldown": "技能冷卻中！",
+  "hud.assassin.no_guesses": "不可進行再次猜測！",
+
+  "screen.assassin.title": "刺殺菜單",
+  "screen.assassin.button.cancel": "撤銷目標",
+  "screen.assassin.title.select_target": "§c選擇刺殺目標",
+  "screen.assassin.subtitle.click_to_confirm": "§7點擊頭像確認目標",
+  "screen.assassin.unknown_target": "未知目標",
+  "screen.assassin.title.confirm_execution": "§4身份確認: %s",
+  "screen.assassin.subtitle.warning": "§c警告: 猜測錯誤將導致自身死亡",
+
+  "tip.assassin.guess_correct": "%s 的身份被你一眼看穿——他含恨而亡！",
+  "tip.assassin.guess_wrong": "哎呀！%s 可不是你想的那樣...砰！過於自信的代價來了。",
+
+  "announcement.goals.scavenger": "殺人無需蓄力！你殺的人屍體大部分人看不到。此外，你還可以使用 150金幣 重置刀的冷卻時間。",
+  "announcement.role.scavenger": "清道夫",
+  "announcement.win.scavenger": "殺手勝利！",
+
+  "item.noellesroles.scavenger_reset_knife_cd": "重置冷卻時間",
+  "item.noellesroles.scavenger_reset_knife_cd.tooltip": "花費 150 金幣\n立即重置刀的冷卻時間",
+
+  "tip.scavenger.knife_cd_reset": "刀的冷卻已重置！",
+  "tip.scavenger.not_enough_money": "需要150金幣才能重置刀的冷卻！",
+
+  "tip.corrupt_cop.moment_triggered": "黑警時刻已觸發！槍械冷卻減少，撬棍已獲得！",
+  "tip.corrupt_cop.moment_ended": "黑警時刻結束。",
+  "tip.corrupt_cop.vision_active": "透視啟動: %s秒",
+  "tip.corrupt_cop.vision_inactive": "透視冷卻: %s秒",
+
+  "title.noellesroles.corrupt_cop_moment": "黑警處決時刻",
+  "subtitle.noellesroles.corrupt_cop_moment": "黑警已經清理了足夠的人，他向剩下的人發起了巴巴博弈",
+
+  "item.noellesroles.corrupt_cop_crowbar": "黑警撬棍",
+  "item.noellesroles.corrupt_cop_crowbar.tooltip": "黑警時刻專用撬棍\n可以打開所有門",
+
+  "subtitles.noellesroles.ambient.corrupt_cop_moment": "黑警時刻BGM",
+  "subtitles.noellesroles.ambient.corrupt_cop_execution": "處決音效",
+
+  "announcement.goals.reporter": "標記一名玩家，即可透視他！",
+  "announcement.role.reporter": "記者",
+  "announcement.win.reporter": "乘客勝利！",
+  "tip.reporter.target": "目標: %s 按 [%s] 以標記他",
+  "tip.reporter.no_target": "你需要指向一個目標以標記他",
+  "tip.reporter.marked": "你標記了 %s ！",
+
+  "announcement.goals.serial_killer": "追蹤並擊殺你的目標！可獲得額外金錢獎勵！",
+  "announcement.role.serial_killer": "連環殺手",
+  "announcement.win.serial_killer": "殺手勝利！",
+  "tip.serial_killer.target": "目標: %s",
+  "tip.serial_killer.no_target": "暫無目標",
+
+  "item.noellesroles.timekeeper_reduce_time": "減少45秒遊戲時間",
+  "item.noellesroles.timekeeper_reduce_time.tooltip": "花費100金幣\n減少45秒遊戲時間",
+
+  "announcement.goals.attendant": "你能夠查閱你的乘客登記表，了解每個房間的乘客！",
+  "announcement.role.attendant": "乘務員",
+  "announcement.win.attendant": "乘客勝利！",
+
+  "item.noellesroles.antidote": "解毒劑",
+  "item.noellesroles.antidote.tooltip": "對中毒的玩家使用以解毒\n需要1.5秒蓄力時間\n使用後5分鐘冷卻",
+
+  "noellesroles.infected.notification": "你感覺身體不太舒服...",
+
+  "announcement.goals.taotie": "吞噬所有玩家，或在饕餮時刻存活 120秒 即可獲勝！",
+  "announcement.role.taotie": "饕餮",
+  "announcement.win.taotie": "饕餮勝利！",
+  "game.win.taotie": "饑餓...永無止境的饑餓終於得到了滿足。",
+  "tip.taotie.swallow": "按 %s 吞噬 %s",
+  "tip.taotie.swallowed_count": "肚子裡: %s人",
+  "tip.taotie.moment_active": "饕餮時刻！剩餘 %s 秒",
+  "title.noellesroles.taotie_moment": "饕餮時刻",
+  "subtitle.noellesroles.taotie_moment": "無盡的饑餓即將吞噬一切",
+  "tip.noellesroles.taotie_moment_countdown": "你必須找出並殺掉饕餮！剩餘時間: %s秒",
+  "tip.noellesroles.taotie_moment_ended": "饕餮時刻已結束",
+
+  "title.noellesroles.jester_moment": "小丑盛宴",
+  "subtitle.noellesroles.jester_moment": "當正義開始嘲笑自己...",
+
+  "death_reason.noellesroles.digested": "被饕餮消化",
+
+  "announcement.goals.silencer": "讓目標閉嘴！被沉默的人無法說話、無法聽到別人說話、無法進食或飲酒，且情緒值下降速度加快!",
+  "announcement.role.silencer": "沉默者",
+  "announcement.win.silencer": "殺手勝利！",
+  "tip.silencer.mark": "按 %s 標記 %s",
+  "tip.silencer.confirm": "按 %s 釋放沉默 %s（%s秒）",
+  "tip.silencer.ready": "技能就緒！對準目標按 [%s] 標記",
+  "tip.silencer.already_silenced": "%s 已被沉默",
+  "tip.silencer.marked": "已標記 %s，30秒內再次按下釋放",
+  "tip.silencer.success": "你沉默了 %s",
+  "tip.silenced.cannot_eat": "我被沉默了，無法進食！",
+  "tip.silenced.cannot_drink": "我被沉默了，無法飲酒！",
+
+  "replay.skill.noellesroles.silencer.target": "%s §7沉默§r了 %s",
+
+  "replay.death_blocked.corrupt_cop_moment": "%s 在§d黑警時刻§r中免疫死亡",
+  "replay.death_blocked.taotie_moment": "%s 在§d饕餮時刻§r中免疫死亡",
+  "replay.death_blocked.jester_stasis": "%s 進入§d小丑禁錮§r，免疫死亡",
+  "replay.global.noellesroles.jester_stasis_start": "%s 被 %s 擊殺，進入§d小丑禁錮§r",
+  "replay.global.noellesroles.jester_moment_start": "%s 被 %s 擊殺，觸發§d小丑時刻§r",
+  "replay.global.noellesroles.jester_moment_end": "%s 的§d小丑時刻§r結束",
+  "replay.global.noellesroles.corrupt_cop_moment_start": "%s 觸發§d黑警時刻§r",
+  "replay.global.noellesroles.corrupt_cop_moment_end": "%s 的§d黑警時刻§r結束",
+  "replay.global.noellesroles.taotie_moment_start": "%s 觸發§d饕餮時刻§r",
+  "replay.global.noellesroles.taotie_moment_end": "%s 的§d饕餮時刻§r結束",
+  "replay.iron_man_activated.block_damage": "%s 的§e鐵人藥劑§r抵擋了致命傷害",
+  "replay.iron_man_activated.block_swallow": "%s 的§e鐵人藥劑§r抵擋了§6饕餮§r的吞噬",
+  "replay.death_blocked.unknown": "%s 免疫了死亡",
+
+  "replay.voodoo_chain_death": "%s 死亡，§5巫毒詛咒§r觸發，目標 %s",
+  "replay.death_in_stomach": "%s 在§6饕餮§r的肚子裡死亡",
+
+  "replay.skill.noellesroles.morphling.target": "%s §b變形§r為 %s",
+  "replay.skill.noellesroles.assassin.target": "%s 試圖§c刺殺§r %s",
+  "replay.skill.noellesroles.taotie.target": "%s §6吞噬§r了 %s",
+  "replay.skill.noellesroles.voodoo.target": "%s 將§5巫毒詛咒§r綁定到 %s",
+  "replay.skill.noellesroles.vulture.target": "%s §6吃掉§r了 %s 的屍體",
+  "replay.skill.noellesroles.pathogen.target": "%s §a感染§r了 %s",
+  "replay.skill.noellesroles.recaller": "%s 使用了§b回溯§r",
+  "replay.skill.noellesroles.phantom": "%s 進入§7隱身§r狀態",
+  "replay.skill.noellesroles.swapper.target": "%s §b交換§r了 %s 和 %s 的位置",
+  "replay.skill.noellesroles.bomber.target": "%s 在 %s 身上§e安裝了炸彈§r",
+  "replay.skill.noellesroles.serial_killer.target": "%s 將§c目標§r鎖定為 %s",
+  "replay.skill.noellesroles.serial_killer": "%s 的§c目標§r已全部死亡",
+  "replay.skill.noellesroles.reporter.target": "%s §b標記§r了 %s",
+
+  "replay.death.noellesroles.assassinated.killed": "%s 被 %s §c識破身份§r擊殺",
+  "replay.death.noellesroles.assassinated.died": "%s 被§c識破身份§r擊殺",
+  "replay.death.noellesroles.assassin_misfire.died": "%s §c刺殺失手§r身亡",
+  "replay.death.noellesroles.digested.killed": "%s 在 %s 的肚子裡被§c消化§r",
+  "replay.death.noellesroles.digested.died": "%s 被§c消化§r",
+  "replay.death.noellesroles.bomb.killed": "%s 被 %s 的§e定時炸彈§r炸死",
+  "replay.death.noellesroles.bomb.died": "%s 被§e定時炸彈§r炸死",
+  "replay.death.noellesroles.voodoo.died": "%s 死於§5巫毒詛咒§r",
+  "replay.death.noellesroles.jester_timeout.died": "%s 的§d瘋魔時間§r耗盡",
+
+  "replay.item_use.noellesroles.fine_drink.drink": "%s 喝下了§d上等佳釀§r",
+  "replay.item_use.noellesroles.fine_drink.place": "%s 將§d上等佳釀§r放到了餐盤上",
+  "replay.item_use.noellesroles.timed_bomb.transfer": "%s 將§e定時炸彈§r傳遞給了 %s",
+  "replay.item_use.noellesroles.antidote": "%s 為 %s §a解除§r了毒素",
+  "replay.item_use.noellesroles.iron_man_vial": "%s 為 %s 注射了§b鐵人藥劑§r",
+  "replay.platter_take.noellesroles.fine_drink": "%s 從餐盤取走了§d上等佳釀§r",
+
+  "announcement.goals.bodyguard": "保護你的目標！待在3格內，用生命守護目標！",
+  "announcement.role.bodyguard": "保鏢",
+  "announcement.win.bodyguard": "乘客勝利！",
+  "tip.bodyguard.target": "你需要保護 %s ！",
+  "tip.bodyguard.no_target": "暫無保護目標",
+  "death_reason.noellesroles.bodyguard_sacrifice": "為保護目標而犧牲",
+  "replay.death.noellesroles.bodyguard_sacrifice.killed": "%s 犧牲自己保護目標免受 %s 的攻擊",
+  "replay.death.noellesroles.bodyguard_sacrifice.died": "%s 作為保鏢犧牲了自己",
+  "replay.skill.noellesroles.bodyguard.target": "%s 作為§b保鏢§r保護了 %s",
+
+  "announcement.goals.poisoner": "使用毒針和毒氣彈讓敵人中毒！你還可以使用毒藥瓶和蠍子！催化劑可以加快毒發和重置冷卻!",
+  "announcement.role.poisoner": "毒師",
+  "announcement.win.poisoner": "殺手勝利！",
+
+  "item.noellesroles.poison_needle": "毒針",
+  "item.noellesroles.poison_needle.tooltip": "右鍵點擊玩家注入毒素\n初始冷卻1分鐘 / 後續冷卻45秒\n可重複使用",
+
+  "item.noellesroles.poison_gas_bomb": "毒氣彈",
+  "item.noellesroles.poison_gas_bomb.tooltip": "右鍵丟出毒氣彈\n釋放毒氣可在空間內擴散\n毒氣不能穿過方塊\n在毒氣中停留5秒將中毒\n30秒後毒氣消散",
+
+  "replay.item_use.noellesroles.poison_needle": "%s 用§5毒針§r刺了 %s",
+  "replay.item_use.noellesroles.poison_gas_bomb": "%s 投擲了§5毒氣彈§r",
+
+  "item.noellesroles.catalyst": "催化劑",
+  "item.noellesroles.catalyst.tooltip": "對中毒玩家使用：5秒內毒發身亡\n同時重置毒針冷卻\n對空氣或非中毒玩家使用僅重置冷卻",
+  "replay.item_use.noellesroles.catalyst": "%s 對 %s 使用了§5催化劑§r",
+  "replay.item_use.noellesroles.catalyst.no_target": "%s 使用了§5催化劑§r",
+
+  "replay.poisoned.noellesroles.needle.by": "%s 被 %s 用§5毒針§r扎傷中毒",
+  "replay.poisoned.noellesroles.needle": "%s 被§5毒針§r扎傷中毒",
+  "replay.poisoned.noellesroles.gas_bomb.by": "%s 吸入了 %s 釋放的§5毒氣§r中毒",
+  "replay.poisoned.noellesroles.gas_bomb": "%s 吸入§5毒氣§r中毒",
+
+  "announcement.goals.bandit": "使用飛斧遠程擊殺目標！蓄力越久飛得越遠，可貫穿多人！",
+  "announcement.role.bandit": "強盜",
+  "announcement.win.bandit": "殺手勝利！",
+
+  "item.noellesroles.throwing_axe": "飛斧",
+  "item.noellesroles.throwing_axe.tooltip": "長按右鍵蓄力，鬆開投擲\n蓄力越久投擲距離越遠\n可貫穿多個玩家，一擊必殺",
+
+  "death_reason.noellesroles.throwing_axe": "被飛斧貫穿",
+
+  "replay.death.noellesroles.throwing_axe.killed": "%s 被 %s 的§c飛斧§r貫穿擊殺",
+  "replay.death.noellesroles.throwing_axe.died": "%s 被§c飛斧§r貫穿擊殺",
+  "replay.item_use.noellesroles.throwing_axe": "%s 投擲了§c飛斧§r",
+
+  "announcement.goals.survival_master": "殺手的本能透視對你無效！當條件滿足時，進入生存時刻，在 120秒 記憶體活即可獲勝！",
+  "announcement.role.survival_master": "生存大師",
+  "announcement.win.survival_master": "乘客勝利！",
+  "tip.survival_master.moment_active": "生存時刻！堅持住！剩餘 %s 秒",
+
+  "title.noellesroles.survival_moment": "生存時刻",
+  "subtitle.noellesroles.survival_moment": "生存大師已隱入暗處，殺手們必須在限定時間內找到他",
+  "tip.noellesroles.survival_moment_countdown": "你必須找出並殺掉生存大師！剩餘時間: %s秒",
+  "tip.noellesroles.survival_moment_ended": "生存時刻已結束",
+
+  "replay.death_blocked.survival_moment": "%s 在§d生存時刻§r中免疫刺客刺殺",
+  "replay.global.noellesroles.survival_moment_start": "%s 觸發§d生存時刻§r",
+  "replay.global.noellesroles.survival_moment_end": "%s 的§d生存時刻§r結束",
+
+  "tip.letter.pathogen.tooltip2": "你的每次§a感染§r，會被其他乘客察覺！",
+  "tip.letter.taotie.tooltip2": "吞掉其他乘客，但你會在§4死亡時§r放出你吞過的乘客！",
+  "tip.letter.jester.tooltip2": "化為§d瘋魔後§r，去追殺槍擊過你的目標！",
+  "tip.letter.vulture.tooltip2": "吃屍體時會產生粒子效果，不要被發現！",
+  "tip.letter.corrupt_cop.tooltip2": "無需為好人賣命，殺死所有存活的乘客！"
+}

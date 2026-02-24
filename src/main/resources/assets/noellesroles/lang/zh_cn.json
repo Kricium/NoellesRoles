@@ -1,5 +1,5 @@
 {
-  "announcement.goals.morphling": "愚弄所有人。",
+  "announcement.goals.morphling": "你可以变形为任何一名活着的乘客，同时你也可以伪装成尸体！",
   "announcement.role.morphling": "变形者",
   "announcement.win.morphling": "杀手胜利！",
 
@@ -7,24 +7,24 @@
   "announcement.role.awesome_binglus": "超级宾格鲁斯",
   "announcement.win.awesome_binglus": "乘客胜利！",
 
-  "announcement.goals.conductor": "使用万能钥匙打开列车上的所有门！",
+  "announcement.goals.conductor": "你可以使用万能钥匙打开列车上的所有门！",
   "announcement.role.conductor": "列车长",
   "announcement.win.conductor": "乘客胜利！",
 
-  "announcement.goals.the_insane_damned_paranoid_killer": "我听得到死者的声音。",
+  "announcement.goals.the_insane_damned_paranoid_killer": "我听得到死者的哀嚎。",
   "announcement.role.the_insane_damned_paranoid_killer": "亡语杀手",
   "announcement.win.the_insane_damned_paranoid_killer": "杀手胜利！",
 
 
-  "announcement.goals.bartender": "购买上等佳酿，恢复心情值！可以看出喝酒的玩家。",
+  "announcement.goals.bartender": "你可以购买上等佳酿，恢复情绪值！还能看出喝过酒的其他乘客。",
   "announcement.role.bartender": "酒保",
   "announcement.win.bartender": "乘客胜利！",
 
-  "announcement.goals.phantom": "化为隐形，但要小心你还有碰撞体积。",
+  "announcement.goals.phantom": "化为隐形，但是要小心他们还能触碰到你！",
   "announcement.role.phantom": "幽灵",
   "announcement.win.phantom": "杀手胜利！",
 
-  "announcement.goals.noisemaker": "在死亡时向所有人暴露你的位置。",
+  "announcement.goals.noisemaker": "你会在死亡时向所有人暴露你的位置。",
   "announcement.role.noisemaker": "大嗓门",
   "announcement.win.noisemaker": "乘客胜利！",
   "noellesroles.noisemaker.death_scream": "§c远处传来一声凄厉的惨叫...",
@@ -32,13 +32,13 @@
   "announcement.goals.voodoo": "选择一名玩家，在你死时与你一起同归于尽。",
   "announcement.role.voodoo": "巫毒师",
   "announcement.win.voodoo": "乘客胜利！",
-  "hud.voodoo.natural_death_disabled": "巫毒死亡必须由其他玩家触发！",
+  "hud.voodoo.natural_death_disabled": "巫毒死亡必须由其他玩家触发，才可生效！",
 
   "announcement.goals.swapper": "指定任意两名玩家交换位置。",
   "announcement.role.swapper": "交换者",
   "announcement.win.swapper": "杀手胜利！",
 
-  "announcement.goals.coroner": "从尸体上获取信息。",
+  "announcement.goals.coroner": "从尸体上获取死者身份、姓名、死因以及死亡时间。",
   "announcement.role.coroner": "验尸官",
   "announcement.win.coroner": "乘客胜利！",
   "hud.coroner.sanity_requirements": "验尸需保持50%的理智值",
@@ -49,11 +49,11 @@
   "game.win.vulture": "妈妈，我吃饱了！",
   "hud.vulture.eat": "按 %s 吃掉尸体!",
 
-  "announcement.goals.recaller": "保存一个位置，可以传送回去！",
+  "announcement.goals.recaller": "保存一个位置，可以花费金币传送回去！",
   "announcement.role.recaller": "回溯者",
   "announcement.win.recaller": "杀手胜利！",
 
-  "announcement.goals.time_keeper": "你可以看到回合剩余时间。",
+  "announcement.goals.time_keeper": "你可以看到本场游戏剩余时间，并且能使用金币减少游戏时间！",
   "announcement.role.time_keeper": "计时员",
   "announcement.win.time_keeper": "乘客胜利！",
 
@@ -61,7 +61,7 @@
   "announcement.role.undercover": "卧底",
   "announcement.win.undercover": "乘客胜利!",
 
-  "announcement.goals.toxicologist": "你可以看到谁中毒了。",
+  "announcement.goals.toxicologist": "你可以看到谁中毒了，并且你还可以使用解毒剂救治他！",
   "announcement.role.toxicologist": "毒理学家",
   "announcement.win.toxicologist": "乘客胜利！",
 
@@ -71,7 +71,7 @@
   "item.noellesroles.defense_vial.tooltip": "右键点击饮品托盘使用\n清除托盘上的所有毒药\n饮用被防御饮品的人可额外承受一击。",
 
   "item.noellesroles.fine_drink": "上等佳酿",
-  "item.noellesroles.fine_drink.tooltip": "饮用后恢复满心情值\n可放入餐盘供他人取用",
+  "item.noellesroles.fine_drink.tooltip": "饮用后恢复满情绪值\n可放入餐盘供他人取用",
 
   "item.noellesroles.iron_man_vial": "铁人药剂",
   "item.noellesroles.iron_man_vial.tooltip": "对3格内的玩家使用\n使目标获得护甲buff\n可抵御一次致命伤害",
@@ -79,26 +79,26 @@
   "death_reason.noellesroles.voodoo": "巫毒魔法。",
 
 
-  "hud.swapper.first_player_selection": "选择第一个要交换的玩家",
-  "hud.swapper.second_player_selection": "选择第二个要交换的玩家",
+  "hud.swapper.first_player_selection": "选择第 1 个要交换的玩家",
+  "hud.swapper.second_player_selection": "选择第 2 个要交换的玩家",
 
   "tip.phantom": "使用 %s 隐身！",
-  "tip.phantom.active": "隐身中！剩余 %s 秒",
+  "tip.phantom.active": "隐身将会在 %s 秒后结束！",
   "tip.morphling": "打开背包进行变形！",
-  "tip.morphling.active": "变形中！剩余 %s 秒",
+  "tip.morphling.active": "变形将会在 %s 秒后结束！",
   "tip.morphling.corpse_active": "尸体伪装中（按%s关闭）",
   "tip.morphling.corpse_hint": "按%s开启尸体伪装",
   "tip.recaller.place": "使用 %s 保存你的位置！",
   "tip.recaller.teleport": "使用 %s 传送！",
   "tip.vulture": "已吃掉 %s/%s 具尸体。",
-  "tip.recaller.not_enough_money": "传送需要 100\uE781。",
-  "tip.noellesroles.cooldown": "技能将在 %s秒后可用",
+  "tip.recaller.not_enough_money": "传送需要 100 金币\uE781。",
+  "tip.noellesroles.cooldown": "技能将在 %s秒 后可用",
 
   "announcement.goals.professor": "使用铁人药剂保护其他玩家！",
   "announcement.role.professor": "教授",
   "announcement.win.professor": "乘客胜利！",
 
-  "announcement.goals.jester": "被无辜者杀死即可获胜！",
+  "announcement.goals.jester": "被无辜者用枪击中即可化为疯魔！",
   "announcement.role.jester": "小丑",
   "announcement.win.jester": "小丑胜利！",
   "game.win.jester": "你听见了吗？那是为你那愚蠢的正义响起的嘲笑声。",
@@ -157,15 +157,15 @@
   "tip.assassin.guess_correct": "%s 的身份被你一眼看穿——他倒了！",
   "tip.assassin.guess_wrong": "哎呀！%s 可不是你想的那样...砰！过于自信的代价来了。",
 
-  "announcement.goals.scavenger": "清除痕迹！你杀的人尸体大部分人看不到。额外：每次击杀多100金币，只能用刀，可花100金币重置刀的CD。",
+  "announcement.goals.scavenger": "杀人无需蓄力！你杀的人尸体大部分人看不到。此外，你还可以使用 150金币 重置刀的冷却时间。",
   "announcement.role.scavenger": "清道夫",
   "announcement.win.scavenger": "杀手胜利！",
 
-  "item.noellesroles.scavenger_reset_knife_cd": "重置刀冷却",
-  "item.noellesroles.scavenger_reset_knife_cd.tooltip": "花费100金币\n立即重置刀的冷却时间",
+  "item.noellesroles.scavenger_reset_knife_cd": "重置冷却时间",
+  "item.noellesroles.scavenger_reset_knife_cd.tooltip": "花费 150 金币\n立即重置刀的冷却时间",
 
   "tip.scavenger.knife_cd_reset": "刀的冷却已重置！",
-  "tip.scavenger.not_enough_money": "需要100金币才能重置刀的冷却！",
+  "tip.scavenger.not_enough_money": "需要150金币才能重置刀的冷却！",
 
   "tip.corrupt_cop.moment_triggered": "黑警时刻已触发！枪械冷却减少，撬棍已获得！",
   "tip.corrupt_cop.moment_ended": "黑警时刻结束。",
@@ -194,10 +194,10 @@
   "tip.serial_killer.target": "目标: %s",
   "tip.serial_killer.no_target": "暂无目标",
 
-  "item.noellesroles.timekeeper_reduce_time": "减少游戏时间",
-  "item.noellesroles.timekeeper_reduce_time.tooltip": "花费100金币\n减少30秒游戏时间",
+  "item.noellesroles.timekeeper_reduce_time": "减少45秒游戏时间",
+  "item.noellesroles.timekeeper_reduce_time.tooltip": "花费100金币\n减少45秒游戏时间",
 
-  "announcement.goals.attendant": "查阅你的乘客登记表，了解每个房间的乘客！",
+  "announcement.goals.attendant": "你能够查阅你的乘客登记表，了解每个房间的乘客！",
   "announcement.role.attendant": "乘务员",
   "announcement.win.attendant": "乘客胜利！",
 
@@ -206,7 +206,7 @@
 
   "noellesroles.infected.notification": "你感觉身体不太舒服...",
 
-  "announcement.goals.taotie": "吞噬所有玩家，或在饕餮时刻存活2分钟即可获胜！",
+  "announcement.goals.taotie": "吞噬所有玩家，或在饕餮时刻存活 120秒 即可获胜！",
   "announcement.role.taotie": "饕餮",
   "announcement.win.taotie": "饕餮胜利！",
   "game.win.taotie": "饥饿...永无止境的饥饿终于得到了满足。",
@@ -223,7 +223,7 @@
 
   "death_reason.noellesroles.digested": "被饕餮消化",
 
-  "announcement.goals.silencer": "让目标闭嘴！被沉默的人无法说话、无法听到别人说话、无法进食或饮酒，且心情值会加速下降。",
+  "announcement.goals.silencer": "让目标闭嘴！被沉默的人无法说话、无法听到别人说话、无法进食或饮酒，且情绪值下降速度加快!",
   "announcement.role.silencer": "静语者",
   "announcement.win.silencer": "杀手胜利！",
   "tip.silencer.mark": "按 %s 标记 %s",
@@ -288,19 +288,19 @@
   "announcement.goals.bodyguard": "保护你的的目标！待在3格内，用生命守护目标！",
   "announcement.role.bodyguard": "保镖",
   "announcement.win.bodyguard": "乘客胜利！",
-  "tip.bodyguard.target": "保护: %s",
+  "tip.bodyguard.target": "你需要保护 %s ！",
   "tip.bodyguard.no_target": "暂无保护目标",
   "death_reason.noellesroles.bodyguard_sacrifice": "为保护目标而牺牲",
   "replay.death.noellesroles.bodyguard_sacrifice.killed": "%s 牺牲自己保护目标免受 %s 的攻击",
   "replay.death.noellesroles.bodyguard_sacrifice.died": "%s 作为保镖牺牲了自己",
   "replay.skill.noellesroles.bodyguard.target": "%s 作为§b保镖§r保护了 %s",
 
-  "announcement.goals.poisoner": "使用毒针和毒气弹让敌人中毒！你还可以使用毒药瓶和蝎子。",
+  "announcement.goals.poisoner": "使用毒针和毒气弹让敌人中毒！你还可以使用毒药瓶和蝎子！催化剂可以加快毒发和重置冷却!",
   "announcement.role.poisoner": "毒师",
   "announcement.win.poisoner": "杀手胜利！",
 
   "item.noellesroles.poison_needle": "毒针",
-  "item.noellesroles.poison_needle.tooltip": "右键点击玩家注入毒素\n开局冷却1分钟，后续冷却45秒\n可重复使用",
+  "item.noellesroles.poison_needle.tooltip": "右键点击玩家注入毒素\n初始冷却1分钟 / 后续冷却45秒\n可重复使用",
 
   "item.noellesroles.poison_gas_bomb": "毒气弹",
   "item.noellesroles.poison_gas_bomb.tooltip": "右键丢出毒气弹\n释放毒气可在空间内扩散\n毒气不能穿过方块\n在毒气中停留5秒将中毒\n30秒后毒气消散",
@@ -331,7 +331,7 @@
   "replay.death.noellesroles.throwing_axe.died": "%s 被§c飞斧§r贯穿击杀",
   "replay.item_use.noellesroles.throwing_axe": "%s 投掷了§c飞斧§r",
 
-  "announcement.goals.survival_master": "你无法被杀手本能察觉！当条件满足时，进入生存时刻，在120秒内存活即可获胜！",
+  "announcement.goals.survival_master": "杀手的本能透视对你无效！当条件满足时，进入生存时刻，在 120秒 内存活即可获胜！",
   "announcement.role.survival_master": "生存大师",
   "announcement.win.survival_master": "乘客胜利！",
   "tip.survival_master.moment_active": "生存时刻！坚持住！剩余 %s 秒",
@@ -343,5 +343,11 @@
 
   "replay.death_blocked.survival_moment": "%s 在§d生存时刻§r中免疫刺客刺杀",
   "replay.global.noellesroles.survival_moment_start": "%s 触发§d生存时刻§r",
-  "replay.global.noellesroles.survival_moment_end": "%s 的§d生存时刻§r结束"
+  "replay.global.noellesroles.survival_moment_end": "%s 的§d生存时刻§r结束",
+
+  "tip.letter.pathogen.tooltip2": "你的每次§a感染§r, 会被其他乘客察觉!",
+  "tip.letter.taotie.tooltip2": "吞掉其他乘客, 但你会在§4死亡时§r放出你吞过的乘客！",
+  "tip.letter.jester.tooltip2": "化为§d疯魔后§r，去追杀枪击过你的目标！",
+  "tip.letter.vulture.tooltip2": "吃尸体时会产生粒子效果，不要被发现！",
+  "tip.letter.corrupt_cop.tooltip2": "无需为好人卖命，杀死所有存活的乘客！"
 }
