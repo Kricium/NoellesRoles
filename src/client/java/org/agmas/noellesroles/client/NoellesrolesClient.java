@@ -223,7 +223,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
 
             // 如果目标是生存大师，阻止被杀手本能高亮
-            if (gameWorldComponent.isRole(player, Noellesroles.SURVIVAL_MASTER)) {
+            if (gameWorldComponent.isRole(player, Noellesroles.SURVIVAL_MASTER) && !localPlayer.canSee(player)) {
                 return GetInstinctHighlight.HighlightResult.skip();
             }
 

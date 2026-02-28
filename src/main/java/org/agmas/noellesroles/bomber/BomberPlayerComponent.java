@@ -52,8 +52,6 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
     private int bombTimer = 0;
     // 滴滴声计时器（tick）- 从滴滴声开始到爆炸
     private int beepTimer = 0;
-    // 传递冷却（tick）
-    private int transferCooldown = 0;
     // 是否正在滴滴声阶段
     private boolean isBeeping = false;
     // 放置炸弹的炸弹客UUID
@@ -99,10 +97,10 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         this.hasBomb = false;
         this.bombTimer = 0;
         this.beepTimer = 0;
-        this.transferCooldown = 0;
         this.isBeeping = false;
         this.bomberUuid = null;
         this.lastDisplayedSeconds = -1;
+        player.getItemCooldownManager().remove(TIMED_BOMB);
         if (wasHasBomb) {
             this.sync();
         }
@@ -118,7 +116,6 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         this.beepTimer = 0;
         this.isBeeping = false;
         this.bomberUuid = bomber.getUuid();
-        this.transferCooldown = 0;
         this.lastDisplayedSeconds = -1;
         this.sync();
         if (bomber instanceof ServerPlayerEntity serverBomber && player instanceof ServerPlayerEntity target) {
@@ -134,7 +131,7 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
      * @param target 目标玩家
      */
     public void transferBomb(PlayerEntity target) {
-        if (!hasBomb || !isBeeping || transferCooldown > 0) {
+        if (!hasBomb || !isBeeping || player.getItemCooldownManager().isCoolingDown(TIMED_BOMB)) {
             return;
         }
 
@@ -162,7 +159,7 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         targetComponent.beepTimer = this.beepTimer;
         targetComponent.isBeeping = true;
         targetComponent.bomberUuid = this.bomberUuid;
-        targetComponent.transferCooldown = TRANSFER_COOLDOWN_TICKS;
+        target.getItemCooldownManager().set(TIMED_BOMB, TRANSFER_COOLDOWN_TICKS);
         targetComponent.lastDisplayedSeconds = -1;
         targetComponent.sync();
 
@@ -212,11 +209,6 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
     public void serverTick() {
         if (!hasBomb) return;
 
-        // 传递冷却递减
-        if (transferCooldown > 0) {
-            transferCooldown--;
-        }
-
         if (!isBeeping) {
             // 放置后等待阶段
             if (bombTimer > 0) {
@@ -224,7 +216,7 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
             } else {
                 // 开始滴滴声阶段
                 isBeeping = true;
-                transferCooldown = TRANSFER_COOLDOWN_TICKS;
+                player.getItemCooldownManager().set(TIMED_BOMB, TRANSFER_COOLDOWN_TICKS);
                 beepTimer = BEEP_DURATION_TICKS;
                 player.giveItemStack(TIMED_BOMB.getDefaultStack());
             }
@@ -328,12 +320,8 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         return beepTimer;
     }
 
-    public int getTransferCooldown() {
-        return transferCooldown;
-    }
-
     public boolean canTransfer(PlayerEntity target) {
-        return hasBomb && isBeeping && transferCooldown <= 0 && !(KEY.get(target).hasBomb);
+        return hasBomb && isBeeping && !player.getItemCooldownManager().isCoolingDown(TIMED_BOMB) && !(KEY.get(target).hasBomb);
     }
 
     @Override
@@ -341,7 +329,6 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         tag.putBoolean("hasBomb", this.hasBomb);
         tag.putInt("bombTimer", this.bombTimer);
         tag.putInt("beepTimer", this.beepTimer);
-        tag.putInt("transferCooldown", this.transferCooldown);
         tag.putBoolean("isBeeping", this.isBeeping);
         if (this.bomberUuid != null) {
             tag.putUuid("bomberUuid", this.bomberUuid);
@@ -353,7 +340,6 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         this.hasBomb = tag.getBoolean("hasBomb");
         this.bombTimer = tag.getInt("bombTimer");
         this.beepTimer = tag.getInt("beepTimer");
-        this.transferCooldown = tag.getInt("transferCooldown");
         this.isBeeping = tag.getBoolean("isBeeping");
         if (tag.containsUuid("bomberUuid")) {
             this.bomberUuid = tag.getUuid("bomberUuid");
