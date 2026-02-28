@@ -66,9 +66,9 @@
     "music.jester_moment": {
         "sounds": [
             {
-                "name": "noellesroles:ambient/haoyunlai",
+                "name": "noellesroles:ambient/dbd_jester",
                 "stream": true,
-                "volume": 0.7
+                "volume": 0.9
             }
         ],
         "subtitle": "subtitles.noellesroles.ambient.jester_moment"
