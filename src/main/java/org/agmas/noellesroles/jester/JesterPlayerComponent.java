@@ -1,11 +1,16 @@
 package org.agmas.noellesroles.jester;
 
 import dev.doctor4t.wathe.Wathe;
+import dev.doctor4t.wathe.api.WatheRoles;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.MapEnhancementsWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPsychoComponent;
+import dev.doctor4t.wathe.cca.PlayerStaminaComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
+import dev.doctor4t.wathe.index.WatheAttributes;
 import dev.doctor4t.wathe.record.GameRecordManager;
+import net.minecraft.entity.attribute.EntityAttributeInstance;
+import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
@@ -40,6 +45,7 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
     private static final Identifier EVENT_MOMENT_START = Identifier.of(Noellesroles.MOD_ID, "jester_moment_start");
     private static final Identifier EVENT_MOMENT_END = Identifier.of(Noellesroles.MOD_ID, "jester_moment_end");
     private static final Identifier EVENT_STASIS_START = Identifier.of(Noellesroles.MOD_ID, "jester_stasis_start");
+    private static final Identifier PSYCHO_SPRINT_MODIFIER_ID = Identifier.of(Noellesroles.MOD_ID, "jester_psycho_sprint");
 
     private final PlayerEntity player;
     public boolean won = false;
@@ -81,12 +87,19 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
                 WorldMusicComponent worldMusic = WorldMusicComponent.KEY.get(player.getWorld());
                 worldMusic.stopMusic();
             }
-            // 记录疯魔模式被中断（被杀死），排除超时情况（超时时 psychoModeTicks <= 0，已单独记录）
-            if (this.psychoModeTicks > 0 && player instanceof ServerPlayerEntity serverPlayer && player.getWorld() instanceof ServerWorld serverWorld) {
-                NbtCompound extra = new NbtCompound();
-                extra.putString("reason", "killed");
-                extra.putInt("remaining_ticks", this.psychoModeTicks);
-                GameRecordManager.recordGlobalEvent(serverWorld, EVENT_MOMENT_END, serverPlayer, extra);
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                // 记录疯魔模式被中断（被杀死），排除超时情况（超时时 psychoModeTicks <= 0，已单独记录）
+                if (this.psychoModeTicks > 0 && player.getWorld() instanceof ServerWorld serverWorld) {
+                    NbtCompound extra = new NbtCompound();
+                    extra.putString("reason", "killed");
+                    extra.putInt("remaining_ticks", this.psychoModeTicks);
+                    GameRecordManager.recordGlobalEvent(serverWorld, EVENT_MOMENT_END, serverPlayer, extra);
+                }
+                // 移除体力上限修改器
+                EntityAttributeInstance sprintAttr = serverPlayer.getAttributeInstance(WatheAttributes.MAX_SPRINT_TIME);
+                if (sprintAttr != null && sprintAttr.hasModifier(PSYCHO_SPRINT_MODIFIER_ID)) {
+                    sprintAttr.removeModifier(PSYCHO_SPRINT_MODIFIER_ID);
+                }
             }
             this.inPsychoMode = false;
             PlayerPsychoComponent psychoComponent = PlayerPsychoComponent.KEY.get(this.player);
@@ -153,6 +166,22 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
             psychoComponent.setPsychoTicks(Integer.MAX_VALUE);
             psychoComponent.setArmour(this.psychoArmour);
             this.inPsychoMode = true;
+
+            // 疯魔模式：体力上限 ×3，恢复满体力，清除疲惫
+            if (player instanceof ServerPlayerEntity serverPlayer) {
+                EntityAttributeInstance sprintAttr = serverPlayer.getAttributeInstance(WatheAttributes.MAX_SPRINT_TIME);
+                if (sprintAttr != null && !sprintAttr.hasModifier(PSYCHO_SPRINT_MODIFIER_ID)) {
+                    // ADD_MULTIPLIED_TOTAL: 有效值 = base × (1 + 2.0) = 3倍
+                    sprintAttr.addTemporaryModifier(new EntityAttributeModifier(
+                        PSYCHO_SPRINT_MODIFIER_ID, 2.0,
+                        EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+                }
+                PlayerStaminaComponent staminaComp = PlayerStaminaComponent.KEY.get(player);
+                int effectiveMax = sprintAttr != null ? (int) sprintAttr.getValue()
+                    : WatheRoles.CIVILIAN.getMaxSprintTime() * 3;
+                staminaComp.setSprintingTicks(effectiveMax);
+                staminaComp.setExhausted(false);
+            }
 
             // 传送小丑至当局游戏分配的房间
             if (player instanceof ServerPlayerEntity serverJester && serverJester.getWorld() instanceof ServerWorld serverWorld) {
