@@ -1747,14 +1747,19 @@ public class Noellesroles implements ModInitializer {
             return Text.translatable("replay.item_use.noellesroles.timed_bomb.transfer", actorText, targetText);
         });
 
-        // 解毒剂 - 解毒
+        // 解毒剂 - 解毒 / 清除餐盘毒素
         ReplayRegistry.registerItemUseFormatter(antidoteId, (event, match, world) -> {
             var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
             NbtCompound data = event.data();
             UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
-            UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
-            if (actorUuid == null || targetUuid == null) return null;
+            if (actorUuid == null) return null;
             Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            String action = data.getString("action");
+            if ("cure_plate".equals(action)) {
+                return Text.translatable("replay.item_use.noellesroles.antidote.cure_plate", actorText);
+            }
+            UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
+            if (targetUuid == null) return null;
             Text targetText = ReplayGenerator.formatPlayerName(targetUuid, playerInfoCache);
             return Text.translatable("replay.item_use.noellesroles.antidote", actorText, targetText);
         });

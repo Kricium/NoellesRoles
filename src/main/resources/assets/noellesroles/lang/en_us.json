@@ -154,7 +154,7 @@
   "item.noellesroles.timekeeper_reduce_time": "Reduce Game Time",
   "item.noellesroles.timekeeper_reduce_time.tooltip": "Costs 100 coins\nReduces game time by 45 seconds",
   "item.noellesroles.antidote": "Antidote",
-  "item.noellesroles.antidote.tooltip": "Use on a poisoned player to cure them\nRequires 1.5s charge time\n5 minute cooldown after use",
+  "item.noellesroles.antidote.tooltip": "Use on a poisoned player to cure them\nRequires 1.5s charge time\nUse on poisoned plates to remove poison\n3 minute cooldown after use",
   "item.noellesroles.poison_needle": "Poison Needle",
   "item.noellesroles.poison_needle.tooltip": "Right-click a player to inject poison\n1 minute initial cooldown, 45s cooldown after use\nReusable",
   "item.noellesroles.poison_gas_bomb": "Poison Gas Bomb",
@@ -324,6 +324,7 @@
   "replay.item_use.noellesroles.fine_drink.place": "%s placed a §dFine Drink§r on a platter",
   "replay.item_use.noellesroles.timed_bomb.transfer": "%s transferred the §eTimed Bomb§r to %s",
   "replay.item_use.noellesroles.antidote": "%s §acured§r %s of poison",
+  "replay.item_use.noellesroles.antidote.cure_plate": "%s §aremoved poison§r from a food plate",
   "replay.item_use.noellesroles.iron_man_vial": "%s injected %s with an §bIron Man Vial§r",
   "replay.platter_take.noellesroles.fine_drink": "%s took a §dFine Drink§r from a platter",
 
