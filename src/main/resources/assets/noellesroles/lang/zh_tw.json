@@ -128,6 +128,7 @@
   "death_reason.noellesroles.jester_timeout": "小丑瘋魔時間耗盡而亡",
 
   "tip.bomber.bomb_warning": "你的身上有一個炸彈！%s秒後會爆炸！你必須將他傳遞給別人！",
+  "tip.item.invisible_in_hand": "此物品對其他玩家不可見",
 
   "subtitles.noellesroles.item.bomb.beep": "炸彈滴滴聲",
   "subtitles.noellesroles.item.bomb.explode": "炸彈爆炸",

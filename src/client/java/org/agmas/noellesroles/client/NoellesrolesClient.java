@@ -39,6 +39,8 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
+import org.agmas.noellesroles.util.HiddenEquipmentHelper;
+import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.client.screen.AssassinScreen;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
@@ -84,6 +86,9 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static double crosshairTargetDistance;
 
     public static Map<UUID, UUID> SHUFFLED_PLAYER_ENTRIES_CACHE = Maps.newHashMap();
+
+    // 不可见物品提示：切换到不可见物品时提示
+    private static boolean wasHoldingInvisible = false;
 
 
     @Override
@@ -518,6 +523,15 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
                 JesterTimeRenderer.tick();
+
+                // 切换到不可见物品时在 actionbar 提示
+                boolean holdingInvisible = WatheClient.isPlayerPlayingAndAlive()
+                        && (HiddenEquipmentHelper.shouldHideItem(player.getMainHandStack(), player)
+                            || player.getMainHandStack().isOf(WatheItems.NOTE));
+                if (holdingInvisible && !wasHoldingInvisible) {
+                    player.sendMessage(Text.translatable("tip.item.invisible_in_hand").withColor(0xAAAAAA), true);
+                }
+                wasHoldingInvisible = holdingInvisible;
             }
         });
     }

@@ -190,6 +190,7 @@
   "tip.bomber.beeping": "BOMB! Pass it with %s! (%ss left)",
   "tip.bomber.cooldown": "Transfer cooldown: %ss",
   "tip.bomber.bomb_warning": "You have a bomb on you! It will explode in %s seconds! Pass it to someone else!",
+  "tip.item.invisible_in_hand": "This item is hidden from other players",
   "tip.scavenger.knife_cd_reset": "Knife cooldown reset!",
   "tip.scavenger.not_enough_money": "Need 150 coins to reset knife CD!",
   "tip.corrupt_cop.moment_triggered": "Corrupt Cop Moment activated! Gun cooldown reduced, crowbar obtained!",
