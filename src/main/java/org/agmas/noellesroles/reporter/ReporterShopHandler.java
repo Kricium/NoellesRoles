@@ -12,8 +12,8 @@ public class ReporterShopHandler {
         BuildShopEntries.EVENT.register((player, context) -> {
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
             if (gameWorld.isRole(player, Noellesroles.REPORTER)) {
-                // 便条: 10金币, 4个一组, 无限制
-                context.addEntry(new ShopEntry.Builder("note", new ItemStack(WatheItems.NOTE, 4), 10, ShopEntry.Type.TOOL)
+                // 便条: 25金币, 4个一组, 无限制
+                context.addEntry(new ShopEntry.Builder("note", new ItemStack(WatheItems.NOTE, 4), 50, ShopEntry.Type.TOOL)
                     .build());
             }
         });
