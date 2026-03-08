@@ -54,6 +54,10 @@ public class RecallerPlayerComponent implements AutoSyncedComponent {
 
     public void teleport() {
         if (player instanceof ServerPlayerEntity serverPlayer) {
+            // 传送前先下车（例如从沙发上站起来）
+            if (serverPlayer.hasVehicle()) {
+                serverPlayer.stopRiding();
+            }
             // 传送前在原位播放粒子和音效
             serverPlayer.getWorld().sendEntityStatus(serverPlayer, EntityStatuses.ADD_PORTAL_PARTICLES);
             serverPlayer.getWorld().playSound(null, serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),

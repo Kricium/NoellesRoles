@@ -26,7 +26,6 @@ public class SwapperPlayerWidget extends PlayerSelectWidget {
         super(screen, x, y, disguiseTargetUuid, getNameText(disguiseTargetUuid), (a) -> {
             if (AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).cooldown == 0) {
                 if (MinecraftClient.getInstance().player.getWorld().getPlayerByUuid(disguiseTargetUuid) == null) return;
-                if (MinecraftClient.getInstance().player.getWorld().getPlayerByUuid(disguiseTargetUuid).hasVehicle()) return;
                 if (playerChoiceOne != null) {
                     ClientPlayNetworking.send(new SwapperC2SPacket(playerChoiceOne, disguiseTargetUuid));
                 } else {
