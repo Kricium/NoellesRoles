@@ -45,7 +45,9 @@ import org.agmas.noellesroles.client.screen.AssassinScreen;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
+import org.agmas.noellesroles.client.render.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
+import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
@@ -104,6 +106,15 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册世界BGM管理器
         WorldMusicManager.register();
+
+        // 注册工程师门高亮渲染器
+        EngineerDoorHighlightRenderer.register();
+
+        // 注册工程师门高亮 S2C 包接收
+        ClientPlayNetworking.registerGlobalReceiver(EngineerDoorHighlightS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        EngineerDoorHighlightRenderer.onPacketReceived(payload.doorPos())
+                ));
 
         // 注册实体渲染器
         EntityRendererRegistry.register(NoellesRolesEntities.POISON_GAS_BOMB_ENTITY, FlyingItemEntityRenderer::new);

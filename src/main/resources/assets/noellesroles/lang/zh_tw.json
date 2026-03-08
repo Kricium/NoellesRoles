@@ -378,4 +378,15 @@
   "tip.letter.serial_killer.tooltip2": "附言： 去殺死你的目標！ 當你在場時， 保鑣也會存在場內",
   "tip.letter.scavenger.tooltip2": "附言： 大嗓門對你的擊殺隱藏§4無效§r， 禿鷲還可以看到被你殺的乘客屍體",
   "tip.letter.corrupt_cop.tooltip2": "附言： 你用槍殺別人§7冷卻時間§r會更短， 殺死所有存活的乘客！",
+
+  "announcement.goals.engineer": "你可以感知被撬/被鎖的門！維修工具可以修復被撬的門或上鎖/解鎖！",
+  "announcement.role.engineer": "工程師",
+  "announcement.win.engineer": "乘客勝利！",
+  "item.noellesroles.repair_tool": "維修工具",
+  "item.noellesroles.repair_tool.tooltip": "對被撬的門使用：修復門\n對正常關閉的門使用：上鎖\n對被鎖的門使用：解鎖\n冷卻時間：3分鐘",
+  "tip.engineer.door_blasted": "一扇門被撬開了！",
+  "tip.engineer.door_jammed": "一扇門被堵住了！",
+  "tip.engineer.repaired": "門已修復！",
+  "tip.engineer.locked": "門已上鎖！",
+  "tip.engineer.unlocked": "門已解鎖！"
 }

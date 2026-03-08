@@ -8,6 +8,7 @@ import org.agmas.noellesroles.item.IronManVialItem;
 import org.agmas.noellesroles.item.PoisonNeedleItem;
 import org.agmas.noellesroles.item.PoisonGasBombItem;
 import org.agmas.noellesroles.item.CatalystItem;
+import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.item.ThrowingAxeItem;
 import org.agmas.noellesroles.item.BaseSpiritItem;
 import org.agmas.noellesroles.item.IngredientItem;
@@ -74,6 +75,12 @@ public class ModItems {
     public static final Item CATALYST = register(
             new CatalystItem(new Item.Settings().maxCount(1)),
             "catalyst"
+    );
+
+    // ---- 工程师系统 ----
+    public static final Item REPAIR_TOOL = register(
+            new RepairToolItem(new Item.Settings().maxCount(1)),
+            "repair_tool"
     );
 
     // ---- 调酒师系统 ----

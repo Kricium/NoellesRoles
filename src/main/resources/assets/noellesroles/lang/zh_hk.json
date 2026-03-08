@@ -353,5 +353,16 @@
   "tip.letter.taotie.tooltip2": "吞掉其他乘客，但你會在§4死亡時§r放出你吞過的乘客！",
   "tip.letter.jester.tooltip2": "化為§d瘋魔後§r，去追殺槍擊過你的目標！",
   "tip.letter.vulture.tooltip2": "吃屍體時會產生粒子效果，不要被發現！",
-  "tip.letter.corrupt_cop.tooltip2": "無需為好人賣命，殺死所有存活的乘客！"
+  "tip.letter.corrupt_cop.tooltip2": "無需為好人賣命，殺死所有存活的乘客！",
+
+  "announcement.goals.engineer": "你可以感知被撬/被鎖嘅門！維修工具可以修復被撬嘅門或上鎖/解鎖！",
+  "announcement.role.engineer": "工程師",
+  "announcement.win.engineer": "乘客勝利！",
+  "item.noellesroles.repair_tool": "維修工具",
+  "item.noellesroles.repair_tool.tooltip": "對被撬嘅門使用：修復門\n對正常關閉嘅門使用：上鎖\n對被鎖嘅門使用：解鎖\n冷卻時間：3分鐘",
+  "tip.engineer.door_blasted": "一扇門被撬開咗！",
+  "tip.engineer.door_jammed": "一扇門被堵住咗！",
+  "tip.engineer.repaired": "門已修復！",
+  "tip.engineer.locked": "門已上鎖！",
+  "tip.engineer.unlocked": "門已解鎖！"
 }

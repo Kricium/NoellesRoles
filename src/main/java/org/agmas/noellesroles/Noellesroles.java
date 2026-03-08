@@ -5,6 +5,9 @@ import dev.doctor4t.wathe.api.RoleAppearanceCondition;
 import dev.doctor4t.wathe.api.WatheRoles;
 import org.agmas.noellesroles.bartender.CocktailRegistry;
 import dev.doctor4t.wathe.api.event.*;
+import dev.doctor4t.wathe.block.SmallDoorBlock;
+import dev.doctor4t.wathe.block_entity.DoorBlockEntity;
+import dev.doctor4t.wathe.block_entity.SmallDoorBlockEntity;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerShopComponent;
 import dev.doctor4t.wathe.client.gui.RoleAnnouncementTexts;
@@ -47,6 +50,7 @@ import org.agmas.noellesroles.config.NoellesRolesConfig;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.AssassinGuessRoleC2SPacket;
+import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.MorphC2SPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.SwapperC2SPacket;
@@ -77,6 +81,8 @@ import org.agmas.noellesroles.packet.SilencerSilenceC2SPacket;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencerPlayerComponent;
 import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
+import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
+import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.music.WorldMusicComponent;
 import org.agmas.noellesroles.poisoner.PoisonerShopHandler;
 import org.agmas.noellesroles.bandit.BanditShopHandler;
@@ -129,6 +135,7 @@ public class Noellesroles implements ModInitializer {
     public static Identifier POISONER_ID = Identifier.of(MOD_ID, "poisoner");
     public static Identifier BANDIT_ID = Identifier.of(MOD_ID, "bandit");
     public static Identifier SURVIVAL_MASTER_ID = Identifier.of(MOD_ID, "survival_master");
+    public static Identifier ENGINEER_ID = Identifier.of(MOD_ID, "engineer");
 
     // 炸弹死亡原因
     public static Identifier DEATH_REASON_BOMB = Identifier.of(MOD_ID, "bomb");
@@ -189,6 +196,8 @@ public class Noellesroles implements ModInitializer {
     public static Role BODYGUARD = WatheRoles.registerRole(new Role(BODYGUARD_ID, new Color(70, 130, 250).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false, ctx -> ctx.isRoleAssigned(SERIAL_KILLER)));
     // 生存大师角色 - 无辜者阵营，无法被杀手本能察觉，触发生存时刻后杀手必须在120秒内找到并杀死他
     public static Role SURVIVAL_MASTER = WatheRoles.registerRole(new Role(SURVIVAL_MASTER_ID, new Color(50, 180, 160).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    // 工程师角色 - 无辜者阵营，感知被撬/被锁的门，维修工具修复/上锁/解锁
+    public static Role ENGINEER = WatheRoles.registerRole(new Role(ENGINEER_ID, new Color(200, 160, 60).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
 
 
     // 小丑角色 - 中立阵营，被无辜者杀死时获胜
@@ -300,6 +309,7 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(ReporterMarkC2SPacket.ID, ReporterMarkC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(TaotieSwallowC2SPacket.ID, TaotieSwallowC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SilencerSilenceC2SPacket.ID, SilencerSilenceC2SPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
 
         registerEvents();
 
@@ -613,6 +623,13 @@ public class Noellesroles implements ModInitializer {
                 // Professor starts with 1 Iron Man Vial
                 player.giveItemStack(ModItems.IRON_MAN_VIAL.getDefaultStack());
                 player.getItemCooldownManager().set(ModItems.IRON_MAN_VIAL, 20 * 60 * 3);
+            }
+            if (role.equals(ENGINEER)) {
+                // 工程师开局获得维修工具，60秒开局冷却
+                EngineerPlayerComponent engineerComp = EngineerPlayerComponent.KEY.get(player);
+                engineerComp.reset();
+                player.giveItemStack(ModItems.REPAIR_TOOL.getDefaultStack());
+                player.getItemCooldownManager().set(ModItems.REPAIR_TOOL, GameConstants.getInTicks(0, 60));
             }
             if (role.equals(ATTENDANT)) {
                 // 乘务员开局获得一本房间信息书
@@ -1063,6 +1080,142 @@ public class Noellesroles implements ModInitializer {
                 }
             }
             return DoorInteraction.DoorInteractionResult.PASS;
+        });
+
+        // 工程师维修工具 DoorInteraction 处理
+        DoorInteraction.EVENT.register((DoorInteraction.DoorInteractionContext context) -> {
+            if (!context.getHandItem().isOf(ModItems.REPAIR_TOOL)) {
+                return DoorInteraction.DoorInteractionResult.PASS;
+            }
+            if (!context.isServerSide()) {
+                return DoorInteraction.DoorInteractionResult.PASS;
+            }
+
+            PlayerEntity player = context.getPlayer();
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(context.getWorld());
+            if (!gameWorld.isRole(player, ENGINEER)) {
+                return DoorInteraction.DoorInteractionResult.PASS;
+            }
+            if (player.getItemCooldownManager().isCoolingDown(ModItems.REPAIR_TOOL)) {
+                return DoorInteraction.DoorInteractionResult.DENY;
+            }
+
+            DoorBlockEntity entity = context.getEntity();
+            net.minecraft.world.World world = context.getWorld();
+            net.minecraft.util.math.BlockPos lowerPos = context.getLowerPos();
+            net.minecraft.block.BlockState state = world.getBlockState(lowerPos);
+
+            if (entity.isBlasted()) {
+                // 修复被撬的门
+                entity.setBlasted(false);
+                if (entity.isOpen()) {
+                    entity.toggle(false);
+                }
+                entity.sync();
+                // 处理邻居双开门
+                if (entity instanceof SmallDoorBlockEntity smallEntity) {
+                    SmallDoorBlockEntity neighbor = SmallDoorBlock.getNeighborDoorEntity(state, world, lowerPos);
+                    if (neighbor != null && neighbor.isBlasted()) {
+                        neighbor.setBlasted(false);
+                        if (neighbor.isOpen()) {
+                            neighbor.toggle(false);
+                        }
+                        neighbor.sync();
+                    }
+                }
+                player.getItemCooldownManager().set(ModItems.REPAIR_TOOL, RepairToolItem.COOLDOWN_TICKS);
+                player.sendMessage(Text.translatable("tip.engineer.repaired"), true);
+                world.playSound(null, lowerPos.getX() + .5f, lowerPos.getY() + 1, lowerPos.getZ() + .5f,
+                        WatheSounds.BLOCK_DOOR_TOGGLE, net.minecraft.sound.SoundCategory.BLOCKS, 1f, 1.2f);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    NbtCompound extra = new NbtCompound();
+                    GameRecordManager.putBlockPos(extra, "pos", lowerPos);
+                    extra.putString("action", "repair");
+                    GameRecordManager.recordItemUse(serverPlayer,
+                            net.minecraft.registry.Registries.ITEM.getId(ModItems.REPAIR_TOOL), null, extra);
+                }
+                return DoorInteraction.DoorInteractionResult.HANDLED;
+            } else if (entity.isJammed()) {
+                // 解锁被堵的门
+                entity.setJammed(0);
+                entity.sync();
+                if (entity instanceof SmallDoorBlockEntity) {
+                    SmallDoorBlockEntity neighbor = SmallDoorBlock.getNeighborDoorEntity(state, world, lowerPos);
+                    if (neighbor != null && neighbor.isJammed()) {
+                        neighbor.setJammed(0);
+                        neighbor.sync();
+                    }
+                }
+                player.getItemCooldownManager().set(ModItems.REPAIR_TOOL, RepairToolItem.COOLDOWN_TICKS);
+                player.sendMessage(Text.translatable("tip.engineer.unlocked"), true);
+                world.playSound(null, lowerPos.getX() + .5f, lowerPos.getY() + 1, lowerPos.getZ() + .5f,
+                        WatheSounds.ITEM_LOCKPICK_DOOR, net.minecraft.sound.SoundCategory.BLOCKS, 1f, 1.2f);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    NbtCompound extra = new NbtCompound();
+                    GameRecordManager.putBlockPos(extra, "pos", lowerPos);
+                    extra.putString("action", "unlock");
+                    GameRecordManager.recordItemUse(serverPlayer,
+                            net.minecraft.registry.Registries.ITEM.getId(ModItems.REPAIR_TOOL), null, extra);
+                }
+                return DoorInteraction.DoorInteractionResult.HANDLED;
+            } else {
+                // 上锁门（无论开关状态）
+                entity.setJammed(GameConstants.JAMMED_DOOR_TIME);
+                if (entity.isOpen()) {
+                    entity.toggle(false);
+                }
+                entity.sync();
+                if (entity instanceof SmallDoorBlockEntity) {
+                    SmallDoorBlockEntity neighbor = SmallDoorBlock.getNeighborDoorEntity(state, world, lowerPos);
+                    if (neighbor != null) {
+                        neighbor.setJammed(GameConstants.JAMMED_DOOR_TIME);
+                        if (neighbor.isOpen()) {
+                            neighbor.toggle(false);
+                        }
+                        neighbor.sync();
+                    }
+                }
+                player.getItemCooldownManager().set(ModItems.REPAIR_TOOL, RepairToolItem.COOLDOWN_TICKS);
+                player.sendMessage(Text.translatable("tip.engineer.locked"), true);
+                world.playSound(null, lowerPos.getX() + .5f, lowerPos.getY() + 1, lowerPos.getZ() + .5f,
+                        WatheSounds.BLOCK_DOOR_LOCKED, net.minecraft.sound.SoundCategory.BLOCKS, 1f, 0.8f);
+                if (player instanceof ServerPlayerEntity serverPlayer) {
+                    NbtCompound extra = new NbtCompound();
+                    GameRecordManager.putBlockPos(extra, "pos", lowerPos);
+                    extra.putString("action", "lock");
+                    GameRecordManager.recordItemUse(serverPlayer,
+                            net.minecraft.registry.Registries.ITEM.getId(ModItems.REPAIR_TOOL), null, extra);
+                }
+                return DoorInteraction.DoorInteractionResult.HANDLED;
+            }
+        });
+
+        // 工程师 - 门被撬开时通知
+        DoorStateChanged.BLAST.register((world, pos, doorEntity) -> {
+            if (!(world instanceof ServerWorld serverWorld)) return;
+            GameWorldComponent gameComponent = GameWorldComponent.KEY.get(serverWorld);
+            for (UUID uuid : gameComponent.getAllWithRole(ENGINEER)) {
+                PlayerEntity engineer = serverWorld.getPlayerByUuid(uuid);
+                if (engineer != null && GameFunctions.isPlayerPlayingAndAlive(engineer)
+                        && engineer instanceof ServerPlayerEntity serverEngineer) {
+                    serverEngineer.sendMessage(Text.translatable("tip.engineer.door_blasted"), true);
+                    ServerPlayNetworking.send(serverEngineer, new EngineerDoorHighlightS2CPacket(pos));
+                }
+            }
+        });
+
+        // 工程师 - 门被堵住时通知
+        DoorStateChanged.JAM.register((world, pos, doorEntity) -> {
+            if (!(world instanceof ServerWorld serverWorld)) return;
+            GameWorldComponent gameComponent = GameWorldComponent.KEY.get(serverWorld);
+            for (UUID uuid : gameComponent.getAllWithRole(ENGINEER)) {
+                PlayerEntity engineer = serverWorld.getPlayerByUuid(uuid);
+                if (engineer != null && GameFunctions.isPlayerPlayingAndAlive(engineer)
+                        && engineer instanceof ServerPlayerEntity serverEngineer) {
+                    serverEngineer.sendMessage(Text.translatable("tip.engineer.door_jammed"), true);
+                    ServerPlayNetworking.send(serverEngineer, new EngineerDoorHighlightS2CPacket(pos));
+                }
+            }
         });
 
         // 游戏结束时触发

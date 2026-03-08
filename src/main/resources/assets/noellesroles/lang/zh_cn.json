@@ -438,5 +438,19 @@
   "cocktail.noellesroles.playboy": "花花公子",
   "cocktail.noellesroles.see_you_tomorrow": "明天见",
   "cocktail.noellesroles.tequila_sunrise": "龙舌兰日出",
-  "cocktail.noellesroles.witchs_remedy": "女巫的解药"
+  "cocktail.noellesroles.witchs_remedy": "女巫的解药",
+
+  "announcement.goals.engineer": "你可以感知被撬/被锁的门！维修工具可以修复被撬的门或上锁/解锁！",
+  "announcement.role.engineer": "工程师",
+  "announcement.win.engineer": "乘客胜利！",
+  "item.noellesroles.repair_tool": "维修工具",
+  "item.noellesroles.repair_tool.tooltip": "对被撬的门使用：修复门\n对正常关闭的门使用：上锁\n对被锁的门使用：解锁\n冷却时间：3分钟",
+  "tip.engineer.door_blasted": "一扇门被撬开了！",
+  "tip.engineer.door_jammed": "一扇门被堵住了！",
+  "tip.engineer.repaired": "门已修复！",
+  "tip.engineer.locked": "门已上锁！",
+  "tip.engineer.unlocked": "门已解锁！",
+  "replay.item_use.noellesroles.repair_tool.repair": "%s 使用§b维修工具§r修复了一扇门",
+  "replay.item_use.noellesroles.repair_tool.lock": "%s 使用§b维修工具§r锁上了一扇门",
+  "replay.item_use.noellesroles.repair_tool.unlock": "%s 使用§b维修工具§r解锁了一扇门"
 }
