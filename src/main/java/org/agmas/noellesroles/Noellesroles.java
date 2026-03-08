@@ -1008,7 +1008,7 @@ public class Noellesroles implements ModInitializer {
                     return DoorInteraction.DoorInteractionResult.ALLOW;
                 }
             }
-            if (handItem.isOf(ModItems.NEUTRAL_MASTER_KEY) && context.requiresKey()) {
+            if (handItem.isOf(ModItems.NEUTRAL_MASTER_KEY) && (doorType == DoorInteraction.DoorType.TRAIN_DOOR || context.requiresKey())) {
                 if (player.getItemCooldownManager().isCoolingDown(ModItems.NEUTRAL_MASTER_KEY)) {
                     return DoorInteraction.DoorInteractionResult.DENY;
                 }
