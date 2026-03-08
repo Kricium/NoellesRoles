@@ -1,7 +1,6 @@
 package org.agmas.noellesroles.jester;
 
 import dev.doctor4t.wathe.Wathe;
-import dev.doctor4t.wathe.api.WatheRoles;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.MapEnhancementsWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPsychoComponent;
@@ -171,16 +170,17 @@ public class JesterPlayerComponent implements AutoSyncedComponent, ServerTicking
             if (player instanceof ServerPlayerEntity serverPlayer) {
                 EntityAttributeInstance sprintAttr = serverPlayer.getAttributeInstance(WatheAttributes.MAX_SPRINT_TIME);
                 if (sprintAttr != null && !sprintAttr.hasModifier(PSYCHO_SPRINT_MODIFIER_ID)) {
-                    // ADD_MULTIPLIED_TOTAL: 有效值 = base × (1 + 2.0) = 3倍
                     sprintAttr.addTemporaryModifier(new EntityAttributeModifier(
                         PSYCHO_SPRINT_MODIFIER_ID, 2.0,
                         EntityAttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
                 }
                 PlayerStaminaComponent staminaComp = PlayerStaminaComponent.KEY.get(player);
                 int effectiveMax = sprintAttr != null ? (int) sprintAttr.getValue()
-                    : WatheRoles.CIVILIAN.getMaxSprintTime() * 3;
+                    : staminaComp.getMaxSprintTime() * 3;
                 staminaComp.setSprintingTicks(effectiveMax);
+                staminaComp.setMaxSprintTime(effectiveMax);
                 staminaComp.setExhausted(false);
+                staminaComp.sync();
             }
 
             // 传送小丑至当局游戏分配的房间
