@@ -8,6 +8,7 @@
     "bartender.CocktailItemMixin",
     "bartender.DefenseVialApplyMixin",
     "noisemaker.NoisemakerKillMixin",
+    "toxicologist.AntidoteCurePlateMixin",
     "toxicologist.ToxicologistPoisonSyncMixin",
     "scavenger.ScavengerKnifeSoundMixin",
     "scavenger.ScavengerBodyCanHitMixin",

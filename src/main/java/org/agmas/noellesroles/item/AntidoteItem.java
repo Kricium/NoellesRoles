@@ -1,18 +1,14 @@
 package org.agmas.noellesroles.item;
 
-import dev.doctor4t.wathe.block.FoodPlatterBlock;
-import dev.doctor4t.wathe.block_entity.BeveragePlateBlockEntity;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.record.GameRecordManager;
-import net.minecraft.block.BlockState;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.Registries;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -22,7 +18,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 import java.util.UUID;
@@ -31,7 +26,7 @@ public class AntidoteItem extends Item {
     // Charge time: 1.5 seconds = 30 ticks
     private static final int USE_TIME = 30;
     // Cooldown after use: 3 minutes = 3 * 60 * 20 ticks
-    private static final int COOLDOWN_TICKS = 3 * 60 * 20;
+    public static final int COOLDOWN_TICKS = 3 * 60 * 20;
     // Initial cooldown at game start: 2 minutes = 2 * 60 * 20 ticks
     public static final int INITIAL_COOLDOWN_TICKS = 2 * 60 * 20;
     // Max distance to target: 3 blocks
@@ -39,42 +34,6 @@ public class AntidoteItem extends Item {
 
     public AntidoteItem(Settings settings) {
         super(settings);
-    }
-
-    @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        PlayerEntity player = context.getPlayer();
-        World world = context.getWorld();
-        if (player == null) return ActionResult.PASS;
-
-        if (player.getItemCooldownManager().isCoolingDown(this)) {
-            return ActionResult.PASS;
-        }
-
-        BlockPos pos = context.getBlockPos();
-        BlockState state = world.getBlockState(pos);
-
-        // Poisoned food plate / drink tray
-        if (state.getBlock() instanceof FoodPlatterBlock) {
-            if (world.isClient) return ActionResult.SUCCESS;
-            if (world.getBlockEntity(pos) instanceof BeveragePlateBlockEntity blockEntity) {
-                if (blockEntity.getPoisoner() != null) {
-                    blockEntity.setPoisoner(null);
-                    world.playSound(null, pos, SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.0F, 1.2F);
-                    player.getItemCooldownManager().set(this, COOLDOWN_TICKS);
-                    if (player instanceof ServerPlayerEntity serverPlayer) {
-                        NbtCompound extra = new NbtCompound();
-                        extra.putString("action", "cure_plate");
-                        GameRecordManager.putBlockPos(extra, "pos", pos);
-                        GameRecordManager.recordItemUse(serverPlayer, Registries.ITEM.getId(this), null, extra);
-                    }
-                    return ActionResult.SUCCESS;
-                }
-            }
-            return ActionResult.PASS;
-        }
-
-        return super.useOnBlock(context);
     }
 
     @Override
