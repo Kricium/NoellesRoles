@@ -56,6 +56,7 @@ import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.pathogen.PathogenPlayerComponent;
+import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberShopHandler;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
@@ -677,6 +678,7 @@ public class Noellesroles implements ModInitializer {
             SilencedPlayerComponent.KEY.get(player).reset();
             SilencerPlayerComponent.KEY.get(player).reset();
             BodyguardPlayerComponent.KEY.get(player).reset();
+            NoisemakerPlayerComponent.KEY.get(player).reset();
             SurvivalMasterPlayerComponent.KEY.get(player).reset();
         });
 
@@ -1329,6 +1331,16 @@ public class Noellesroles implements ModInitializer {
                     extra.putString("action", "infect");
                     GameRecordManager.recordSkillUse(context.player(), PATHOGEN_ID, recordTarget, extra);
                 }
+            }
+            // 大嗓门广播技能：语音广播给所有玩家10秒，CD 180秒
+            if (gameWorldComponent.isRole(context.player(), NOISEMAKER) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                NoisemakerPlayerComponent noisemakerComp = NoisemakerPlayerComponent.KEY.get(context.player());
+                noisemakerComp.startBroadcasting();
+                abilityPlayerComponent.setCooldown(GameConstants.getInTicks(3, 0)); // 180秒 = 3分钟
+                context.player().sendMessage(net.minecraft.text.Text.translatable("noellesroles.noisemaker.broadcast_start"), true);
+                NbtCompound extra = new NbtCompound();
+                extra.putString("action", "broadcast");
+                GameRecordManager.recordSkillUse(context.player(), NOISEMAKER_ID, null, extra);
             }
         });
 

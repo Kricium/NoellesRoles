@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 
@@ -227,6 +228,47 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     }
 
     /**
+     * 大嗓门广播：广播期间将语音发送给所有玩家
+     * 被沉默时不生效；死亡后不生效；被吞噬时不生效
+     */
+    public void noisemakerBroadcastEvent(MicrophonePacketEvent event) {
+        if (event.getSenderConnection() == null) return;
+        if (event.getSenderConnection().getPlayer() == null) return;
+        if (event.getSenderConnection().getPlayer().getPlayer() == null) return;
+
+        VoicechatServerApi api = event.getVoicechat();
+        ServerPlayerEntity speaker = (ServerPlayerEntity) event.getSenderConnection().getPlayer().getPlayer();
+
+        // 被沉默时广播不生效
+        SilencedPlayerComponent silencedComp = SilencedPlayerComponent.KEY.get(speaker);
+        if (silencedComp.isSilenced()) return;
+
+        // 被吞噬时广播不生效
+        if (SwallowedPlayerComponent.isPlayerSwallowed(speaker)) return;
+
+        // 死亡后广播不生效
+        if (!GameFunctions.isPlayerPlayingAndAlive(speaker)) return;
+
+        GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(speaker.getWorld());
+        if (!gameWorldComponent.isRole(speaker, Noellesroles.NOISEMAKER)) return;
+
+        NoisemakerPlayerComponent noisemakerComp = NoisemakerPlayerComponent.KEY.get(speaker);
+        if (!noisemakerComp.isBroadcasting()) return;
+
+        // 广播语音给所有玩家（在接收者位置播放，相当于直接在耳边听到）
+        for (ServerPlayerEntity receiver : speaker.getServer().getPlayerManager().getPlayerList()) {
+            if (receiver.equals(speaker)) continue;
+            VoicechatConnection receiverCon = api.getConnectionOf(receiver.getUuid());
+            if (receiverCon != null) {
+                api.sendLocationalSoundPacketTo(receiverCon, event.getPacket().locationalSoundPacketBuilder()
+                        .position(api.createPosition(receiver.getX(), receiver.getY(), receiver.getZ()))
+                        .distance((float) api.getVoiceChatDistance())
+                        .build());
+            }
+        }
+    }
+
+    /**
      * Block voice packets from silenced players (they cannot speak)
      * Also block voice packets TO silenced players (they cannot hear)
      */
@@ -262,6 +304,7 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         registration.registerEvent(MicrophonePacketEvent.class, this::paranoidEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::taotieVoiceEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::silencerVoiceEvent);
+        registration.registerEvent(MicrophonePacketEvent.class, this::noisemakerBroadcastEvent);
         registration.registerEvent(RemoveGroupEvent.class, this::onGroupRemoved);
 
         registration.registerEvent(EntitySoundPacketEvent.class, this::blockVoiceToSwallowedPlayers);

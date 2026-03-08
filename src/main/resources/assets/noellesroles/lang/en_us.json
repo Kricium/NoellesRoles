@@ -31,6 +31,7 @@
   "announcement.role.noisemaker": "Noisemaker",
   "announcement.win.noisemaker": "Passengers Win!",
   "noellesroles.noisemaker.death_scream": "§cA piercing scream echoes from afar...",
+  "noellesroles.noisemaker.broadcast_start": "§aYou raise your voice! Everyone can hear you now!",
 
   "announcement.goals.voodoo": "Choose another player to go down with you.",
   "announcement.role.voodoo": "Voodoo",
@@ -176,6 +177,8 @@
   "noellesroles.noisemaker.death_scream": "§cA piercing scream echoes from afar...",
   "noellesroles.infected.notification": "You don't feel so good...",
 
+  "tip.noisemaker": "Use %s to raise your voice!",
+  "tip.noisemaker.active": "Broadcasting! %ss remaining!",
   "tip.phantom": "Use %s to go invisible!",
   "tip.phantom.active": "Invisible! %ss remaining",
   "tip.morphling": "Open inventory to morph!",
@@ -274,6 +277,7 @@
   "replay.skill.noellesroles.recaller.place": "%s §bmarked§r recall point at %s",
   "replay.skill.noellesroles.recaller.teleport": "%s §brecalled§r to %s",
   "replay.skill.noellesroles.phantom": "%s entered §7stealth§r mode",
+  "replay.skill.noellesroles.noisemaker": "%s §eroared at the top of their lungs§r, heard by everyone",
   "replay.skill.noellesroles.swapper.target": "%s §bswapped§r %s and %s's positions",
   "replay.skill.noellesroles.bomber.target": "%s §eplanted a bomb§r on %s",
   "replay.skill.noellesroles.serial_killer.target": "%s §clocked on§r to %s as target",

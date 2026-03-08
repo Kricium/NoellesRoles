@@ -27,6 +27,7 @@
   "announcement.goals.noisemaker": "Оповещайте игроков о вашем местоположении в случае смерти.",
   "announcement.role.noisemaker": "Знаменитость",
   "announcement.win.noisemaker": "Пассажиры победили!",
+  "noellesroles.noisemaker.broadcast_start": "§aВы орёте во всё горло! Все вас слышат!",
 
   "announcement.goals.voodoo": "Выберите другого игрока, который умрёт с вами.",
   "announcement.role.voodoo": "Вуду",

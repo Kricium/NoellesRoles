@@ -28,6 +28,7 @@
   "announcement.role.noisemaker": "大嗓门",
   "announcement.win.noisemaker": "乘客胜利！",
   "noellesroles.noisemaker.death_scream": "§c远处传来一声凄厉的惨叫...",
+  "noellesroles.noisemaker.broadcast_start": "§a你扯开嗓子大喊！所有人都能听到你的声音！",
 
   "announcement.goals.voodoo": "选择一名玩家，在你死时与你一起同归于尽。",
   "announcement.role.voodoo": "巫毒师",
@@ -82,6 +83,8 @@
   "hud.swapper.first_player_selection": "选择第 1 个要交换的玩家",
   "hud.swapper.second_player_selection": "选择第 2 个要交换的玩家",
 
+  "tip.noisemaker": "使用 %s 扯开嗓子大喊！",
+  "tip.noisemaker.active": "大嗓门广播中！%s 秒后结束！",
   "tip.phantom": "使用 %s 隐身！",
   "tip.phantom.active": "隐身将会在 %s 秒后结束！",
   "tip.morphling": "打开背包进行变形！",
@@ -264,6 +267,7 @@
   "replay.skill.noellesroles.recaller.place": "%s §b标记§r了回溯坐标 %s",
   "replay.skill.noellesroles.recaller.teleport": "%s §b回溯§r到了坐标 %s",
   "replay.skill.noellesroles.phantom": "%s 进入§7隐身§r状态",
+  "replay.skill.noellesroles.noisemaker": "%s §e扯开嗓子大喊§r，全车厢都听到了",
   "replay.skill.noellesroles.swapper.target": "%s §b交换§r了 %s 和 %s 的位置",
   "replay.skill.noellesroles.bomber.target": "%s 在 %s 身上§e安装了炸弹§r",
   "replay.skill.noellesroles.serial_killer.target": "%s 将§c目标§r锁定为 %s",
