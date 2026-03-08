@@ -40,6 +40,21 @@ public final class HiddenEquipmentHelper {
             return gameWorld.isRole(holder, Noellesroles.BOMBER) && !BomberPlayerComponent.KEY.get(holder).hasBomb();
         }
 
+        // 酒保商店物品和维修工具 — 始终隐藏
+        if (stack.isOf(ModItems.RUM)) return true;
+        if (stack.isOf(ModItems.GIN)) return true;
+        if (stack.isOf(ModItems.VODKA)) return true;
+        if (stack.isOf(ModItems.TEQUILA)) return true;
+        if (stack.isOf(ModItems.WHISKEY)) return true;
+        if (stack.isOf(ModItems.ICE_CUBE)) return true;
+        if (stack.isOf(ModItems.REPAIR_TOOL)) return true;
+
+        // 基酒瓶 — 酒保手中隐藏，其他角色手中可见
+        if (stack.isOf(ModItems.BASE_SPIRIT)) {
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(holder.getWorld());
+            return gameWorld.isRole(holder, Noellesroles.BARTENDER);
+        }
+
         return false;
     }
 
