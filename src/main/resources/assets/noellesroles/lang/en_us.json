@@ -414,6 +414,10 @@
   "cocktail.noellesroles.tequila_sunrise": "Tequila Sunrise",
   "cocktail.noellesroles.witchs_remedy": "Witch's Remedy",
 
+  "announcement.goals.criminal_reasoner": "Your role is registered as a neutral placeholder for now. Ability and win condition are not implemented yet.",
+  "announcement.role.criminal_reasoner": "Criminal Reasoner",
+  "announcement.win.criminal_reasoner": "Criminal Reasoner Wins!",
+
   "announcement.goals.engineer": "You can sense pried/locked doors! Use your Repair Tool to fix or lock/unlock doors!",
   "announcement.role.engineer": "Engineer",
   "announcement.win.engineer": "Passengers Win!",

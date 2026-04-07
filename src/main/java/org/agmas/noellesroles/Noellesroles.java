@@ -81,6 +81,7 @@ import org.agmas.noellesroles.packet.SilencerSilenceC2SPacket;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencerPlayerComponent;
 import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
+import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.music.WorldMusicComponent;
@@ -136,6 +137,7 @@ public class Noellesroles implements ModInitializer {
     public static Identifier BANDIT_ID = Identifier.of(MOD_ID, "bandit");
     public static Identifier SURVIVAL_MASTER_ID = Identifier.of(MOD_ID, "survival_master");
     public static Identifier ENGINEER_ID = Identifier.of(MOD_ID, "engineer");
+    public static Identifier CRIMINAL_REASONER_ID = Identifier.of(MOD_ID, "criminal_reasoner");
 
     // 炸弹死亡原因
     public static Identifier DEATH_REASON_BOMB = Identifier.of(MOD_ID, "bomb");
@@ -155,10 +157,10 @@ public class Noellesroles implements ModInitializer {
     public static Identifier POISON_SOURCE_NEEDLE = Identifier.of(MOD_ID, "needle");
     public static Identifier POISON_SOURCE_GAS_BOMB = Identifier.of(MOD_ID, "gas_bomb");
 
-    public static Role SWAPPER = WatheRoles.registerRole(new Role(SWAPPER_ID, new Color(57, 4, 170).getRGB(),false,true, Role.MoodType.FAKE,Integer.MAX_VALUE,true));
-    public static Role PHANTOM =WatheRoles.registerRole(new Role(PHANTOM_ID, new Color(80, 5, 5, 192).getRGB(),false,true, Role.MoodType.FAKE,Integer.MAX_VALUE,true));
-    public static Role MORPHLING =WatheRoles.registerRole(new Role(MORPHLING_ID, new Color(170, 2, 61).getRGB(),false,true, Role.MoodType.FAKE,Integer.MAX_VALUE,true));
-    public static Role THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES = WatheRoles.registerRole(new Role(THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES_ID, new Color(255, 0, 0, 192).getRGB(),false,true, Role.MoodType.FAKE,Integer.MAX_VALUE,true));
+    public static Role SWAPPER = WatheRoles.registerRole(new Role(SWAPPER_ID, new Color(57, 4, 170).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
+    public static Role PHANTOM = WatheRoles.registerRole(new Role(PHANTOM_ID, new Color(80, 5, 5, 192).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
+    public static Role MORPHLING = WatheRoles.registerRole(new Role(MORPHLING_ID, new Color(170, 2, 61).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
+    public static Role THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES = WatheRoles.registerRole(new Role(THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES_ID, new Color(255, 0, 0, 192).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
     // 炸弹客角色 - 杀手阵营，无法购买刀和枪，只能用炸弹
     public static Role BOMBER = WatheRoles.registerRole(new Role(BOMBER_ID, new Color(50, 50, 50).getRGB(), false, true, Role.MoodType.FAKE, Integer.MAX_VALUE, true));
     // 刺客角色 - 杀手阵营，可以猜测玩家身份
@@ -178,13 +180,13 @@ public class Noellesroles implements ModInitializer {
     public static HashMap<Role, RoleAnnouncementTexts.RoleAnnouncementText> roleRoleAnnouncementTextHashMap = new HashMap<>();
     public static Role TIMEKEEPER = WatheRoles.registerRole(new Role(TIMEKEEPER_ID, new Color(0, 38, 255).getRGB(), true, false, Role.MoodType.REAL, GameConstants.getInTicks(0, 10), true));
     public static Role UNDERCOVER = WatheRoles.registerRole(new Role(UNDERCOVER_ID, new Color(192, 192, 192).getRGB(), true, false, Role.MoodType.NONE, GameConstants.getInTicks(0, 10), false, RoleAppearanceCondition.minKillers(2)));
-    public static Role CONDUCTOR =WatheRoles.registerRole(new Role(CONDUCTOR_ID, new Color(255, 205, 84).getRGB(),true,false, Role.MoodType.REAL,WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role AWESOME_BINGLUS = WatheRoles.registerRole(new Role(AWESOME_BINGLUS_ID, new Color(155, 255, 168).getRGB(),true,false, Role.MoodType.REAL,WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role BARTENDER =WatheRoles.registerRole(new Role(BARTENDER_ID, new Color(217,241,240).getRGB(),true,false, Role.MoodType.REAL,WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role NOISEMAKER =WatheRoles.registerRole(new Role(NOISEMAKER_ID, new Color(200, 255, 0).getRGB(),true,false, Role.MoodType.REAL,WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role VOODOO =WatheRoles.registerRole(new Role(VOODOO_ID, new Color(128, 114, 253).getRGB(),true,false,Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role CORONER =WatheRoles.registerRole(new Role(CORONER_ID, new Color(122, 122, 122).getRGB(),true,false,Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(),false));
-    public static Role RECALLER = WatheRoles.registerRole(new Role(RECALLER_ID, new Color(158, 255, 255).getRGB(),true,false,Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(),false));
+    public static Role CONDUCTOR = WatheRoles.registerRole(new Role(CONDUCTOR_ID, new Color(255, 205, 84).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role AWESOME_BINGLUS = WatheRoles.registerRole(new Role(AWESOME_BINGLUS_ID, new Color(155, 255, 168).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role BARTENDER = WatheRoles.registerRole(new Role(BARTENDER_ID, new Color(217, 241, 240).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role NOISEMAKER = WatheRoles.registerRole(new Role(NOISEMAKER_ID, new Color(200, 255, 0).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role VOODOO = WatheRoles.registerRole(new Role(VOODOO_ID, new Color(128, 114, 253).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role CORONER = WatheRoles.registerRole(new Role(CORONER_ID, new Color(122, 122, 122).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role RECALLER = WatheRoles.registerRole(new Role(RECALLER_ID, new Color(158, 255, 255).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
     public static Role TOXICOLOGIST = WatheRoles.registerRole(new Role(TOXICOLOGIST_ID, new Color(184, 41, 90).getRGB(), true, false, Role.MoodType.REAL, GameConstants.getInTicks(0, 10), false));
     // 记者角色 - 无辜者阵营，可以标记一个玩家并透视他
     public static Role REPORTER = WatheRoles.registerRole(new Role(REPORTER_ID, new Color(210, 180, 100).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
@@ -202,13 +204,15 @@ public class Noellesroles implements ModInitializer {
 
     // 小丑角色 - 中立阵营，被无辜者杀死时获胜
     public static Role JESTER = WatheRoles.registerRole(new Role(JESTER_ID, new Color(248, 200, 220).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
-    public static Role VULTURE =WatheRoles.registerRole(new Role(VULTURE_ID, new Color(181, 103, 0).getRGB(),false,false,Role.MoodType.FAKE,-1,false));
+    public static Role VULTURE = WatheRoles.registerRole(new Role(VULTURE_ID, new Color(181, 103, 0).getRGB(), false, false, Role.MoodType.FAKE, -1, false));
     // 黑警角色 - 中立阵营，杀光所有人获胜，阻止其他阵营获胜
     public static Role CORRUPT_COP = WatheRoles.registerRole(new Role(CORRUPT_COP_ID, new Color(25, 50, 100).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true));
     // 病原体角色 - 中立阵营，感染所有存活玩家获胜
-    public static Role PATHOGEN = WatheRoles.registerRole(new Role(PATHOGEN_ID, 0x7FFF00, false, false, Role.MoodType.FAKE, Integer.MAX_VALUE , false));
+    public static Role PATHOGEN = WatheRoles.registerRole(new Role(PATHOGEN_ID, new Color(127,255,0).getRGB(), false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
     // 饕餮角色 - 中立阵营，吞噬玩家获胜
     public static Role TAOTIE = WatheRoles.registerRole(new Role(TAOTIE_ID, new Color(139, 69, 19).getRGB(), false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
+    // 犯罪推理学家角色 - 中立阵营，将死者与存活的凶手匹配获胜
+    public static Role CRIMINAL_REASONER = WatheRoles.registerRole(new Role(CRIMINAL_REASONER_ID, new Color(112,75,75).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
 
     public static final CustomPayload.Id<MorphC2SPacket> MORPH_PACKET = MorphC2SPacket.ID;
     public static final CustomPayload.Id<SwapperC2SPacket> SWAP_PACKET = SwapperC2SPacket.ID;
@@ -362,13 +366,13 @@ public class Noellesroles implements ModInitializer {
             // 黑警被杀时结束黑警时刻
             if (gameWorldComponent.isRole(victim, CORRUPT_COP)) {
                 CorruptCopPlayerComponent corruptCopComp = CorruptCopPlayerComponent.KEY.get(victim);
-                if(corruptCopComp.isCorruptCopMomentActive() && deathReason == DEATH_REASON_ASSASSINATED){
+                if (corruptCopComp.isCorruptCopMomentActive() && deathReason == DEATH_REASON_ASSASSINATED) {
                     // 记录黑警时刻免疫刺客
                     if (victim instanceof ServerPlayerEntity serverVictim) {
                         var event = GameRecordManager.event("death_blocked")
-                            .actor(serverVictim)
-                            .put("block_reason", "corrupt_cop_moment")
-                            .put("death_reason", deathReason.toString());
+                                .actor(serverVictim)
+                                .put("block_reason", "corrupt_cop_moment")
+                                .put("death_reason", deathReason.toString());
                         if (killer instanceof ServerPlayerEntity serverKiller) {
                             event.target(serverKiller);
                         }
@@ -381,13 +385,13 @@ public class Noellesroles implements ModInitializer {
             // 饕餮时刻时无法被刺客杀死
             if (gameWorldComponent.isRole(victim, TAOTIE)) {
                 TaotiePlayerComponent taotieComp = TaotiePlayerComponent.KEY.get(victim);
-                if(taotieComp.isTaotieMomentActive() && deathReason == DEATH_REASON_ASSASSINATED){
+                if (taotieComp.isTaotieMomentActive() && deathReason == DEATH_REASON_ASSASSINATED) {
                     // 记录饕餮时刻免疫刺客
                     if (victim instanceof ServerPlayerEntity serverVictim) {
                         var event = GameRecordManager.event("death_blocked")
-                            .actor(serverVictim)
-                            .put("block_reason", "taotie_moment")
-                            .put("death_reason", deathReason.toString());
+                                .actor(serverVictim)
+                                .put("block_reason", "taotie_moment")
+                                .put("death_reason", deathReason.toString());
                         if (killer instanceof ServerPlayerEntity serverKiller) {
                             event.target(serverKiller);
                         }
@@ -403,9 +407,9 @@ public class Noellesroles implements ModInitializer {
                 if (survivalComp.isSurvivalMomentActive() && deathReason == DEATH_REASON_ASSASSINATED) {
                     if (victim instanceof ServerPlayerEntity serverVictim) {
                         var event = GameRecordManager.event("death_blocked")
-                            .actor(serverVictim)
-                            .put("block_reason", "survival_moment")
-                            .put("death_reason", deathReason.toString());
+                                .actor(serverVictim)
+                                .put("block_reason", "survival_moment")
+                                .put("death_reason", deathReason.toString());
                         if (killer instanceof ServerPlayerEntity serverKiller) {
                             event.target(serverKiller);
                         }
@@ -425,9 +429,9 @@ public class Noellesroles implements ModInitializer {
                         // 禁锢期间免疫其他死亡
                         if (victim instanceof ServerPlayerEntity serverVictim) {
                             var event = GameRecordManager.event("death_blocked")
-                                .actor(serverVictim)
-                                .put("block_reason", "jester_stasis")
-                                .put("death_reason", deathReason.toString());
+                                    .actor(serverVictim)
+                                    .put("block_reason", "jester_stasis")
+                                    .put("death_reason", deathReason.toString());
                             if (killer instanceof ServerPlayerEntity serverKiller) {
                                 event.target(serverKiller);
                             }
@@ -441,12 +445,12 @@ public class Noellesroles implements ModInitializer {
             if (deathReason == GameConstants.DeathReasons.FELL_OUT_OF_TRAIN) return null;
 
             if (gameWorldComponent.isRole(victim, JESTER) &&
-                deathReason == GameConstants.DeathReasons.GUN &&
-                killer != null) {
+                    deathReason == GameConstants.DeathReasons.GUN &&
+                    killer != null) {
                 Role killerRole = gameWorldComponent.getRole(killer);
                 if (killerRole != null && killerRole.isInnocent()) {
                     JesterPlayerComponent jesterComponent = JesterPlayerComponent.KEY.get(victim);
-                    if(!jesterComponent.inPsychoMode){
+                    if (!jesterComponent.inPsychoMode) {
                         jesterComponent.targetKiller = killer.getUuid();
                         jesterComponent.enterStasis(GameConstants.getInTicks(0, 5));
                         return KillPlayer.KillResult.cancel();
@@ -461,17 +465,17 @@ public class Noellesroles implements ModInitializer {
                 // 记录铁人药水保护生效
                 if (victim instanceof ServerPlayerEntity serverVictim) {
                     var deathBlockedEvent = GameRecordManager.event("death_blocked")
-                        .actor(serverVictim)
-                        .put("block_reason", "iron_man_buff")
-                        .put("death_reason", deathReason.toString());
+                            .actor(serverVictim)
+                            .put("block_reason", "iron_man_buff")
+                            .put("death_reason", deathReason.toString());
                     if (killer instanceof ServerPlayerEntity serverKiller) {
                         deathBlockedEvent.target(serverKiller);
                     }
                     deathBlockedEvent.record();
 
                     var ironManEvent = GameRecordManager.event("iron_man_activated")
-                        .actor(serverVictim)
-                        .put("action", "block_damage");
+                            .actor(serverVictim)
+                            .put("action", "block_damage");
                     if (killer instanceof ServerPlayerEntity serverKiller) {
                         ironManEvent.target(serverKiller);
                     }
@@ -490,17 +494,17 @@ public class Noellesroles implements ModInitializer {
                 victim.getWorld().playSound(null, victim.getBlockPos(), WatheSounds.ITEM_PSYCHO_ARMOUR, SoundCategory.MASTER, 5.0F, 1.0F);
                 // 记录威士忌护盾保护（仿铁人药剂模式）
                 var deathBlockedEvent2 = GameRecordManager.event("death_blocked")
-                    .actor(serverVictim2)
-                    .put("block_reason", "whiskey_shield")
-                    .put("death_reason", deathReason.toString());
+                        .actor(serverVictim2)
+                        .put("block_reason", "whiskey_shield")
+                        .put("death_reason", deathReason.toString());
                 if (killer instanceof ServerPlayerEntity serverKiller) {
                     deathBlockedEvent2.target(serverKiller);
                 }
                 deathBlockedEvent2.record();
 
                 var whiskeyEvent = GameRecordManager.event("whiskey_shield_activated")
-                    .actor(serverVictim2)
-                    .put("action", "block_damage");
+                        .actor(serverVictim2)
+                        .put("action", "block_damage");
                 if (killer instanceof ServerPlayerEntity serverKiller) {
                     whiskeyEvent.target(serverKiller);
                 }
@@ -533,14 +537,14 @@ public class Noellesroles implements ModInitializer {
             }
             return null;
         }));
-        CanSeePoison.EVENT.register((player)->{
+        CanSeePoison.EVENT.register((player) -> {
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
             if (gameWorldComponent.isRole((PlayerEntity) player, Noellesroles.TOXICOLOGIST)) {
                 return true;
             }
             return false;
         });
-        RoleAssigned.EVENT.register((player, role)->{
+        RoleAssigned.EVENT.register((player, role) -> {
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(player);
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
             abilityPlayerComponent.cooldown = NoellesRolesConfig.HANDLER.instance().generalCooldownTicks;
@@ -673,11 +677,11 @@ public class Noellesroles implements ModInitializer {
 
                 // 设置书籍组件
                 WrittenBookContentComponent bookContent = new WrittenBookContentComponent(
-                    RawFilteredPair.of("乘客登记表"),
-                    "乘务员",
-                    0,
-                    pages,
-                    true
+                        RawFilteredPair.of("乘客登记表"),
+                        "乘务员",
+                        0,
+                        pages,
+                        true
                 );
                 book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, bookContent);
 
@@ -689,7 +693,7 @@ public class Noellesroles implements ModInitializer {
                 taotieComp.setSwallowCooldown(GameConstants.getInTicks(1, 0));
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
             }
-            if(role.equals(BOMBER)) {
+            if (role.equals(BOMBER)) {
                 player.getItemCooldownManager().set(ModItems.TIMED_BOMB, 20 * 45);
             }
             if (role.equals(SILENCER)) {
@@ -880,8 +884,8 @@ public class Noellesroles implements ModInitializer {
             if (victimSwallowedCheck.isSwallowed() && victim instanceof ServerPlayerEntity serverVictim) {
                 UUID taotieUuid = victimSwallowedCheck.getSwallowedBy();
                 var event = GameRecordManager.event("death_in_stomach")
-                    .actor(serverVictim)
-                    .put("death_reason", deathReason.toString());
+                        .actor(serverVictim)
+                        .put("death_reason", deathReason.toString());
                 if (taotieUuid != null) {
                     event.putUuid("taotie_uuid", taotieUuid);
                 }
@@ -926,12 +930,12 @@ public class Noellesroles implements ModInitializer {
             // 炸弹客击杀奖励
             if (killer != null && gameComponent.isRole(killer, BOMBER) && deathReason == DEATH_REASON_BOMB) {
                 PlayerShopComponent.KEY.get(killer).addToBalance(50);
-            }else if(bomberPlayerComponent.hasBomb()){
+            } else if (bomberPlayerComponent.hasBomb()) {
                 PlayerEntity bomber = victim.getWorld().getPlayerByUuid(bomberPlayerComponent.getBomberUuid());
-                if(GameFunctions.isPlayerPlayingAndAlive(bomber)){
-                    if((deathReason == GameConstants.DeathReasons.FELL_OUT_OF_TRAIN || deathReason == GameConstants.DeathReasons.ESCAPED)){
+                if (GameFunctions.isPlayerPlayingAndAlive(bomber)) {
+                    if ((deathReason == GameConstants.DeathReasons.FELL_OUT_OF_TRAIN || deathReason == GameConstants.DeathReasons.ESCAPED)) {
                         PlayerShopComponent.KEY.get(bomber).addToBalance(150);
-                    }else{
+                    } else {
                         PlayerShopComponent.KEY.get(bomber).addToBalance(100);
                     }
                 }
@@ -947,17 +951,17 @@ public class Noellesroles implements ModInitializer {
             if (NoellesRolesConfig.HANDLER.instance().voodooNonKillerDeaths || killer != null) {
                 if (gameComponent.isRole(victim, Noellesroles.VOODOO)) {
                     VoodooPlayerComponent voodooPlayerComponent = VoodooPlayerComponent.KEY.get(victim);
-                    if (voodooPlayerComponent.target != null && (deathReason != DEATH_REASON_ASSASSINATED || !gameComponent.isRole(voodooPlayerComponent.target ,ASSASSIN))) {
+                    if (voodooPlayerComponent.target != null && (deathReason != DEATH_REASON_ASSASSINATED || !gameComponent.isRole(voodooPlayerComponent.target, ASSASSIN))) {
                         ServerPlayerEntity voodooed = (ServerPlayerEntity) victim.getWorld().getPlayerByUuid(voodooPlayerComponent.target);
                         if (voodooed != null) {
                             if (GameFunctions.isPlayerPlayingAndAlive(voodooed) && voodooed != victim) {
                                 // 记录 Voodoo 连锁死亡
                                 if (victim instanceof ServerPlayerEntity serverVictim && voodooed instanceof ServerPlayerEntity serverVoodooed) {
                                     GameRecordManager.event("voodoo_chain_death")
-                                        .actor(serverVictim)
-                                        .target(serverVoodooed)
-                                        .put("voodoo_death_reason", deathReason.toString())
-                                        .record();
+                                            .actor(serverVictim)
+                                            .target(serverVoodooed)
+                                            .put("voodoo_death_reason", deathReason.toString())
+                                            .record();
                                 }
                                 GameFunctions.killPlayer(voodooed, true, null, Identifier.of(Noellesroles.MOD_ID, "voodoo"));
                             }
@@ -1025,7 +1029,7 @@ public class Noellesroles implements ModInitializer {
                         taotieComp.removeSwallowedPlayer((ServerPlayerEntity) victim);
                         // 播放打嗝音效
                         serverWorld2.playSound(null, taotie.getBlockPos(),
-                            SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.5F, 0.8F);
+                                SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.5F, 0.8F);
                     }
                 }
                 victimSwallowed.reset();
@@ -1071,10 +1075,10 @@ public class Noellesroles implements ModInitializer {
                     return DoorInteraction.DoorInteractionResult.DENY;
                 }
                 Role playerRole = gameWorld.getRole(player);
-                if (NEUTRAL_MASTER_KEY_ROLES.contains(playerRole)){
+                if (NEUTRAL_MASTER_KEY_ROLES.contains(playerRole)) {
                     player.getItemCooldownManager().set(ModItems.NEUTRAL_MASTER_KEY, 200);
                     return DoorInteraction.DoorInteractionResult.ALLOW;
-                } else if (gameWorld.isRole(player, Noellesroles.CORRUPT_COP) && doorType == DoorInteraction.DoorType.SMALL_DOOR){
+                } else if (gameWorld.isRole(player, Noellesroles.CORRUPT_COP) && doorType == DoorInteraction.DoorType.SMALL_DOOR) {
                     player.getItemCooldownManager().set(ModItems.NEUTRAL_MASTER_KEY, 200);
                     return DoorInteraction.DoorInteractionResult.ALLOW;
                 }
@@ -1361,19 +1365,19 @@ public class Noellesroles implements ModInitializer {
                                 PlayerEntity player1 = context.player().getWorld().getPlayerByUuid(payload.player());
                                 PlayerEntity player2 = context.player().getWorld().getPlayerByUuid(payload.player2());
 
-                                if(player1 == null)
+                                if (player1 == null)
                                     return;
-                                if(player2 == null)
+                                if (player2 == null)
                                     return;
-                                if(SwallowedPlayerComponent.isPlayerSwallowed(player1))
+                                if (SwallowedPlayerComponent.isPlayerSwallowed(player1))
                                     return;
-                                if(SwallowedPlayerComponent.isPlayerSwallowed(player2))
+                                if (SwallowedPlayerComponent.isPlayerSwallowed(player2))
                                     return;
 
-                                if(player1.isSleeping()){
+                                if (player1.isSleeping()) {
                                     player1.wakeUp();
                                 }
-                                if(player2.isSleeping()){
+                                if (player2.isSleeping()) {
                                     player2.wakeUp();
                                 }
 
@@ -1451,7 +1455,7 @@ public class Noellesroles implements ModInitializer {
                 RecallerPlayerComponent recallerPlayerComponent = RecallerPlayerComponent.KEY.get(context.player());
                 PlayerShopComponent playerShopComponent = PlayerShopComponent.KEY.get(context.player());
                 if (!recallerPlayerComponent.placed) {
-                    abilityPlayerComponent.cooldown = GameConstants.getInTicks(0,10);
+                    abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 10);
                     recallerPlayerComponent.setPosition();
                     NbtCompound extra = new NbtCompound();
                     extra.putString("action", "place");
@@ -1459,11 +1463,10 @@ public class Noellesroles implements ModInitializer {
                     extra.putDouble("y", recallerPlayerComponent.y);
                     extra.putDouble("z", recallerPlayerComponent.z);
                     GameRecordManager.recordSkillUse(context.player(), RECALLER_ID, null, extra);
-                }
-                else if (playerShopComponent.balance >= 100) {
+                } else if (playerShopComponent.balance >= 100) {
                     playerShopComponent.balance -= 100;
                     playerShopComponent.sync();
-                    abilityPlayerComponent.cooldown = GameConstants.getInTicks(0,30);
+                    abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 30);
                     double targetX = recallerPlayerComponent.x;
                     double targetY = recallerPlayerComponent.y;
                     double targetZ = recallerPlayerComponent.z;
@@ -1478,7 +1481,7 @@ public class Noellesroles implements ModInitializer {
 
             }
             if (gameWorldComponent.isRole(context.player(), PHANTOM) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
-                context.player().addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, 30 * 20,0,true,false,true));
+                context.player().addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, 30 * 20, 0, true, false, true));
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(1, 30);
                 NbtCompound extra = new NbtCompound();
                 extra.putString("action", "invisible");
@@ -1564,14 +1567,13 @@ public class Noellesroles implements ModInitializer {
             boolean guessedCorrectly = targetRole.identifier().equals(payload.guessedRole());
 
 
-
             // 执行结果
             if (guessedCorrectly) {
                 // 发送消息给刺客（通过 actionbar 显示）- 先发送消息再击杀
                 assassin.sendMessage(
-                    net.minecraft.text.Text.translatable("tip.assassin.guess_correct", target.getName())
-                        .formatted(net.minecraft.util.Formatting.GREEN, net.minecraft.util.Formatting.BOLD),
-                    true
+                        net.minecraft.text.Text.translatable("tip.assassin.guess_correct", target.getName())
+                                .formatted(net.minecraft.util.Formatting.GREEN, net.minecraft.util.Formatting.BOLD),
+                        true
                 );
 
                 // 播放枪响音效（对所有玩家可见）
@@ -1589,9 +1591,9 @@ public class Noellesroles implements ModInitializer {
             } else {
                 // 发送消息（通过 actionbar 显示）- 先发送消息再自杀
                 assassin.sendMessage(
-                    net.minecraft.text.Text.translatable("tip.assassin.guess_wrong", target.getName())
-                        .formatted(net.minecraft.util.Formatting.RED, net.minecraft.util.Formatting.BOLD),
-                    true
+                        net.minecraft.text.Text.translatable("tip.assassin.guess_wrong", target.getName())
+                                .formatted(net.minecraft.util.Formatting.RED, net.minecraft.util.Formatting.BOLD),
+                        true
                 );
 
                 // 播放枪响音效（对所有玩家可见）
@@ -1725,9 +1727,9 @@ public class Noellesroles implements ModInitializer {
 
                 // 给静语者发送成功提示
                 silencer.sendMessage(
-                    Text.translatable("tip.silencer.success", target.getName())
-                        .formatted(net.minecraft.util.Formatting.GRAY),
-                    true
+                        Text.translatable("tip.silencer.success", target.getName())
+                                .formatted(net.minecraft.util.Formatting.GRAY),
+                        true
                 );
 
                 // 记录技能使用
@@ -1756,9 +1758,9 @@ public class Noellesroles implements ModInitializer {
             SilencedPlayerComponent silencedComp = SilencedPlayerComponent.KEY.get(target);
             if (silencedComp.isSilenced()) {
                 silencer.sendMessage(
-                    Text.translatable("tip.silencer.already_silenced", target.getName())
-                        .formatted(net.minecraft.util.Formatting.GRAY),
-                    true
+                        Text.translatable("tip.silencer.already_silenced", target.getName())
+                                .formatted(net.minecraft.util.Formatting.GRAY),
+                        true
                 );
                 return;
             }
@@ -1768,9 +1770,9 @@ public class Noellesroles implements ModInitializer {
 
             // 给静语者发送标记提示
             silencer.sendMessage(
-                Text.translatable("tip.silencer.marked", target.getName())
-                    .formatted(net.minecraft.util.Formatting.GRAY),
-                true
+                    Text.translatable("tip.silencer.marked", target.getName())
+                            .formatted(net.minecraft.util.Formatting.GRAY),
+                    true
             );
         });
     }
