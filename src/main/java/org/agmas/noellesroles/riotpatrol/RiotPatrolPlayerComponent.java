@@ -7,7 +7,6 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.agmas.noellesroles.ModItems;
@@ -26,12 +25,7 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
 
     private final PlayerEntity player;
     private boolean shieldActive = false;
-    private float lockedYaw = 0.0F;
-    private float lockedPitch = 0.0F;
     private int rootedTicks = 0;
-    private double rootedX = 0.0;
-    private double rootedY = 0.0;
-    private double rootedZ = 0.0;
 
     public RiotPatrolPlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -55,16 +49,12 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
         buf.writeBoolean(this.shieldActive);
-        buf.writeFloat(this.lockedYaw);
-        buf.writeFloat(this.lockedPitch);
         buf.writeInt(this.rootedTicks);
     }
 
     @Override
     public void applySyncPacket(RegistryByteBuf buf) {
         this.shieldActive = buf.readBoolean();
-        this.lockedYaw = buf.readFloat();
-        this.lockedPitch = buf.readFloat();
         this.rootedTicks = buf.readInt();
     }
 
@@ -73,8 +63,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
             return;
         }
         this.shieldActive = true;
-        this.lockedYaw = this.player.getYaw();
-        this.lockedPitch = this.player.getPitch();
         this.sync();
     }
 
@@ -93,19 +81,8 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         return this.shieldActive;
     }
 
-    public float getLockedYaw() {
-        return this.lockedYaw;
-    }
-
-    public float getLockedPitch() {
-        return this.lockedPitch;
-    }
-
     public void rootAtCurrentPosition(int ticks) {
         this.rootedTicks = Math.max(this.rootedTicks, ticks);
-        this.rootedX = this.player.getX();
-        this.rootedY = this.player.getY();
-        this.rootedZ = this.player.getZ();
         this.sync();
     }
 
@@ -135,10 +112,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
                 this.lowerShield(false);
             } else {
                 this.player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 5, 3, false, false, false));
-                if (this.player instanceof ServerPlayerEntity serverPlayer) {
-                    serverPlayer.setYaw(this.lockedYaw);
-                    serverPlayer.setPitch(this.lockedPitch);
-                }
             }
         }
 
@@ -147,14 +120,8 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         }
 
         this.rootedTicks--;
-        if (this.player instanceof ServerPlayerEntity serverPlayer && this.player.getWorld() instanceof ServerWorld) {
-            serverPlayer.teleport(this.rootedX, this.rootedY, this.rootedZ, false);
-            serverPlayer.setVelocity(Vec3d.ZERO);
-            serverPlayer.velocityModified = true;
-        } else {
-            this.player.setVelocity(Vec3d.ZERO);
-            this.player.velocityModified = true;
-        }
+        this.player.setVelocity(Vec3d.ZERO);
+        this.player.velocityModified = true;
 
         if (this.rootedTicks % 20 == 0 || this.rootedTicks == 0) {
             this.sync();
@@ -164,22 +131,12 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putBoolean("shieldActive", this.shieldActive);
-        tag.putFloat("lockedYaw", this.lockedYaw);
-        tag.putFloat("lockedPitch", this.lockedPitch);
         tag.putInt("rootedTicks", this.rootedTicks);
-        tag.putDouble("rootedX", this.rootedX);
-        tag.putDouble("rootedY", this.rootedY);
-        tag.putDouble("rootedZ", this.rootedZ);
     }
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.shieldActive = tag.getBoolean("shieldActive");
-        this.lockedYaw = tag.getFloat("lockedYaw");
-        this.lockedPitch = tag.getFloat("lockedPitch");
         this.rootedTicks = tag.getInt("rootedTicks");
-        this.rootedX = tag.getDouble("rootedX");
-        this.rootedY = tag.getDouble("rootedY");
-        this.rootedZ = tag.getDouble("rootedZ");
     }
 }

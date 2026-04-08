@@ -336,6 +336,25 @@ public class NoellesrolesClient implements ClientModInitializer {
             return null; // 不处理，使用默认逻辑
         });
 
+        ClientTickEvents.START_CLIENT_TICK.register(client -> {
+            ClientPlayerEntity player = client.player;
+            if (player == null) {
+                return;
+            }
+
+            RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(player);
+            if (!riotPatrolComponent.isRooted()) {
+                return;
+            }
+
+            client.options.forwardKey.setPressed(false);
+            client.options.backKey.setPressed(false);
+            client.options.leftKey.setPressed(false);
+            client.options.rightKey.setPressed(false);
+            client.options.jumpKey.setPressed(false);
+            client.options.sprintKey.setPressed(false);
+            client.options.sneakKey.setPressed(false);
+        });
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 更新世界BGM管理器
             WorldMusicManager.tick();
@@ -545,11 +564,6 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
                 JesterTimeRenderer.tick();
-                RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(player);
-                if (riotPatrolComponent.isShieldActive()) {
-                    player.setYaw(riotPatrolComponent.getLockedYaw());
-                    player.setPitch(riotPatrolComponent.getLockedPitch());
-                }
 
                 // 切换到不可见物品时在 actionbar 提示
                 boolean holdingInvisible = WatheClient.isPlayerPlayingAndAlive()
