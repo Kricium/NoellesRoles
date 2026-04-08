@@ -82,6 +82,7 @@ import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencerPlayerComponent;
 import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
+import org.agmas.noellesroles.packet.CriminalReasonerReasonC2SPacket;
 import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.music.WorldMusicComponent;
@@ -208,11 +209,11 @@ public class Noellesroles implements ModInitializer {
     // 黑警角色 - 中立阵营，杀光所有人获胜，阻止其他阵营获胜
     public static Role CORRUPT_COP = WatheRoles.registerRole(new Role(CORRUPT_COP_ID, new Color(25, 50, 100).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), true));
     // 病原体角色 - 中立阵营，感染所有存活玩家获胜
-    public static Role PATHOGEN = WatheRoles.registerRole(new Role(PATHOGEN_ID, new Color(127,255,0).getRGB(), false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
+    public static Role PATHOGEN = WatheRoles.registerRole(new Role(PATHOGEN_ID, 0x7FFF00, false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
     // 饕餮角色 - 中立阵营，吞噬玩家获胜
     public static Role TAOTIE = WatheRoles.registerRole(new Role(TAOTIE_ID, new Color(139, 69, 19).getRGB(), false, false, Role.MoodType.FAKE, Integer.MAX_VALUE, false));
-    // 犯罪推理学家角色 - 中立阵营，将死者与存活的凶手匹配获胜
-    public static Role CRIMINAL_REASONER = WatheRoles.registerRole(new Role(CRIMINAL_REASONER_ID, new Color(112,75,75).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    // 犯罪推理学家角色 - 中立阵营，将死者与仍然存活的凶手正确匹配即可完成一次成功推理
+    public static Role CRIMINAL_REASONER = WatheRoles.registerRole(new Role(CRIMINAL_REASONER_ID, new Color(112, 75, 75).getRGB(), false, false, Role.MoodType.FAKE, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
 
     public static final CustomPayload.Id<MorphC2SPacket> MORPH_PACKET = MorphC2SPacket.ID;
     public static final CustomPayload.Id<SwapperC2SPacket> SWAP_PACKET = SwapperC2SPacket.ID;
@@ -220,6 +221,7 @@ public class Noellesroles implements ModInitializer {
     public static final CustomPayload.Id<VultureEatC2SPacket> VULTURE_PACKET = VultureEatC2SPacket.ID;
     public static final CustomPayload.Id<AssassinGuessRoleC2SPacket> ASSASSIN_GUESS_ROLE_PACKET = AssassinGuessRoleC2SPacket.ID;
     public static final CustomPayload.Id<ReporterMarkC2SPacket> REPORTER_MARK_PACKET = ReporterMarkC2SPacket.ID;
+    public static final CustomPayload.Id<CriminalReasonerReasonC2SPacket> CRIMINAL_REASONER_REASON_PACKET = CriminalReasonerReasonC2SPacket.ID;
     public static final CustomPayload.Id<TaotieSwallowC2SPacket> TAOTIE_SWALLOW_PACKET = TaotieSwallowC2SPacket.ID;
     public static final CustomPayload.Id<SilencerSilenceC2SPacket> SILENCER_SILENCE_PACKET = SilencerSilenceC2SPacket.ID;
     public static final ArrayList<Role> VANNILA_ROLES = new ArrayList<>();
@@ -311,6 +313,7 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(VultureEatC2SPacket.ID, VultureEatC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(AssassinGuessRoleC2SPacket.ID, AssassinGuessRoleC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(ReporterMarkC2SPacket.ID, ReporterMarkC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(CriminalReasonerReasonC2SPacket.ID, CriminalReasonerReasonC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(TaotieSwallowC2SPacket.ID, TaotieSwallowC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SilencerSilenceC2SPacket.ID, SilencerSilenceC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
@@ -727,6 +730,7 @@ public class Noellesroles implements ModInitializer {
             PathogenPlayerComponent.KEY.get(player).reset();
             BomberPlayerComponent.KEY.get(player).reset();
             AssassinPlayerComponent.KEY.get(player).reset();
+            CriminalReasonerPlayerComponent.KEY.get(player).reset();
             CorruptCopPlayerComponent.KEY.get(player).reset();
             ReporterPlayerComponent.KEY.get(player).reset();
             SerialKillerPlayerComponent.KEY.get(player).reset();
@@ -803,6 +807,37 @@ public class Noellesroles implements ModInitializer {
                 }
             }
 
+            // 犯罪推理学家胜利判定优先于普通杀手胜利：
+            // 1. 正确推理次数达到当局玩家人数的三分之一（向下取整）
+            // 2. 除自身以外所有人都已死亡
+            for (UUID uuid : gameComponent.getAllWithRole(CRIMINAL_REASONER)) {
+                ServerPlayerEntity criminalReasoner = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
+                if (!GameFunctions.isPlayerPlayingAndAlive(criminalReasoner)) continue;
+
+                CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
+                int requiredReasoningCount = Math.floorDiv(gameComponent.getAllPlayers().size(), 3);
+                if (requiredReasoningCount > 0 && criminalReasonerComponent.getSuccessfulReasoningCount() >= requiredReasoningCount) {
+                    return CheckWinCondition.WinResult.neutralWin(criminalReasoner);
+                }
+
+                boolean everyoneElseDead = true;
+                for (UUID playerUuid : gameComponent.getAllPlayers()) {
+                    if (playerUuid.equals(criminalReasoner.getUuid())) continue;
+                    if (!gameComponent.isPlayerDead(playerUuid)) {
+                        everyoneElseDead = false;
+                        break;
+                    }
+                }
+
+                if (everyoneElseDead) {
+                    return CheckWinCondition.WinResult.neutralWin(criminalReasoner);
+                }
+
+                if (currentStatus == GameFunctions.WinStatus.KILLERS) {
+                    return CheckWinCondition.WinResult.block();
+                }
+            }
+
             // Taotie win condition check (priority over corrupt cop)
             for (UUID uuid : gameComponent.getAllWithRole(TAOTIE)) {
                 PlayerEntity taotie = world.getPlayerByUuid(uuid);
@@ -875,9 +910,18 @@ public class Noellesroles implements ModInitializer {
             return null;
         });
 
-        // Jester kill detection - when jester is killed by an innocent, mark as won
+        // 记录受害者和凶手的匹配
         KillPlayer.AFTER.register((victim, killer, deathReason) -> {
             GameWorldComponent gameComponent = GameWorldComponent.KEY.get(victim.getWorld());
+            if (killer != null && victim.getWorld() instanceof ServerWorld serverWorld) {
+                for (UUID uuid : gameComponent.getAllWithRole(CRIMINAL_REASONER)) {
+                    PlayerEntity criminalReasoner = serverWorld.getPlayerByUuid(uuid);
+                    if (criminalReasoner != null) {
+                        CriminalReasonerPlayerComponent criminalReasonerComp = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
+                        criminalReasonerComp.recordReasoningTarget(victim.getUuid(), killer.getUuid());
+                    }
+                }
+            }
 
             // 记录被吞玩家肚内死亡标记
             SwallowedPlayerComponent victimSwallowedCheck = SwallowedPlayerComponent.KEY.get(victim);
@@ -1451,6 +1495,9 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.ABILITY_PACKET, (payload, context) -> {
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(context.player());
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());
+            if (abilityPlayerComponent.getCooldown() > 0) {
+                return;
+            }
             if (gameWorldComponent.isRole(context.player(), RECALLER) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
                 RecallerPlayerComponent recallerPlayerComponent = RecallerPlayerComponent.KEY.get(context.player());
                 PlayerShopComponent playerShopComponent = PlayerShopComponent.KEY.get(context.player());
@@ -1655,7 +1702,62 @@ public class Noellesroles implements ModInitializer {
             GameRecordManager.recordSkillUse(reporter, REPORTER_ID, target instanceof ServerPlayerEntity serverTarget ? serverTarget : null, extra);
         });
 
-        // 饕餮吞噬目标
+        // 犯罪推理学家推理目标
+        ServerPlayNetworking.registerGlobalReceiver(Noellesroles.CRIMINAL_REASONER_REASON_PACKET, (payload, context) -> {
+            ServerPlayerEntity criminalReasoner = context.player();
+            GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(criminalReasoner.getWorld());
+            AbilityPlayerComponent abilityPlayerComponent = AbilityPlayerComponent.KEY.get(criminalReasoner);
+
+            // 验证角色和状态
+            if (!gameWorldComponent.isRole(criminalReasoner, CRIMINAL_REASONER)) return;
+            if (!GameFunctions.isPlayerPlayingAndAlive(criminalReasoner)) return;
+            if (SwallowedPlayerComponent.isPlayerSwallowed(criminalReasoner)) return;
+            if (abilityPlayerComponent.cooldown > 0) return;
+
+            // 验证推理对象，死者必须已死亡，嫌疑人则允许是存活或死亡玩家
+            if (payload.victimPlayer() == null || payload.suspectPlayer() == null) return;
+            PlayerEntity victim = criminalReasoner.getWorld().getPlayerByUuid(payload.victimPlayer());
+            PlayerEntity suspect = criminalReasoner.getWorld().getPlayerByUuid(payload.suspectPlayer());
+            if (victim == null || suspect == null) return;
+            if (victim.equals(criminalReasoner)) return;
+            if (!gameWorldComponent.isPlayerDead(victim.getUuid())) return;
+
+            CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
+            boolean reasonSuccess = criminalReasonerComponent.isCorrectReasoning(victim.getUuid(), suspect.getUuid());
+
+            if (reasonSuccess) {
+                criminalReasonerComponent.recordSuccessfulReasoning(victim.getUuid());
+                criminalReasoner.sendMessage(
+                        Text.translatable("tip.criminal_reasoner.guess_success", victim.getName(), suspect.getName())
+                                .formatted(net.minecraft.util.Formatting.GRAY),
+                        true
+                );
+            } else {
+                criminalReasoner.sendMessage(
+                        Text.translatable("tip.criminal_reasoner.guess_wrong")
+                                .formatted(net.minecraft.util.Formatting.RED),
+                        true
+                );
+            }
+
+            // 参考饕餮的动态冷却思路：以 30 秒为基准，玩家越多成功冷却越短，但最低不低于 5 秒。
+            int totalPlayers = gameWorldComponent.getAllPlayers().size();
+            int successCooldownSeconds = Math.max(5, Math.min(30, 40 - totalPlayers));
+
+            // 推理成功使用动态冷却，推理失败固定 80 秒冷却。
+            abilityPlayerComponent.setCooldown(reasonSuccess
+                    ? GameConstants.getInTicks(0, successCooldownSeconds)
+                    : GameConstants.getInTicks(1, 20));
+
+            NbtCompound extra = new NbtCompound();
+            extra.putString("action", "reason");
+            extra.putUuid("victim_uuid", victim.getUuid());
+            extra.putUuid("suspect_uuid", suspect.getUuid());
+            extra.putBoolean("success", reasonSuccess);
+            GameRecordManager.recordSkillUse(criminalReasoner, CRIMINAL_REASONER_ID, suspect instanceof ServerPlayerEntity serverSuspect ? serverSuspect : null, extra);
+        });
+
+        //饕餮吞噬
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.TAOTIE_SWALLOW_PACKET, (payload, context) -> {
             ServerPlayerEntity taotie = context.player();
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(taotie.getWorld());
@@ -2119,6 +2221,40 @@ public class Noellesroles implements ModInitializer {
                 }
             }
             return Text.translatable("replay.ingredient_mixed", actorText, ingredientName, targetName);
+        });
+
+        ReplayRegistry.registerSkillFormatter(CRIMINAL_REASONER_ID, (event, match, world) -> {
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            String action = data.getString("action");
+            UUID victimUuid = data.containsUuid("victim_uuid") ? data.getUuid("victim_uuid") : null;
+            UUID suspectUuid = data.containsUuid("suspect_uuid") ? data.getUuid("suspect_uuid") : null;
+            boolean success = data.getBoolean("success");
+
+            if (data.contains("extra")) {
+                NbtCompound extra = data.getCompound("extra");
+                if (action.isEmpty()) action = extra.getString("action");
+                if (victimUuid == null && extra.containsUuid("victim_uuid")) victimUuid = extra.getUuid("victim_uuid");
+                if (suspectUuid == null && extra.containsUuid("suspect_uuid")) suspectUuid = extra.getUuid("suspect_uuid");
+                if (extra.contains("success")) success = extra.getBoolean("success");
+            }
+
+            if (!"reason".equals(action)) return null;
+            if (actorUuid == null || victimUuid == null || suspectUuid == null) return null;
+
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            Text victimText = ReplayGenerator.formatPlayerName(victimUuid, playerInfoCache);
+            Text suspectText = ReplayGenerator.formatPlayerName(suspectUuid, playerInfoCache);
+
+            return Text.translatable(
+                    success
+                            ? "replay.skill.noellesroles.criminal_reasoner.success"
+                            : "replay.skill.noellesroles.criminal_reasoner.fail",
+                    actorText,
+                    victimText,
+                    suspectText
+            );
         });
 
     }

@@ -298,6 +298,8 @@
   "replay.death.noellesroles.bodyguard_sacrifice.killed": "%s 犧牲自己保護目標免受 %s 的攻擊",
   "replay.death.noellesroles.bodyguard_sacrifice.died": "%s 作為保鏢犧牲了自己",
   "replay.skill.noellesroles.bodyguard.target": "%s 作為§b保鏢§r保護了 %s",
+  "replay.skill.noellesroles.criminal_reasoner.success": "%s 推理成功，%s 是由 %s 殺害的",
+  "replay.skill.noellesroles.criminal_reasoner.fail": "%s 推理失敗，%s 並不是 %s 殺害的",
 
   "announcement.goals.poisoner": "使用毒針和毒氣彈讓敵人中毒！你還可以使用毒藥瓶和蠍子！催化劑可以加快毒發和重置冷卻!",
   "announcement.role.poisoner": "毒師",

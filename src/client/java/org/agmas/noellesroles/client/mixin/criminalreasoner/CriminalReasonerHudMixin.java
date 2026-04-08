@@ -1,4 +1,4 @@
-﻿package org.agmas.noellesroles.client.mixin.criminalreasoner;
+package org.agmas.noellesroles.client.mixin.criminalreasoner;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -8,8 +8,10 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -28,14 +30,28 @@ public abstract class CriminalReasonerHudMixin {
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
         if (!gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.CRIMINAL_REASONER)) return;
 
-        String keyName = NoellesrolesClient.abilityBind.getBoundKeyLocalizedText().getString();
-        Text hintText = Text.translatable("hud.criminal_reasoner.press_key_hint", keyName);
+        CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+        AbilityPlayerComponent abilityPlayerComponent = AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+        Text cooldownText;
+        if (abilityPlayerComponent.getCooldown() > 0) {
+            cooldownText = Text.translatable("tip.noellesroles.cooldown", abilityPlayerComponent.getCooldown() / 20);
+        } else {
+            String keyName = NoellesrolesClient.abilityBind.getBoundKeyLocalizedText().getString();
+            cooldownText = Text.translatable("hud.criminal_reasoner.press_key_hint", keyName);
+        }
 
-        // 将提示固定绘制在右下角，并与现有角色 HUD 的边距保持一致。
-        int drawX = context.getScaledWindowWidth() - getTextRenderer().getWidth(hintText) - 5;
-        int drawY = context.getScaledWindowHeight() - getTextRenderer().getWrappedLinesHeight(hintText, 999999);
+        int requiredReasoningCount = Math.floorDiv(gameWorldComponent.getAllPlayers().size(), 3);
+        Text progressText = Text.translatable(
+                "hud.criminal_reasoner.progress",
+                criminalReasonerComponent.getSuccessfulReasoningCount(),
+                requiredReasoningCount
+        );
 
-        // 文本颜色使用角色色 RGB(112, 75, 75)。
-        context.drawTextWithShadow(getTextRenderer(), hintText, drawX, drawY, 0x704B4B);
+        int progressY = context.getScaledWindowHeight() - 25;
+        int cooldownY = context.getScaledWindowHeight() - 15;
+        int progressX = context.getScaledWindowWidth() - getTextRenderer().getWidth(progressText);
+        int cooldownX = context.getScaledWindowWidth() - getTextRenderer().getWidth(cooldownText);
+        context.drawTextWithShadow(getTextRenderer(), progressText, progressX, progressY, 0xA37D7D);
+        context.drawTextWithShadow(getTextRenderer(), cooldownText, cooldownX, cooldownY, 0x704B4B);
     }
 }
