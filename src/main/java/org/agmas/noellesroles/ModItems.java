@@ -12,6 +12,9 @@ import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.item.RiotForkItem;
 import org.agmas.noellesroles.item.RiotShieldItem;
 import org.agmas.noellesroles.item.ThrowingAxeItem;
+import org.agmas.noellesroles.item.HunterTrapItem;
+import org.agmas.noellesroles.item.DoubleBarrelShotgunItem;
+import org.agmas.noellesroles.item.DoubleBarrelShellItem;
 import org.agmas.noellesroles.item.BaseSpiritItem;
 import org.agmas.noellesroles.item.IngredientItem;
 import org.agmas.noellesroles.item.ingredient.*;
@@ -85,6 +88,18 @@ public class ModItems {
     public static final Item RIOT_FORK = register(
             new RiotForkItem(new Item.Settings().maxCount(1)),
             "riot_fork"
+    );
+    public static final Item HUNTER_TRAP = register(
+            new HunterTrapItem(new Item.Settings().maxCount(16)),
+            "hunter_trap"
+    );
+    public static final Item DOUBLE_BARREL_SHOTGUN = register(
+            new DoubleBarrelShotgunItem(new Item.Settings().maxCount(1)),
+            "double_barrel_shotgun"
+    );
+    public static final Item DOUBLE_BARREL_SHELL = register(
+            new DoubleBarrelShellItem(new Item.Settings().maxCount(16)),
+            "double_barrel_shell"
     );
 
     // ---- 工程师系统 ----

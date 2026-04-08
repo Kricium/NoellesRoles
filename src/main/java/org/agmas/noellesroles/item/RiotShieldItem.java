@@ -16,6 +16,7 @@ import java.util.List;
 
 public class RiotShieldItem extends ShieldItem {
     public static final int SHIELD_COOLDOWN_TICKS = 20 * 30;
+    public static final int SHOVE_COOLDOWN_TICKS = 20 * 3;
 
     public RiotShieldItem(Settings settings) {
         super(settings);
