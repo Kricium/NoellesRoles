@@ -18,6 +18,7 @@
     "morphling.MorphlingHudMixin",
     "morphling.MorphlingScreenMixin",
     "pathogen.PathogenHudMixin",
+    "orthopedist.OrthopedistHudMixin",
     "noisemaker.NoisemakerHudMixin",
     "phantom.PhantomHudMixin",
     "recaller.RecallerHudMixin",

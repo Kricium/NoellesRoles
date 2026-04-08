@@ -26,7 +26,7 @@ public class PlayerAttackMixin {
             return;
         }
         RiotPatrolPlayerComponent component = RiotPatrolPlayerComponent.KEY.get(player);
-        if (component.isShoveOnCooldown()) {
+        if (player.getItemCooldownManager().isCoolingDown(ModItems.RIOT_SHIELD)) {
             ci.cancel();
             return;
         }
@@ -38,7 +38,7 @@ public class PlayerAttackMixin {
         if (!player.getWorld().isClient) {
             component.lowerShield(false);
             player.clearActiveItem();
-            component.setShoveCooldown(RiotShieldItem.SHOVE_COOLDOWN_TICKS);
+            player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, RiotShieldItem.SHOVE_COOLDOWN_TICKS);
 
             livingTarget.takeKnockback(0.45, player.getX() - livingTarget.getX(), player.getZ() - livingTarget.getZ());
             livingTarget.velocityModified = true;

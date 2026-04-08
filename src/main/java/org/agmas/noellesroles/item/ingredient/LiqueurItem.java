@@ -3,9 +3,9 @@ package org.agmas.noellesroles.item.ingredient;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.agmas.noellesroles.item.IngredientItem;
 
-public class IceCubeItem extends IngredientItem {
-    public IceCubeItem(Settings settings) {
-        super(settings, "ice_cube");
+public class LiqueurItem extends IngredientItem {
+    public LiqueurItem(Settings settings) {
+        super(settings, "liqueur");
     }
 
     @Override
@@ -13,17 +13,12 @@ public class IceCubeItem extends IngredientItem {
     }
 
     @Override
-    public boolean removesDebuff() {
-        return true;
-    }
-
-    @Override
     public int getDisplayColorRgb() {
-        return 0xE0E0E0;
+        return 0xB565D9;
     }
 
     @Override
     public int getShopPrice() {
-        return 25;
+        return 125;
     }
 }

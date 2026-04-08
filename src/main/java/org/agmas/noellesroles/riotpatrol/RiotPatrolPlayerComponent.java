@@ -27,7 +27,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
 
     private final PlayerEntity player;
     private boolean shieldActive = false;
-    private int shoveCooldownTicks = 0;
     private int rootedTicks = 0;
     private UUID rootLinkedPlayer;
     private boolean rootMaintainer = false;
@@ -38,7 +37,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
 
     public void reset() {
         this.shieldActive = false;
-        this.shoveCooldownTicks = 0;
         this.rootedTicks = 0;
         this.rootLinkedPlayer = null;
         this.rootMaintainer = false;
@@ -57,14 +55,12 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
         buf.writeBoolean(this.shieldActive);
-        buf.writeInt(this.shoveCooldownTicks);
         buf.writeInt(this.rootedTicks);
     }
 
     @Override
     public void applySyncPacket(RegistryByteBuf buf) {
         this.shieldActive = buf.readBoolean();
-        this.shoveCooldownTicks = buf.readInt();
         this.rootedTicks = buf.readInt();
     }
 
@@ -89,15 +85,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
 
     public boolean isShieldActive() {
         return this.shieldActive;
-    }
-
-    public boolean isShoveOnCooldown() {
-        return this.shoveCooldownTicks > 0;
-    }
-
-    public void setShoveCooldown(int ticks) {
-        this.shoveCooldownTicks = Math.max(this.shoveCooldownTicks, ticks);
-        this.sync();
     }
 
     public void rootAtCurrentPosition(int ticks) {
@@ -155,13 +142,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
             }
         }
 
-        if (this.shoveCooldownTicks > 0) {
-            this.shoveCooldownTicks--;
-            if (this.shoveCooldownTicks == 0 || this.shoveCooldownTicks % 20 == 0) {
-                this.sync();
-            }
-        }
-
         if (this.rootedTicks <= 0) {
             return;
         }
@@ -207,7 +187,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putBoolean("shieldActive", this.shieldActive);
-        tag.putInt("shoveCooldownTicks", this.shoveCooldownTicks);
         tag.putInt("rootedTicks", this.rootedTicks);
         if (this.rootLinkedPlayer != null) {
             tag.putUuid("rootLinkedPlayer", this.rootLinkedPlayer);
@@ -218,7 +197,6 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.shieldActive = tag.getBoolean("shieldActive");
-        this.shoveCooldownTicks = tag.getInt("shoveCooldownTicks");
         this.rootedTicks = tag.getInt("rootedTicks");
         this.rootLinkedPlayer = tag.containsUuid("rootLinkedPlayer") ? tag.getUuid("rootLinkedPlayer") : null;
         this.rootMaintainer = tag.getBoolean("rootMaintainer");

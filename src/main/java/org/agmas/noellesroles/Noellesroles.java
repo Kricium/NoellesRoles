@@ -69,6 +69,7 @@ import org.agmas.noellesroles.pathogen.PathogenPlayerComponent;
 import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
+import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberShopHandler;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
@@ -146,6 +147,7 @@ public class Noellesroles implements ModInitializer {
     public static Identifier ENGINEER_ID = Identifier.of(MOD_ID, "engineer");
     public static Identifier RIOT_PATROL_ID = Identifier.of(MOD_ID, "riot_patrol");
     public static Identifier HUNTER_ID = Identifier.of(MOD_ID, "hunter");
+    public static Identifier ORTHOPEDIST_ID = Identifier.of(MOD_ID, "orthopedist");
 
     // 炸弹死亡原因
     public static Identifier DEATH_REASON_BOMB = Identifier.of(MOD_ID, "bomb");
@@ -211,6 +213,7 @@ public class Noellesroles implements ModInitializer {
     // 工程师角色 - 无辜者阵营，感知被撬/被锁的门，维修工具修复/上锁/解锁
     public static Role ENGINEER = WatheRoles.registerRole(new Role(ENGINEER_ID, new Color(200, 160, 60).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
     public static Role RIOT_PATROL = WatheRoles.registerRole(new Role(RIOT_PATROL_ID, new Color(45, 95, 145).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role ORTHOPEDIST = WatheRoles.registerRole(new Role(ORTHOPEDIST_ID, new Color(144, 179, 88).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
 
 
     // 小丑角色 - 中立阵营，被无辜者杀死时获胜
@@ -714,6 +717,10 @@ public class Noellesroles implements ModInitializer {
                 HunterPlayerComponent hunterPlayerComponent = HunterPlayerComponent.KEY.get(player);
                 hunterPlayerComponent.reset();
             }
+            if (role.equals(ORTHOPEDIST)) {
+                OrthopedistPlayerComponent orthopedistPlayerComponent = OrthopedistPlayerComponent.KEY.get(player);
+                orthopedistPlayerComponent.reset();
+            }
             if (role.equals(ATTENDANT)) {
                 // 乘务员开局获得一本房间信息书
                 ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
@@ -819,6 +826,7 @@ public class Noellesroles implements ModInitializer {
             SurvivalMasterPlayerComponent.KEY.get(player).reset();
             RiotPatrolPlayerComponent.KEY.get(player).reset();
             HunterPlayerComponent.KEY.get(player).reset();
+            OrthopedistPlayerComponent.KEY.get(player).reset();
         });
 
         // Bartender and Recaller get +50 coins when completing tasks
@@ -1562,6 +1570,51 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.ABILITY_PACKET, (payload, context) -> {
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(context.player());
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());
+            if (gameWorldComponent.isRole(context.player(), ORTHOPEDIST) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                PlayerEntity target = null;
+                double bestScore = Double.NEGATIVE_INFINITY;
+                Vec3d eyePos = context.player().getEyePos();
+                Vec3d look = context.player().getRotationVec(1.0F).normalize();
+
+                for (PlayerEntity candidate : context.player().getWorld().getEntitiesByClass(PlayerEntity.class, context.player().getBoundingBox().expand(3.5), player -> player != context.player() && GameFunctions.isPlayerPlayingAndAlive(player))) {
+                    if (!context.player().canSee(candidate)) {
+                        continue;
+                    }
+                    Vec3d toTarget = candidate.getEyePos().subtract(eyePos);
+                    double distance = toTarget.length();
+                    if (distance > 3.0D || distance <= 0.0001D) {
+                        continue;
+                    }
+                    double alignment = look.dotProduct(toTarget.normalize());
+                    if (alignment < 0.85D) {
+                        continue;
+                    }
+                    double score = alignment - (distance * 0.01D);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        target = candidate;
+                    }
+                }
+
+                if (target != null) {
+                    HunterPlayerComponent hunterTarget = HunterPlayerComponent.KEY.get(target);
+                    boolean healed = hunterTarget.healOneFractureLayer();
+                    if (healed) {
+                        abilityPlayerComponent.setCooldown(GameConstants.getInTicks(1, 0));
+                        ServerPlayerEntity recordTarget = target instanceof ServerPlayerEntity serverTarget ? serverTarget : null;
+                        NbtCompound extra = new NbtCompound();
+                        extra.putString("action", "heal_fracture");
+                        GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, recordTarget, extra);
+                    } else if (target instanceof ServerPlayerEntity serverTarget && !serverTarget.hasStatusEffect(ModEffects.BONE_SETTING)) {
+                        OrthopedistPlayerComponent.applyBoneSetting(serverTarget);
+                        abilityPlayerComponent.setCooldown(GameConstants.getInTicks(1, 0));
+                        ServerPlayerEntity recordTarget = serverTarget;
+                        NbtCompound extra = new NbtCompound();
+                        extra.putString("action", "bone_setting");
+                        GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, recordTarget, extra);
+                    }
+                }
+            }
             if (gameWorldComponent.isRole(context.player(), RECALLER) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
                 RecallerPlayerComponent recallerPlayerComponent = RecallerPlayerComponent.KEY.get(context.player());
                 PlayerShopComponent playerShopComponent = PlayerShopComponent.KEY.get(context.player());

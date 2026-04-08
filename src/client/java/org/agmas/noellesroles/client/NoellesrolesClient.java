@@ -378,7 +378,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
 
             if (player.getMainHandStack().isOf(ModItems.RIOT_SHIELD)
-                    && org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent.KEY.get(player).isShoveOnCooldown()) {
+                    && player.getItemCooldownManager().isCoolingDown(ModItems.RIOT_SHIELD)) {
                 client.options.attackKey.setPressed(false);
             }
         });

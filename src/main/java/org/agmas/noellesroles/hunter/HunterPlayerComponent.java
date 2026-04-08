@@ -53,6 +53,16 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         this.refreshFractureEffect();
     }
 
+    public boolean healOneFractureLayer() {
+        if (this.fractureTimers.isEmpty()) {
+            return false;
+        }
+        this.fractureTimers.remove(this.fractureTimers.size() - 1);
+        this.refreshFractureEffect();
+        this.sync();
+        return true;
+    }
+
     public void trap() {
         this.trappedTicks = Math.max(this.trappedTicks, TRAP_ROOT_TICKS);
         this.sync();
