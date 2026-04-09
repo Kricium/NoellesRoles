@@ -9,6 +9,7 @@
     "corruptcop.CorruptCopHudMixin",
     "criminalreasoner.CriminalReasonerHudMixin",
     "jester.JesterHudMixin",
+    "roundend.RoundTextRendererMixin",
     "morphling.MorphlingCapeRendererMixin",
     "morphling.MorphlingCorpseAnglesMixin",
     "morphling.MorphlingCorpseRendererMixin",
