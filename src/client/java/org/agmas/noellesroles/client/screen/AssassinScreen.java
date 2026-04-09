@@ -24,8 +24,23 @@ import java.util.List;
 import java.util.UUID;
 
 public class AssassinScreen extends Screen {
+    private static final int ROLE_COLUMNS = 3;
+    private static final int ROLE_BUTTON_WIDTH = 90;
+    private static final int ROLE_BUTTON_HEIGHT = 20;
+    private static final int ROLE_GAP_X = 5;
+    private static final int ROLE_GAP_Y = 5;
+    private static final double ROLE_SCROLL_STEP = ROLE_BUTTON_HEIGHT + ROLE_GAP_Y;
+
     private final ClientPlayerEntity player;
+    private final List<AssassinRoleWidget> roleWidgets = new ArrayList<>();
     private UUID selectedTarget = null;
+    private ButtonWidget backButton = null;
+    private int roleListStartX;
+    private int roleListBaseY;
+    private int roleViewportTop;
+    private int roleViewportBottom;
+    private int roleContentHeight;
+    private double roleScrollOffset = 0.0;
 
     public AssassinScreen(ClientPlayerEntity player) {
         super(Text.translatable("screen.assassin.title"));
@@ -35,6 +50,8 @@ public class AssassinScreen extends Screen {
     @Override
     protected void init() {
         super.init();
+        roleWidgets.clear();
+        backButton = null;
 
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
         AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
@@ -88,40 +105,41 @@ public class AssassinScreen extends Screen {
 
             List<Role> allRoles = getAllGuessableRoles();
 
-            int columns = 3;
-            int btnW = 90;
-            int btnH = 20;
-            int gapX = 5;
-            int gapY = 5;
+            int rows = (int) Math.ceil((double) allRoles.size() / ROLE_COLUMNS);
+            int totalW = ROLE_COLUMNS * ROLE_BUTTON_WIDTH + (ROLE_COLUMNS - 1) * ROLE_GAP_X;
 
-            int totalW = columns * btnW + (columns - 1) * gapX;
-            int totalH = (int)Math.ceil((double)allRoles.size() / columns) * (btnH + gapY);
-
-            int startX = centerX - totalW / 2;
-            int startY = centerY - totalH / 2 + 10;
+            roleListStartX = centerX - totalW / 2;
+            roleViewportTop = Math.max(42, centerY - 74);
+            int backButtonY = this.height - 42;
+            roleViewportBottom = Math.max(roleViewportTop + ROLE_BUTTON_HEIGHT, backButtonY - 10);
+            roleListBaseY = roleViewportTop;
+            roleContentHeight = Math.max(0, rows * ROLE_BUTTON_HEIGHT + Math.max(0, rows - 1) * ROLE_GAP_Y);
+            roleScrollOffset = Math.max(0.0, Math.min(roleScrollOffset, getMaxRoleScroll()));
 
             for (int i = 0; i < allRoles.size(); i++) {
-                int col = i % columns;
-                int row = i / columns;
+                int col = i % ROLE_COLUMNS;
+                int row = i / ROLE_COLUMNS;
 
                 AssassinRoleWidget widget = new AssassinRoleWidget(
                         null,
-                        startX + col * (btnW + gapX),
-                        startY + row * (btnH + gapY),
+                        roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X),
+                        roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y),
                         allRoles.get(i),
                         selectedTarget
                 );
+                roleWidgets.add(widget);
                 addDrawableChild(widget);
             }
 
             // 返回/撤销按钮
-            ButtonWidget backButton = ButtonWidget.builder(Text.translatable("screen.assassin.button.cancel"), (btn) -> {
+            backButton = ButtonWidget.builder(Text.translatable("screen.assassin.button.cancel"), (btn) -> {
                         selectedTarget = null;
                         this.clearAndInit();
                     })
-                    .dimensions(centerX - 40, startY + totalH + 10, 80, 20)
+                    .dimensions(centerX - 40, backButtonY, 80, 20)
                     .build();
             addDrawableChild(backButton);
+            updateRoleWidgetPositions();
         }
     }
 
@@ -134,7 +152,21 @@ public class AssassinScreen extends Screen {
         context.fill(0, 0, this.width, 20, 0xFF500000);
         context.fill(0, this.height - 20, this.width, this.height, 0xFF500000);
 
-        super.render(context, mouseX, mouseY, delta);
+        if (selectedTarget == null) {
+            super.render(context, mouseX, mouseY, delta);
+        } else {
+            updateRoleWidgetPositions();
+            context.enableScissor(0, roleViewportTop, this.width, roleViewportBottom);
+            for (AssassinRoleWidget widget : roleWidgets) {
+                if (widget.visible) {
+                    widget.render(context, mouseX, mouseY, delta);
+                }
+            }
+            context.disableScissor();
+            if (backButton != null) {
+                backButton.render(context, mouseX, mouseY, delta);
+            }
+        }
 
         // 渲染文字提示
         int centerX = this.width / 2;
@@ -153,9 +185,20 @@ public class AssassinScreen extends Screen {
                 : entry != null ? entry.getProfile().getName()
                 : Text.translatable("screen.assassin.unknown_target").getString();
 
-            drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 100);
-            drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 85);
+            drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
+            drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (selectedTarget != null && mouseY >= roleViewportTop && mouseY <= roleViewportBottom) {
+            double nextOffset = roleScrollOffset - verticalAmount * ROLE_SCROLL_STEP;
+            roleScrollOffset = Math.max(0.0, Math.min(nextOffset, getMaxRoleScroll()));
+            updateRoleWidgetPositions();
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
     @Override
@@ -191,5 +234,21 @@ public class AssassinScreen extends Screen {
             roles.add(role);
         }
         return roles;
+    }
+
+    private void updateRoleWidgetPositions() {
+        for (int i = 0; i < roleWidgets.size(); i++) {
+            AssassinRoleWidget widget = roleWidgets.get(i);
+            int col = i % ROLE_COLUMNS;
+            int row = i / ROLE_COLUMNS;
+            int x = roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X);
+            int y = roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y) - (int) Math.round(roleScrollOffset);
+            widget.setPosition(x, y);
+            widget.visible = y + ROLE_BUTTON_HEIGHT > roleViewportTop && y < roleViewportBottom;
+        }
+    }
+
+    private double getMaxRoleScroll() {
+        return Math.max(0, roleContentHeight - (roleViewportBottom - roleViewportTop));
     }
 }
