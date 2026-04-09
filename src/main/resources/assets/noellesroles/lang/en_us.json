@@ -416,7 +416,7 @@
   "cocktail.noellesroles.tequila_sunrise": "Tequila Sunrise",
   "cocktail.noellesroles.witchs_remedy": "Witch's Remedy",
 
-  "announcement.goals.criminal_reasoner": "Your role is registered as a neutral placeholder for now. Ability and win condition are not implemented yet.",
+  "announcement.goals.criminal_reasoner": "Find out the killer of each victim.",
   "announcement.role.criminal_reasoner": "Criminal Reasoner",
   "announcement.win.criminal_reasoner": "Criminal Reasoner Wins!",
   "game.win.criminal_reasoner": "Every grudge of the dead has been settled.",
@@ -434,8 +434,9 @@
   "screen.criminal_reasoner.button.back": "Back",
   "screen.criminal_reasoner.button.confirm": "Confirm",
   "screen.criminal_reasoner.empty_victims": "There are no dead players to reason about yet",
-  "screen.criminal_reasoner.submit_preview": "Reasoning recorded: %s was killed by %s",
   "screen.criminal_reasoner.unknown_player": "Unknown Player",
+  "screen.criminal_reasoner.section.alive": "Alive Players",
+  "screen.criminal_reasoner.section.dead": "Dead Players",
 
   "announcement.goals.engineer": "You can sense pried/locked doors! Use your Repair Tool to fix or lock/unlock doors!",
   "announcement.role.engineer": "Engineer",

@@ -121,11 +121,11 @@ public class CriminalReasonerScreen extends Screen {
 
         int aliveHeaderY = startY;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(aliveSuspects, Text.literal("存活玩家"), centerX, aliveHeaderY, aliveGridY);
+        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY);
 
         int deadHeaderY = aliveGridY + aliveRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP;
         int deadGridY = deadHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(deadSuspects, Text.literal("死亡玩家"), centerX, deadHeaderY, deadGridY);
+        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY);
 
         int buttonY = this.height - 42;
 

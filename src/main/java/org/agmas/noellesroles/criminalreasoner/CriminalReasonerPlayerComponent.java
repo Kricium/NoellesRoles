@@ -2,6 +2,7 @@ package org.agmas.noellesroles.criminalreasoner;
 
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
@@ -10,19 +11,20 @@ import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
 import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
-import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
-public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, ServerTickingComponent {
+public class CriminalReasonerPlayerComponent implements AutoSyncedComponent {
     public static final ComponentKey<CriminalReasonerPlayerComponent> KEY = ComponentRegistry.getOrCreate(
             Identifier.of(Noellesroles.MOD_ID, "criminal_reasoner"), CriminalReasonerPlayerComponent.class);
 
     private final PlayerEntity player;
     private final Map<UUID, UUID> victimToKiller = new HashMap<>();
-    private final Map<UUID, Boolean> solvedVictims = new HashMap<>();
+    private final Set<UUID> solvedVictims = new HashSet<>();
     private int successfulReasoningCount;
 
     public CriminalReasonerPlayerComponent(PlayerEntity player) {
@@ -60,12 +62,12 @@ public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, Ser
     }
 
     public boolean recordSuccessfulReasoning(UUID victimUuid) {
-        if (victimUuid == null || this.solvedVictims.containsKey(victimUuid)) {
+        if (victimUuid == null || this.solvedVictims.contains(victimUuid)) {
             return false;
         }
 
         // 同一名死者只记一次成功推理，避免重复推理刷胜利进度。
-        this.solvedVictims.put(victimUuid, true);
+        this.solvedVictims.add(victimUuid);
         this.successfulReasoningCount++;
         this.sync();
         return true;
@@ -76,7 +78,7 @@ public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, Ser
     }
 
     public boolean hasSolvedVictim(UUID victimUuid) {
-        return victimUuid != null && this.solvedVictims.containsKey(victimUuid);
+        return victimUuid != null && this.solvedVictims.contains(victimUuid);
     }
 
     @Override
@@ -85,7 +87,23 @@ public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, Ser
     }
 
     @Override
-    public void serverTick() {
+    public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
+        // 只同步 successfulReasoningCount 和 solvedVictims，不同步 victimToKiller 以防作弊客户端读取答案。
+        buf.writeInt(this.successfulReasoningCount);
+        buf.writeInt(this.solvedVictims.size());
+        for (UUID solved : this.solvedVictims) {
+            buf.writeUuid(solved);
+        }
+    }
+
+    @Override
+    public void applySyncPacket(RegistryByteBuf buf) {
+        this.successfulReasoningCount = buf.readInt();
+        this.solvedVictims.clear();
+        int solvedCount = buf.readInt();
+        for (int i = 0; i < solvedCount; i++) {
+            this.solvedVictims.add(buf.readUuid());
+        }
     }
 
     @Override
@@ -109,7 +127,7 @@ public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, Ser
             NbtCompound solvedTag = nbtCompound.getCompound("solvedVictims");
             for (String key : solvedTag.getKeys()) {
                 try {
-                    this.solvedVictims.put(UUID.fromString(key), true);
+                    this.solvedVictims.add(UUID.fromString(key));
                 } catch (IllegalArgumentException ignored) {
                 }
             }
@@ -125,7 +143,7 @@ public class CriminalReasonerPlayerComponent implements AutoSyncedComponent, Ser
         nbtCompound.put("victimToKiller", mappingTag);
 
         NbtCompound solvedTag = new NbtCompound();
-        for (UUID solvedVictim : this.solvedVictims.keySet()) {
+        for (UUID solvedVictim : this.solvedVictims) {
             solvedTag.putBoolean(solvedVictim.toString(), true);
         }
         nbtCompound.put("solvedVictims", solvedTag);
