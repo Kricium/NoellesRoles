@@ -452,6 +452,5 @@
   "tip.engineer.unlocked": "门已解锁！",
   "replay.item_use.noellesroles.repair_tool.repair": "%s 使用§b维修工具§r修复了一扇门",
   "replay.item_use.noellesroles.repair_tool.lock": "%s 使用§b维修工具§r锁上了一扇门",
-  "replay.item_use.noellesroles.repair_tool.unlock": "%s 使用§b维修工具§r解锁了一扇门",
-  "key.noellesroles.ability": "角色技能"
+  "replay.item_use.noellesroles.repair_tool.unlock": "%s 使用§b维修工具§r解锁了一扇门"
 }

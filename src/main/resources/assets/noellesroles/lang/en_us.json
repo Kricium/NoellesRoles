@@ -426,6 +426,5 @@
   "tip.engineer.unlocked": "Door unlocked!",
   "replay.item_use.noellesroles.repair_tool.repair": "%s §brepaired§r a door",
   "replay.item_use.noellesroles.repair_tool.lock": "%s §blocked§r a door",
-  "replay.item_use.noellesroles.repair_tool.unlock": "%s §bunlocked§r a door",
-  "key.noellesroles.ability": "Role Ability"
+  "replay.item_use.noellesroles.repair_tool.unlock": "%s §bunlocked§r a door"
 }
