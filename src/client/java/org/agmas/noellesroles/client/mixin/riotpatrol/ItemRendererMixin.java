@@ -21,7 +21,7 @@ public class ItemRendererMixin {
         )
     )
     private boolean noellesroles$allowRiotForkHandModel(ItemStack stack, Item item) {
-        return stack.isOf(item) || item == Items.TRIDENT && stack.isOf(ModItems.RIOT_FORK);
+        return isRiotForkOrOriginal(stack, item);
     }
 
     @Redirect(
@@ -33,7 +33,7 @@ public class ItemRendererMixin {
         )
     )
     private boolean noellesroles$allowRiotForkInventoryModel(ItemStack stack, Item item) {
-        return stack.isOf(item) || item == Items.TRIDENT && stack.isOf(ModItems.RIOT_FORK);
+        return isRiotForkOrOriginal(stack, item);
     }
 
     @Redirect(
@@ -45,6 +45,10 @@ public class ItemRendererMixin {
         )
     )
     private boolean noellesroles$allowRiotForkBuiltinPath(ItemStack stack, Item item) {
-        return stack.isOf(item) || item == Items.TRIDENT && stack.isOf(ModItems.RIOT_FORK);
+        return isRiotForkOrOriginal(stack, item);
+    }
+
+    private static boolean isRiotForkOrOriginal(ItemStack stack, Item item) {
+        return stack.isOf(item) || (item == Items.TRIDENT && stack.isOf(ModItems.RIOT_FORK));
     }
 }

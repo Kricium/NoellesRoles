@@ -12,7 +12,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.agmas.noellesroles.ModEffects;
-import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
@@ -22,6 +21,7 @@ import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class HunterPlayerComponent implements AutoSyncedComponent, ServerTickingComponent {
     public static final ComponentKey<HunterPlayerComponent> KEY = ComponentRegistry.getOrCreate(
@@ -33,8 +33,11 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
     public static final int FRACTURE_LAYER_TICKS = 20 * 60;
     public static final int MAX_FRACTURE_LAYERS = 5;
 
+    public static final int MAX_TRAPS = 2;
+
     private final PlayerEntity player;
     private final List<Integer> fractureTimers = new ArrayList<>();
+    private final List<UUID> ownedTrapUuids = new ArrayList<>();
     private int trappedTicks = 0;
 
     public HunterPlayerComponent(PlayerEntity player) {
@@ -43,6 +46,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
 
     public void reset() {
         this.fractureTimers.clear();
+        this.ownedTrapUuids.clear();
         this.trappedTicks = 0;
         this.sync();
     }
@@ -77,6 +81,26 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
 
     public int getFractureLayers() {
         return this.fractureTimers.size();
+    }
+
+    public void registerTrap(UUID trapUuid) {
+        this.ownedTrapUuids.add(trapUuid);
+    }
+
+    public void unregisterTrap(UUID trapUuid) {
+        this.ownedTrapUuids.remove(trapUuid);
+    }
+
+    /**
+     * Removes the oldest trap(s) if the player has reached the max trap limit.
+     * Returns the UUIDs that were removed so the caller can discard the entities.
+     */
+    public List<UUID> removeOldestTrapsIfNeeded() {
+        List<UUID> removed = new ArrayList<>();
+        while (this.ownedTrapUuids.size() >= MAX_TRAPS) {
+            removed.add(this.ownedTrapUuids.remove(0));
+        }
+        return removed;
     }
 
     public void sync() {
@@ -124,18 +148,10 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
     @Override
     public void serverTick() {
         if (this.trappedTicks > 0) {
-            boolean wasTrapped = this.trappedTicks > 1;
             this.trappedTicks--;
             this.player.setVelocity(Vec3d.ZERO);
             this.player.velocityModified = true;
-            this.player.setSprinting(false);
-
-            PlayerStaminaComponent stamina = PlayerStaminaComponent.KEY.get(this.player);
-            if (!stamina.isExhausted()) {
-                stamina.setSprintingTicks(stamina.getMaxSprintTime());
-                stamina.setExhausted(true);
-                stamina.sync();
-            }
+            this.exhaustStamina();
 
             if (this.trappedTicks % 20 == 0 || this.trappedTicks == 0) {
                 this.sync();
@@ -154,14 +170,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
                 }
             }
 
-            this.player.setSprinting(false);
-            PlayerStaminaComponent stamina = PlayerStaminaComponent.KEY.get(this.player);
-            if (!stamina.isExhausted()) {
-                stamina.setSprintingTicks(stamina.getMaxSprintTime());
-                stamina.setExhausted(true);
-                stamina.sync();
-            }
-
+            this.exhaustStamina();
             this.refreshFractureEffect();
             if (changed || this.player.age % 20 == 0) {
                 this.sync();
@@ -169,6 +178,16 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         } else if (this.player.hasStatusEffect(ModEffects.FRACTURE)) {
             this.player.removeStatusEffect(ModEffects.FRACTURE);
             removeFractureSpeedModifier();
+        }
+    }
+
+    private void exhaustStamina() {
+        this.player.setSprinting(false);
+        PlayerStaminaComponent stamina = PlayerStaminaComponent.KEY.get(this.player);
+        if (!stamina.isExhausted()) {
+            stamina.setSprintingTicks(stamina.getMaxSprintTime());
+            stamina.setExhausted(true);
+            stamina.sync();
         }
     }
 
@@ -200,6 +219,10 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
             tag.putInt("fractureTimer" + i, this.fractureTimers.get(i));
         }
         tag.putInt("fractureCount", this.fractureTimers.size());
+        tag.putInt("ownedTrapCount", this.ownedTrapUuids.size());
+        for (int i = 0; i < this.ownedTrapUuids.size(); i++) {
+            tag.putUuid("ownedTrap" + i, this.ownedTrapUuids.get(i));
+        }
     }
 
     @Override
@@ -209,6 +232,13 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         int count = tag.getInt("fractureCount");
         for (int i = 0; i < count; i++) {
             this.fractureTimers.add(tag.getInt("fractureTimer" + i));
+        }
+        this.ownedTrapUuids.clear();
+        int trapCount = tag.getInt("ownedTrapCount");
+        for (int i = 0; i < trapCount; i++) {
+            if (tag.containsUuid("ownedTrap" + i)) {
+                this.ownedTrapUuids.add(tag.getUuid("ownedTrap" + i));
+            }
         }
     }
 }
