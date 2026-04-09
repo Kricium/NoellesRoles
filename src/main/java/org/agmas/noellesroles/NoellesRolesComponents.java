@@ -24,6 +24,9 @@ import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
 import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
+import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
+import org.agmas.noellesroles.hunter.HunterPlayerComponent;
+import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.survivalmaster.SurvivalMasterPlayerComponent;
 import org.agmas.noellesroles.music.WorldMusicComponent;
 import org.agmas.noellesroles.scavenger.HiddenBodiesWorldComponent;
@@ -63,6 +66,9 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, SurvivalMasterPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(SurvivalMasterPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, EngineerPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(EngineerPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, CriminalReasonerPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CriminalReasonerPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, RiotPatrolPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(RiotPatrolPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, HunterPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(HunterPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, OrthopedistPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(OrthopedistPlayerComponent::new);
     }
 
     @Override
