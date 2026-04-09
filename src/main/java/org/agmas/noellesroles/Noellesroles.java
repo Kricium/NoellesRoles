@@ -913,9 +913,6 @@ public class Noellesroles implements ModInitializer {
                     return CheckWinCondition.WinResult.neutralWin(criminalReasoner);
                 }
 
-                if (currentStatus == GameFunctions.WinStatus.KILLERS) {
-                    return CheckWinCondition.WinResult.block();
-                }
             }
 
             // Taotie win condition check (priority over corrupt cop)
