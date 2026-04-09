@@ -19,7 +19,7 @@ public abstract class RoundTextRendererMixin {
     private static final int ROLE_TEXT_LINE_HEIGHT = 9;
     private static final int MULTILINE_ROLE_TEXT_OFFSET_X = 0;
     private static final int MULTILINE_ROLE_TEXT_OFFSET_Y = -8;
-    private static final int ROLE_TEXT_MAX_CHARS_PER_LINE = 3;
+    private static final int ROLE_TEXT_MAX_CHARS_PER_LINE = 4;
 
     @WrapOperation(
             method = "renderPlayerCard",
