@@ -37,6 +37,7 @@ public abstract class RoundTextRendererMixin {
     private static final int SCREEN_TOP_MARGIN = 20;
     private static final int SCREEN_BOTTOM_MARGIN = 12;
     private static final int PLAYER_CARD_TEXT_BOTTOM = 18;
+    private static final int ORIGINAL_PLAYER_CARD_BOTTOM = 26;
     private static final int END_TEXT_TOP_Y = -12;
     private static final int SUBTITLE_TOP_Y = -4;
     private static final int ROLE_TEXT_MAX_WIDTH = 36;
@@ -103,19 +104,39 @@ public abstract class RoundTextRendererMixin {
             }
         }
 
-        int maxColumns = noellesroles$getMaxColumns(context.getScaledWindowWidth());
-        float[] layoutPlan = noellesroles$findLayoutPlan(
+        boolean useOriginalLayout = noellesroles$canUseOriginalLayout(
                 winners.size(),
                 losers.size(),
-                maxColumns,
+                context.getScaledWindowWidth(),
                 context.getScaledWindowHeight()
         );
-        int extraColumns = Math.round(layoutPlan[0]);
-        SectionLayout winnerLayout = noellesroles$createLayout(winners.size(), maxColumns, extraColumns);
-        SectionLayout loserLayout = noellesroles$createLayout(losers.size(), maxColumns, extraColumns);
-        int loserTitleY = Math.round(layoutPlan[1]);
-        int shiftUp = Math.round(layoutPlan[2]);
-        float cardScale = layoutPlan[3];
+
+        SectionLayout winnerLayout;
+        SectionLayout loserLayout;
+        int loserTitleY;
+        int shiftUp;
+        float cardScale;
+        if (useOriginalLayout) {
+            winnerLayout = noellesroles$createOriginalLayout(winners.size());
+            loserLayout = noellesroles$createOriginalLayout(losers.size());
+            loserTitleY = noellesroles$getOriginalLoserTitleY(winnerLayout.rows());
+            shiftUp = 0;
+            cardScale = 1.0f;
+        } else {
+            int maxColumns = noellesroles$getMaxColumns(context.getScaledWindowWidth());
+            float[] layoutPlan = noellesroles$findLayoutPlan(
+                    winners.size(),
+                    losers.size(),
+                    maxColumns,
+                    context.getScaledWindowHeight()
+            );
+            int extraColumns = Math.round(layoutPlan[0]);
+            winnerLayout = noellesroles$createLayout(winners.size(), maxColumns, extraColumns);
+            loserLayout = noellesroles$createLayout(losers.size(), maxColumns, extraColumns);
+            loserTitleY = Math.round(layoutPlan[1]);
+            shiftUp = Math.round(layoutPlan[2]);
+            cardScale = layoutPlan[3];
+        }
 
         context.getMatrices().push();
         context.getMatrices().translate(
@@ -328,6 +349,72 @@ public abstract class RoundTextRendererMixin {
     @Unique
     private static int noellesroles$getSectionBottom(int cardsStartY, int rows) {
         return cardsStartY + Math.max(1, rows) * PLAYER_CARD_SPACING_Y - PLAYER_CARD_SPACING_Y + PLAYER_CARD_TEXT_BOTTOM;
+    }
+
+    @Unique
+    private static boolean noellesroles$canUseOriginalLayout(
+            int winnerCount,
+            int loserCount,
+            int screenWidth,
+            int screenHeight
+    ) {
+        SectionLayout winnerLayout = noellesroles$createOriginalLayout(winnerCount);
+        SectionLayout loserLayout = noellesroles$createOriginalLayout(loserCount);
+
+        if (!noellesroles$sectionFitsOriginalWidth(winnerCount, winnerLayout, screenWidth)) {
+            return false;
+        }
+
+        if (!noellesroles$sectionFitsOriginalWidth(loserCount, loserLayout, screenWidth)) {
+            return false;
+        }
+
+        int localVisibleBottom = screenHeight - (screenHeight / 2 + CONTENT_CENTER_OFFSET_Y);
+        int contentBottom = loserCount <= 0
+                ? noellesroles$getOriginalSectionBottom(PLAYER_SECTION_START_Y, winnerLayout.rows())
+                : noellesroles$getOriginalSectionBottom(
+                noellesroles$getOriginalLoserTitleY(winnerLayout.rows()) + LOSER_SECTION_GAP_Y,
+                loserLayout.rows()
+        );
+        return contentBottom <= localVisibleBottom;
+    }
+
+    @Unique
+    private static boolean noellesroles$sectionFitsOriginalWidth(
+            int playerCount,
+            SectionLayout layout,
+            int screenWidth
+    ) {
+        for (int row = 0; row < layout.rows(); row++) {
+            int columnsThisRow = row == layout.rows() - 1
+                    ? noellesroles$getLastRowColumns(playerCount, layout.columns())
+                    : layout.columns();
+            if (columnsThisRow * PLAYER_CARD_SPACING_X > screenWidth) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Unique
+    private static int noellesroles$getOriginalSectionBottom(int cardsStartY, int rows) {
+        return cardsStartY + Math.max(0, rows - 1) * PLAYER_CARD_SPACING_Y + ORIGINAL_PLAYER_CARD_BOTTOM;
+    }
+
+    @Unique
+    private static int noellesroles$getOriginalLoserTitleY(int winnerRows) {
+        return PLAYER_SECTION_START_Y + Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y + 8;
+    }
+
+    @Unique
+    private static SectionLayout noellesroles$createOriginalLayout(int playerCount) {
+        if (playerCount <= 0) {
+            return new SectionLayout(1, 0);
+        }
+
+        int columns = Math.max(DEFAULT_PLAYER_COLUMNS, (playerCount + BASE_PLAYER_ROWS - 1) / BASE_PLAYER_ROWS);
+        int rows = Math.min(BASE_PLAYER_ROWS, (playerCount + columns - 1) / columns);
+        return new SectionLayout(columns, rows);
     }
 
     @Unique
