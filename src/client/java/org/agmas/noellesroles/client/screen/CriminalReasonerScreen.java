@@ -24,6 +24,10 @@ import java.util.List;
 import java.util.UUID;
 
 public class CriminalReasonerScreen extends Screen {
+    private static final int TOP_BAR_HEIGHT = 20;
+    private static final int BOTTOM_BAR_HEIGHT = 20;
+    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
+    private static final int SUSPECT_TITLE_SHIFT_Y = 5;
     private static final int SUSPECT_COLUMNS = 6;
     private static final int SUSPECT_SPACING_X = 36;
     private static final int SUSPECT_SPACING_Y = 45;
@@ -222,11 +226,8 @@ public class CriminalReasonerScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0xF0000000);
-
+        renderBackground(context, mouseX, mouseY, delta);
         int accentColor = 0xFF000000 | (Noellesroles.CRIMINAL_REASONER.color() & 0x00FFFFFF);
-        context.fill(0, 0, this.width, 20, accentColor);
-        context.fill(0, this.height - 20, this.width, this.height, accentColor);
 
         if (selectedVictim != null) {
             CriminalReasonerPlayerWidget.setClipBounds(0, getSuspectViewTop(), this.width, getSuspectViewBottom());
@@ -247,17 +248,21 @@ public class CriminalReasonerScreen extends Screen {
             if (children().size() <= 1) {
                 drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.empty_victims"), centerX, centerY);
             }
+            context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
+            context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
             return;
         }
 
         Text victimName = getPlayerName(selectedVictim);
-        drawCenteredTitle(context, font, Text.translatable("screen.criminal_reasoner.title.select_suspect", victimName), centerX, centerY - 115);
-        drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.select_suspect"), centerX, centerY - 100);
+        drawCenteredTitle(context, font, Text.translatable("screen.criminal_reasoner.title.select_suspect", victimName), centerX, centerY - 115 - SUSPECT_TITLE_SHIFT_Y);
+        drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.select_suspect"), centerX, centerY - 100 - SUSPECT_TITLE_SHIFT_Y);
 
         if (selectedSuspect != null) {
             Text suspectName = getPlayerName(selectedSuspect);
-            drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.current_pair", victimName, suspectName), centerX, centerY - 85);
+            drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.current_pair", victimName, suspectName), centerX, centerY - 85 - SUSPECT_TITLE_SHIFT_Y);
         }
+        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
+        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
     }
 
     @Override
@@ -287,6 +292,12 @@ public class CriminalReasonerScreen extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
+    }
+
     private void drawCenteredTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
         context.getMatrices().push();
         context.getMatrices().translate(x, y, 0);
@@ -300,7 +311,7 @@ public class CriminalReasonerScreen extends Screen {
     }
 
     private int getSuspectViewTop() {
-        return this.height / 2 - SUSPECT_VIEW_TOP_OFFSET;
+        return this.height / 2 - SUSPECT_VIEW_TOP_OFFSET - SUSPECT_TITLE_SHIFT_Y;
     }
 
     private int getSuspectViewBottom() {

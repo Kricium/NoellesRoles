@@ -447,5 +447,6 @@
   "item.noellesroles.liqueur": "特调利口酒",
   "item.noellesroles.liqueur.effect": "使这杯酒的所有效果持续时间延长100%，包括基酒的负面效果与伏特加结束后的负面效果",
   "item.noellesroles.special_spice": "特制香料",
-  "item.noellesroles.special_spice.effect": "使这杯酒改为恢复60%的理智值"
+  "item.noellesroles.special_spice.effect": "使这杯酒改为恢复60%的理智值",
+  "key.noellesroles.ability": "角色技能"
 }

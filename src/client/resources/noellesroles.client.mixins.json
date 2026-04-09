@@ -31,6 +31,7 @@
     "scavenger.ScavengerBodyHideMixin",
     "scavenger.ScavengerInstantKnifeMixin",
     "swapper.SwapperScreenMixin",
+    "screen.MenuHudHideMixin",
     "taotie.TaotieHudMixin",
     "taotie.SpectatorHudMixin",
     "voodoo.VoodoScreenMixin",

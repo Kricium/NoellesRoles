@@ -24,6 +24,9 @@ import java.util.List;
 import java.util.UUID;
 
 public class AssassinScreen extends Screen {
+    private static final int TOP_BAR_HEIGHT = 20;
+    private static final int BOTTOM_BAR_HEIGHT = 20;
+    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
     private static final int ROLE_COLUMNS = 3;
     private static final int ROLE_BUTTON_WIDTH = 90;
     private static final int ROLE_BUTTON_HEIGHT = 20;
@@ -41,6 +44,7 @@ public class AssassinScreen extends Screen {
     private int roleViewportBottom;
     private int roleContentHeight;
     private double roleScrollOffset = 0.0;
+    private boolean suppressNextBackgroundRender = false;
 
     public AssassinScreen(ClientPlayerEntity player) {
         super(Text.translatable("screen.assassin.title"));
@@ -111,7 +115,7 @@ public class AssassinScreen extends Screen {
             roleListStartX = centerX - totalW / 2;
             roleViewportTop = Math.max(42, centerY - 74);
             int backButtonY = this.height - 42;
-            roleViewportBottom = Math.max(roleViewportTop + ROLE_BUTTON_HEIGHT, backButtonY - 10);
+            roleViewportBottom = Math.max(roleViewportTop + ROLE_BUTTON_HEIGHT, backButtonY - 4);
             roleListBaseY = roleViewportTop;
             roleContentHeight = Math.max(0, rows * ROLE_BUTTON_HEIGHT + Math.max(0, rows - 1) * ROLE_GAP_Y);
             roleScrollOffset = Math.max(0.0, Math.min(roleScrollOffset, getMaxRoleScroll()));
@@ -145,14 +149,11 @@ public class AssassinScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        // 绘制全屏深黑色半透明遮罩
-        context.fill(0, 0, this.width, this.height, 0xF0000000);
-
         // 绘制上下红色的电影感边框
-        context.fill(0, 0, this.width, 20, 0xFF500000);
-        context.fill(0, this.height - 20, this.width, this.height, 0xFF500000);
+        renderBackground(context, mouseX, mouseY, delta);
 
         if (selectedTarget == null) {
+            suppressNextBackgroundRender = true;
             super.render(context, mouseX, mouseY, delta);
         } else {
             updateRoleWidgetPositions();
@@ -188,6 +189,8 @@ public class AssassinScreen extends Screen {
             drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
             drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
+        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, 0xFF500000);
+        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, 0xFF500000);
     }
 
     @Override
@@ -199,6 +202,16 @@ public class AssassinScreen extends Screen {
             return true;
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        if (suppressNextBackgroundRender) {
+            suppressNextBackgroundRender = false;
+            return;
+        }
+        super.renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
     }
 
     @Override
