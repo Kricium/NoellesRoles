@@ -1729,7 +1729,7 @@ public class Noellesroles implements ModInitializer {
                 criminalReasonerComponent.recordSuccessfulReasoning(victim.getUuid());
                 criminalReasoner.sendMessage(
                         Text.translatable("tip.criminal_reasoner.guess_success", victim.getName(), suspect.getName())
-                                .formatted(net.minecraft.util.Formatting.GRAY),
+                                .formatted(net.minecraft.util.Formatting.GREEN),
                         true
                 );
             } else {
