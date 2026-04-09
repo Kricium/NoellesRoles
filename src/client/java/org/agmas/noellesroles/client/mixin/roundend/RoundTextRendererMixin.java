@@ -25,8 +25,7 @@ public abstract class RoundTextRendererMixin {
             method = "renderPlayerCard",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/class_332;method_27535(Lnet/minecraft/class_327;Lnet/minecraft/class_2561;III)I",
-                    remap = false
+                    target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/Text;III)I"
             )
     )
     private static int noellesroles$wrapRoundEndRoleName(
