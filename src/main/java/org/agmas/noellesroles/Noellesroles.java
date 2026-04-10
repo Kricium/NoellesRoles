@@ -2040,6 +2040,7 @@ public class Noellesroles implements ModInitializer {
             var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
             NbtCompound data = event.data();
             UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
             String blockReason = data.getString("block_reason");
 
             if (actorUuid == null) return null;
@@ -2048,6 +2049,12 @@ public class Noellesroles implements ModInitializer {
 
             // 铁人药剂和威士忌护盾由各自专属事件处理，此处返回null避免重复
             if ("iron_man_buff".equals(blockReason) || "whiskey_shield".equals(blockReason)) return null;
+
+            if ("riot_shield".equals(blockReason)) {
+                if (targetUuid == null) return null;
+                Text targetText = ReplayGenerator.formatPlayerName(targetUuid, playerInfoCache);
+                return Text.translatable("replay.death_blocked.riot_shield", actorText, targetText);
+            }
 
             // 根据 block_reason 选择翻译键
             String translationKey = switch (blockReason) {
