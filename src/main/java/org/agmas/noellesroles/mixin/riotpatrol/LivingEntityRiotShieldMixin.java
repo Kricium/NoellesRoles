@@ -28,12 +28,12 @@ public class LivingEntityRiotShieldMixin {
         }
 
         RiotPatrolPlayerComponent component = RiotPatrolPlayerComponent.KEY.get(player);
-        if (!component.shouldBlockMeleeHit(attacker)) {
+        if (!component.blocksAttacker(attacker)) {
             return;
         }
 
         if (!player.getWorld().isClient) {
-            component.playShieldBlockEffects(attacker);
+            component.playShieldBlockEffects();
         }
         cir.setReturnValue(false);
     }

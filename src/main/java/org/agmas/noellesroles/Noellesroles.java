@@ -553,7 +553,7 @@ public class Noellesroles implements ModInitializer {
                     || deathReason == DEATH_REASON_THROWING_AXE)) {
                 RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(serverVictim3);
                 if (riotPatrolComponent.blocksAttacker(serverKiller)) {
-                    riotPatrolComponent.playShieldBlockEffects(serverKiller);
+                    riotPatrolComponent.playShieldBlockEffects();
                     var deathBlockedEvent = GameRecordManager.event("death_blocked")
                         .actor(serverVictim3)
                         .put("block_reason", "riot_shield")

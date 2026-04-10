@@ -89,7 +89,7 @@ import java.util.*;
 import java.util.List;
 
 public class NoellesrolesClient implements ClientModInitializer {
-    private static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
+    public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
     public static KeyBinding roleInfoBind;

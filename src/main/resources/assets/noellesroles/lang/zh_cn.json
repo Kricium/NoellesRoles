@@ -390,7 +390,6 @@
   "announcement.role.engineer": "工程师",
   "announcement.win.engineer": "乘客胜利！",
   "announcement.goals.riot_patrol": "你属于好人阵营。右键举起防暴盾可抵挡正面伤害，但会锁定视角并大幅减速；左键可用盾牌短距离击退。防暴叉可将3格内目标与你同时定身8秒。",
-  "announcement.goals.riot_patrol": "你属于好人阵营。右键举起防爆盾可抵挡来自正面的攻击，但会锁定视角并大幅减速；左键可用盾牌进行短距离推搡。防爆叉可将3格内的目标与你同时定身8秒，切换物品会立即解除控制。",
   "announcement.role.riot_patrol": "治安巡警",
   "announcement.win.riot_patrol": "乘客胜利！",
   "roleinfo.skill.riot_patrol.riot_shield.name": "防爆盾",

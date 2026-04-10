@@ -133,11 +133,7 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         return horizontalLook.normalize().dotProduct(horizontalAttacker.normalize()) > 0.35;
     }
 
-    public boolean shouldBlockMeleeHit(PlayerEntity attacker) {
-        return this.blocksAttacker(attacker);
-    }
-
-    public void playShieldBlockEffects(PlayerEntity attacker) {
+    public void playShieldBlockEffects() {
         this.player.getWorld().playSound(null, this.player.getBlockPos(), SoundEvents.ITEM_SHIELD_BLOCK, this.player.getSoundCategory(), 1.0F, 0.9F + this.player.getWorld().random.nextFloat() * 0.2F);
     }
 
