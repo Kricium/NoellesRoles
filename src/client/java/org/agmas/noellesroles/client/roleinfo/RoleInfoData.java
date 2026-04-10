@@ -12,10 +12,11 @@ public class RoleInfoData {
     public String factionKey;
     public String descriptionKey;
     public String winConditionKey;
-    public String roleId;
+    private String roleId;
     public Map<String, SkillInfoData> skills;
 
-    public RoleInfoData(String nameKey, String factionKey, String descriptionKey, String winConditionKey) {
+    public RoleInfoData(String roleId, String nameKey, String factionKey, String descriptionKey, String winConditionKey) {
+        this.roleId = roleId;
         this.nameKey = nameKey;
         this.factionKey = factionKey;
         this.descriptionKey = descriptionKey;
@@ -23,45 +24,23 @@ public class RoleInfoData {
         this.skills = new LinkedHashMap<>();
     }
 
-    public RoleInfoData withRoleId(String roleId) {
-        this.roleId = roleId;
-        return this;
-    }
-
-    /**
-     * Fluent API for adding a skill entry.
-     *
-     * @param id            Skill ID (e.g., "morph")
-     * @param nameKey       Translation key for skill name
-     * @param triggerKey    Translation key for trigger description (may contain %s for keybind name)
-     * @param triggerKeybind Keybind ID to resolve: "ability", "inventory", "use", "attack", or null for passive
-     * @param effectKey     Translation key for skill effect description
-     */
-    public RoleInfoData skill(String id, String nameKey, String triggerKey, String triggerKeybind, String effectKey) {
-        SkillInfoData s = new SkillInfoData();
-        s.nameKey = nameKey;
-        s.triggerKey = triggerKey;
-        s.triggerKeybind = triggerKeybind;
-        s.effectKey = effectKey;
-        skills.put(id, s);
-        return this;
-    }
-
     /**
      * Fluent shortcut to add a role skill using the default translation key pattern.
      */
-    public RoleInfoData add_sk(String skillId, String triggerKeybind) {
-        if (roleId == null || roleId.isEmpty()) {
-            throw new IllegalStateException("roleId is required before add_sk; call withRoleId(...) first.");
-        }
+    public RoleInfoData addSkill(String skillId, String triggerKeybind) {
         String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
-        return skill(skillId, base + "name", base + "trigger", triggerKeybind, base + "effect");
+        SkillInfoData s = new SkillInfoData();
+        s.nameKey = base + "name";
+        s.triggerKey = base + "trigger";
+        s.triggerKeybind = triggerKeybind;
+        s.effectKey = base + "effect";
+        skills.put(skillId, s);
+        return this;
     }
 
-    public RoleInfoData add_sk(String skillId) {
-        return add_sk(skillId, null);
+    public RoleInfoData addSkill(String skillId) {
+        return addSkill(skillId, null);
     }
-
 
     public static class SkillInfoData {
         /** Translation key for skill name */

@@ -156,7 +156,7 @@ public class RoleInfoScreen extends Screen {
                 Text triggerLabel = Text.translatable("roleinfo.skill.trigger_label", triggerText);
                 List<OrderedText> triggerLines = font.wrapLines(triggerLabel, contentWidth - 16);
                 for (OrderedText line : triggerLines) {
-                    context.drawTextWithShadow(font, line, startX + 12, y, 0x666666);
+                    context.drawTextWithShadow(font, line, startX + 12, y, 0xFF666666);
                     y += LINE_HEIGHT;
                 }
 
