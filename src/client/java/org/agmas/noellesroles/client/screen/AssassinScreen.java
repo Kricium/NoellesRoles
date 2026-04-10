@@ -27,6 +27,7 @@ public class AssassinScreen extends Screen {
     private static final int TOP_BAR_HEIGHT = 20;
     private static final int BOTTOM_BAR_HEIGHT = 20;
     private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
+    private static final int ACCENT_BAR_COLOR = 0xFF500000;
     private static final int ROLE_COLUMNS = 3;
     private static final int ROLE_BUTTON_WIDTH = 90;
     private static final int ROLE_BUTTON_HEIGHT = 20;
@@ -82,9 +83,8 @@ public class AssassinScreen extends Screen {
             int columns = 6;
             int spacingX = 36; // 水平间距，与 SwapperScreenMixin 一致
             int spacingY = 45; // 垂直间距（稍大以留出名字空间）
-            int totalRows = (int) Math.ceil((double) targets.size() / columns);
-            int startX = centerX - ((Math.min(targets.size(), columns) * spacingX) / 2) + 9;
-            int startY = centerY - (totalRows * spacingY / 2) + 20;
+            int startX = RoleScreenHelper.getGridStartX(targets.size(), columns, spacingX, centerX);
+            int startY = RoleScreenHelper.getGridStartY(targets.size(), columns, spacingY, centerY);
 
             for (int i = 0; i < targets.size(); i++) {
                 UUID targetUuid = targets.get(i);
@@ -176,8 +176,8 @@ public class AssassinScreen extends Screen {
 
         if (selectedTarget == null) {
             // 阶段1 标题
-            drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.select_target"), centerX, centerY - 80);
-            drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.click_to_confirm"), centerX, centerY - 65);
+            RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.select_target"), centerX, centerY - 80);
+            RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.click_to_confirm"), centerX, centerY - 65);
         } else {
             // 阶段2 标题
             PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(selectedTarget);
@@ -186,11 +186,11 @@ public class AssassinScreen extends Screen {
                 : entry != null ? entry.getProfile().getName()
                 : Text.translatable("screen.assassin.unknown_target").getString();
 
-            drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
-            drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
+            RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
+            RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
-        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, 0xFF500000);
-        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, 0xFF500000);
+        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, ACCENT_BAR_COLOR);
+        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, ACCENT_BAR_COLOR);
     }
 
     @Override
@@ -222,18 +222,6 @@ public class AssassinScreen extends Screen {
     @Override
     public void close() {
         this.client.setScreen(null);
-    }
-
-    private void drawCenteredTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
-        context.getMatrices().push();
-        context.getMatrices().translate(x, y, 0);
-        context.getMatrices().scale(1.5f, 1.5f, 1.5f);
-        context.drawCenteredTextWithShadow(font, text, 0, 0, 0xFFFFFF);
-        context.getMatrices().pop();
-    }
-
-    private void drawCenteredSubTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
-        context.drawCenteredTextWithShadow(font, text, x, y, 0xAAAAAA);
     }
 
     private List<Role> getAllGuessableRoles() {

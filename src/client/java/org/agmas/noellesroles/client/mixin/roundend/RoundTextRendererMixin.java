@@ -31,6 +31,10 @@ public abstract class RoundTextRendererMixin {
     private static final int CONTENT_CENTER_OFFSET_Y = -40;
     private static final int PLAYER_CARD_SPACING_X = 36;
     private static final int PLAYER_CARD_SPACING_Y = 28;
+    private static final int WINNER_SECTION_COLOR = 0x55AA55;
+    private static final int LOSER_SECTION_COLOR = 0xFF5555;
+    private static final int WINNER_TITLE_Y = 14;
+    private static final int SECTION_TITLE_GAP = 8;
     private static final int PLAYER_SECTION_START_Y = 16;
     private static final int LOSER_SECTION_GAP_Y = 14;
     private static final int SCREEN_SIDE_MARGIN = 24;
@@ -42,7 +46,6 @@ public abstract class RoundTextRendererMixin {
     private static final int SUBTITLE_TOP_Y = -4;
     private static final int ROLE_TEXT_MAX_WIDTH = 36;
     private static final int ROLE_TEXT_LINE_HEIGHT = 9;
-    private static final int MULTILINE_ROLE_TEXT_OFFSET_X = 0;
     private static final int MULTILINE_ROLE_TEXT_OFFSET_Y = -8;
     private static final int ROLE_TEXT_MAX_CHARS_PER_LINE = 4;
 
@@ -161,10 +164,10 @@ public abstract class RoundTextRendererMixin {
                 context,
                 textRenderer,
                 null,
-                0x55AA55,
+                WINNER_SECTION_COLOR,
                 winners,
                 winnerLayout,
-                14,
+                WINNER_TITLE_Y,
                 PLAYER_SECTION_START_Y,
                 cardScale
         );
@@ -174,7 +177,7 @@ public abstract class RoundTextRendererMixin {
                     context,
                     textRenderer,
                     Text.translatable("announcement.result.losers"),
-                    0xFF5555,
+                    LOSER_SECTION_COLOR,
                     losers,
                     loserLayout,
                     loserTitleY,
@@ -204,16 +207,11 @@ public abstract class RoundTextRendererMixin {
             Operation<Integer> original
     ) {
         List<OrderedText> wrappedLines = noellesroles$wrapRoleName(textRenderer, text);
-        if (wrappedLines.isEmpty()) {
+        if (wrappedLines.size() <= 1) {
             return original.call(context, textRenderer, text, x, y, color);
         }
 
-        if (wrappedLines.size() == 1) {
-            return original.call(context, textRenderer, text, x, y, color);
-        }
-
-        int lineCount = wrappedLines.size();
-        int centerX = x + textRenderer.getWidth(text) / 2 + MULTILINE_ROLE_TEXT_OFFSET_X;
+        int centerX = x + textRenderer.getWidth(text) / 2;
         int startY = y + MULTILINE_ROLE_TEXT_OFFSET_Y;
         int currentY = startY;
         int drawn = 0;
@@ -403,7 +401,7 @@ public abstract class RoundTextRendererMixin {
 
     @Unique
     private static int noellesroles$getOriginalLoserTitleY(int winnerRows) {
-        return PLAYER_SECTION_START_Y + Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y + 8;
+        return PLAYER_SECTION_START_Y + Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y + SECTION_TITLE_GAP;
     }
 
     @Unique
@@ -430,7 +428,7 @@ public abstract class RoundTextRendererMixin {
             SectionLayout loserLayout = noellesroles$createLayout(loserCount, maxColumns, extraColumns);
             int loserTitleY = PLAYER_SECTION_START_Y
                     + Math.max(1, winnerLayout.rows()) * PLAYER_CARD_SPACING_Y
-                    + 8;
+                    + SECTION_TITLE_GAP;
             int contentBottom = loserCount <= 0
                     ? noellesroles$getSectionBottom(PLAYER_SECTION_START_Y, winnerLayout.rows())
                     : noellesroles$getSectionBottom(loserTitleY + LOSER_SECTION_GAP_Y, loserLayout.rows());
@@ -444,7 +442,7 @@ public abstract class RoundTextRendererMixin {
         }
 
         if (fallbackPlan == null) {
-            return new float[]{0f, PLAYER_SECTION_START_Y + PLAYER_CARD_SPACING_Y + 8, 0f, 1.0f};
+            return new float[]{0f, PLAYER_SECTION_START_Y + PLAYER_CARD_SPACING_Y + SECTION_TITLE_GAP, 0f, 1.0f};
         }
 
         int fallbackExtraColumns = Math.round(fallbackPlan[0]);
@@ -486,7 +484,7 @@ public abstract class RoundTextRendererMixin {
             int availableBottom
     ) {
         float fixedHeight = hasLosers
-                ? PLAYER_SECTION_START_Y + 8 + LOSER_SECTION_GAP_Y
+                ? PLAYER_SECTION_START_Y + SECTION_TITLE_GAP + LOSER_SECTION_GAP_Y
                 : PLAYER_SECTION_START_Y;
         float scalableHeight = hasLosers
                 ? Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y
@@ -506,7 +504,7 @@ public abstract class RoundTextRendererMixin {
     private static int noellesroles$getLoserTitleY(int winnerRows, float cardScale) {
         return PLAYER_SECTION_START_Y
                 + noellesroles$scaleCoordinate(Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y, cardScale)
-                + 8;
+                + SECTION_TITLE_GAP;
     }
 
     @Unique
