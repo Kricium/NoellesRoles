@@ -28,6 +28,7 @@
     "silencer.SilencedEatingMixin",
     "silencer.SilencedDrinkingMixin",
     "wathe.GameRoundEndComponentMixin",
+    "silencer.SilencerPsychoStopMixin",
     "accessor.ItemCooldownManagerAccessor",
     "accessor.ItemCooldownEntryAccessor",
     "accessor.ServerItemCooldownManagerAccessor",
