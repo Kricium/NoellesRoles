@@ -5,9 +5,11 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "assassin.AssassinHudMixin",
+    "commander.CommanderHudMixin",
     "coroner.CoronerHudMixin",
     "corruptcop.CorruptCopHudMixin",
     "criminalreasoner.CriminalReasonerHudMixin",
+    "ferryman.FerrymanHudMixin",
     "jester.JesterHudMixin",
     "roundend.RoundTextRendererMixin",
     "morphling.MorphlingCapeRendererMixin",
@@ -26,6 +28,7 @@
     "recaller.RecallerHudMixin",
     "reporter.ReporterHudMixin",
     "roleinfo.RoleInfoHudMixin",
+    "saint.SaintHudMixin",
     "hunter.HunterClientTrapCullMixin",
     "riotpatrol.BuiltinModelItemRendererMixin",
     "riotpatrol.ItemRendererMixin",
@@ -40,7 +43,8 @@
     "vulture.VultureHudMixin",
     "silencer.SilencerHudMixin",
     "bartender.StimulationVignetteHudMixin",
-    "bartender.StimulationMoodMixin"
+    "bartender.StimulationMoodMixin",
+    "neutral.NeutralMoodMixin"
   ],
   "injectors": {
     "defaultRequire": 1
