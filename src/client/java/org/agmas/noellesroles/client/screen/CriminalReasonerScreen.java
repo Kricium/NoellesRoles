@@ -35,6 +35,7 @@ public class CriminalReasonerScreen extends Screen {
     private static final int SUSPECT_SECTION_GAP = 28;
     private static final int SUSPECT_VIEW_TOP_OFFSET = 72;
     private static final int SUSPECT_VIEW_BOTTOM_GAP = 4;
+    private static final int SUSPECT_CONTENT_SHIFT_Y = 10;
 
     private final ClientPlayerEntity player;
     private UUID selectedVictim;
@@ -112,16 +113,16 @@ public class CriminalReasonerScreen extends Screen {
         int aliveRows = Math.max(1, (int) Math.ceil((double) aliveSuspects.size() / SUSPECT_COLUMNS));
         int deadRows = Math.max(1, (int) Math.ceil((double) deadSuspects.size() / SUSPECT_COLUMNS));
         int totalContentRows = aliveRows + deadRows;
-        int contentHeight = totalContentRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP + SUSPECT_SECTION_HEADER_HEIGHT * 2;
+        int contentHeight = totalContentRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP + SUSPECT_SECTION_HEADER_HEIGHT * 2 + SUSPECT_CONTENT_SHIFT_Y;
         int viewTop = getSuspectViewTop();
         int viewBottom = getSuspectViewBottom();
         int viewHeight = Math.max(1, viewBottom - viewTop);
-        int startY = viewTop - suspectScrollOffset;
+        int startY = viewTop + SUSPECT_CONTENT_SHIFT_Y - suspectScrollOffset;
 
         // 第二步将活人与死人拆成上下两块，并在内容过长时整体滚动，避免顶到标题和按钮。
         suspectMaxScroll = Math.max(0, contentHeight - viewHeight);
         suspectScrollOffset = Math.max(0, Math.min(suspectScrollOffset, suspectMaxScroll));
-        startY = viewTop - suspectScrollOffset;
+        startY = viewTop + SUSPECT_CONTENT_SHIFT_Y - suspectScrollOffset;
 
         int aliveHeaderY = startY;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
