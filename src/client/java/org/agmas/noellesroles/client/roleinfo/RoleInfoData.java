@@ -12,11 +12,8 @@ public class RoleInfoData {
     public String factionKey;
     public String descriptionKey;
     public String winConditionKey;
+    public String roleId;
     public Map<String, SkillInfoData> skills;
-
-    public RoleInfoData() {
-        this.skills = new LinkedHashMap<>();
-    }
 
     public RoleInfoData(String nameKey, String factionKey, String descriptionKey, String winConditionKey) {
         this.nameKey = nameKey;
@@ -24,6 +21,11 @@ public class RoleInfoData {
         this.descriptionKey = descriptionKey;
         this.winConditionKey = winConditionKey;
         this.skills = new LinkedHashMap<>();
+    }
+
+    public RoleInfoData withRoleId(String roleId) {
+        this.roleId = roleId;
+        return this;
     }
 
     /**
@@ -44,6 +46,22 @@ public class RoleInfoData {
         skills.put(id, s);
         return this;
     }
+
+    /**
+     * Fluent shortcut to add a role skill using the default translation key pattern.
+     */
+    public RoleInfoData add_sk(String skillId, String triggerKeybind) {
+        if (roleId == null || roleId.isEmpty()) {
+            throw new IllegalStateException("roleId is required before add_sk; call withRoleId(...) first.");
+        }
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return skill(skillId, base + "name", base + "trigger", triggerKeybind, base + "effect");
+    }
+
+    public RoleInfoData add_sk(String skillId) {
+        return add_sk(skillId, null);
+    }
+
 
     public static class SkillInfoData {
         /** Translation key for skill name */
