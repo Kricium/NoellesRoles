@@ -80,21 +80,18 @@ public class CriminalReasonerScreen extends Screen {
         }
 
         // 第一阶段用死者列表驱动网格，让界面风格与刺客菜单保持一致。
-        int columns = 6;
-        int spacingX = 36;
-        int spacingY = 45;
-        int totalRows = (int) Math.ceil((double) victims.size() / columns);
-        int startX = centerX - ((Math.min(victims.size(), columns) * spacingX) / 2) + 9;
-        int startY = centerY - (totalRows * spacingY / 2) + 20;
+        int totalRows = getRowCount(victims.size(), SUSPECT_COLUMNS);
+        int startX = centerX - ((Math.min(victims.size(), SUSPECT_COLUMNS) * SUSPECT_SPACING_X) / 2) + 9;
+        int startY = centerY - (totalRows * SUSPECT_SPACING_Y / 2) + 20;
 
         for (int i = 0; i < victims.size(); i++) {
             UUID victimUuid = victims.get(i);
-            int row = i / columns;
-            int col = i % columns;
+            int row = i / SUSPECT_COLUMNS;
+            int col = i % SUSPECT_COLUMNS;
 
             addDrawableChild(new CriminalReasonerPlayerWidget(
-                    startX + col * spacingX,
-                    startY + row * spacingY,
+                    startX + col * SUSPECT_SPACING_X,
+                    startY + row * SUSPECT_SPACING_Y,
                     victimUuid,
                     selectedUuid -> {
                         selectedVictim = selectedUuid;
@@ -110,19 +107,18 @@ public class CriminalReasonerScreen extends Screen {
         List<UUID> deadSuspects = getDeadReasoningTargets(gameWorld);
 
         int centerX = this.width / 2;
-        int aliveRows = Math.max(1, (int) Math.ceil((double) aliveSuspects.size() / SUSPECT_COLUMNS));
-        int deadRows = Math.max(1, (int) Math.ceil((double) deadSuspects.size() / SUSPECT_COLUMNS));
+        int aliveRows = Math.max(1, getRowCount(aliveSuspects.size(), SUSPECT_COLUMNS));
+        int deadRows = Math.max(1, getRowCount(deadSuspects.size(), SUSPECT_COLUMNS));
         int totalContentRows = aliveRows + deadRows;
         int contentHeight = totalContentRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP + SUSPECT_SECTION_HEADER_HEIGHT * 2 + SUSPECT_CONTENT_SHIFT_Y;
         int viewTop = getSuspectViewTop();
         int viewBottom = getSuspectViewBottom();
         int viewHeight = Math.max(1, viewBottom - viewTop);
-        int startY = viewTop + SUSPECT_CONTENT_SHIFT_Y - suspectScrollOffset;
 
         // 第二步将活人与死人拆成上下两块，并在内容过长时整体滚动，避免顶到标题和按钮。
         suspectMaxScroll = Math.max(0, contentHeight - viewHeight);
         suspectScrollOffset = Math.max(0, Math.min(suspectScrollOffset, suspectMaxScroll));
-        startY = viewTop + SUSPECT_CONTENT_SHIFT_Y - suspectScrollOffset;
+        int startY = viewTop + SUSPECT_CONTENT_SHIFT_Y - suspectScrollOffset;
 
         int aliveHeaderY = startY;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
@@ -309,6 +305,10 @@ public class CriminalReasonerScreen extends Screen {
 
     private void drawCenteredSubTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
         context.drawCenteredTextWithShadow(font, text, x, y, 0xAAAAAA);
+    }
+
+    private int getRowCount(int itemCount, int columns) {
+        return (itemCount + columns - 1) / columns;
     }
 
     private int getSuspectViewTop() {
