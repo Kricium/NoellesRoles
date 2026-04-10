@@ -140,6 +140,7 @@ public class RoleInfoRegistry {
             case "pathogen" -> "roleinfo.win_condition.pathogen";
             case "corrupt_cop" -> "roleinfo.win_condition.corrupt_cop";
             case "taotie" -> "roleinfo.win_condition.taotie";
+            case "ferryman" -> "roleinfo.win_condition.ferryman";
             default -> "roleinfo.win_condition.default.neutral";
         };
     }
@@ -147,9 +148,9 @@ public class RoleInfoRegistry {
     private static String inferFaction(String roleId) {
         Set<String> killer = Set.of(
                 "morphling", "phantom", "swapper", "the_insane_damned_paranoid_killer", "bomber", "assassin",
-                "scavenger", "serial_killer", "silencer", "poisoner", "bandit"
+                "scavenger", "serial_killer", "silencer", "poisoner", "bandit", "hunter", "commander"
         );
-        Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "pathogen", "taotie");
+        Set<String> neutral = Set.of("jester", "vulture", "corrupt_cop", "pathogen", "taotie", "ferryman");
         if (killer.contains(roleId)) return "killer";
         if (neutral.contains(roleId)) return "neutral";
         return "innocent";
@@ -244,6 +245,14 @@ public class RoleInfoRegistry {
                 .addSkill("instinct", "instinct") // 本能
                 .addSkill("shop", "inventory")); // 商店
 
+        // 指挥官
+        RoleInfoData commander = r("noellesroles", "commander");
+        sk(commander, "noellesroles", "commander", "killer_id", null);
+        sk(commander, "noellesroles", "commander", "threat_mark", "ability");
+        sk(commander, "noellesroles", "commander", "last_bullet", null);
+        sk(commander, "noellesroles", "commander", "shop", "inventory");
+        m.put("noellesroles:commander", commander);
+
         // ===================== 乘客阵营 =====================
 
         // 列车长
@@ -317,6 +326,27 @@ public class RoleInfoRegistry {
                 .addSkill("stealth") // 免疫杀手本能透视
                 .addSkill("survival_moment")); // 触发生存时刻
 
+        RoleInfoData riotPatrol = r("noellesroles", "riot_patrol");
+        sk(riotPatrol, "noellesroles", "riot_patrol", "riot_shield", "use");
+        sk(riotPatrol, "noellesroles", "riot_patrol", "riot_fork", "use");
+        m.put("noellesroles:riot_patrol", riotPatrol);
+
+        RoleInfoData hunter = r("noellesroles", "hunter");
+        sk(hunter, "noellesroles", "hunter", "trap", "use");
+        sk(hunter, "noellesroles", "hunter", "shotgun", "inventory");
+        m.put("noellesroles:hunter", hunter);
+
+        RoleInfoData orthopedist = r("noellesroles", "orthopedist");
+        sk(orthopedist, "noellesroles", "orthopedist", "ancient_healing", "ability");
+        sk(orthopedist, "noellesroles", "orthopedist", "swift_stride", null);
+        m.put("noellesroles:orthopedist", orthopedist);
+
+        // 圣徒
+        RoleInfoData saint = r("noellesroles", "saint");
+        sk(saint, "noellesroles", "saint", "hellfire", null);
+        sk(saint, "noellesroles", "saint", "divine_focus", null);
+        m.put("noellesroles:saint", saint);
+
         // ===================== 中立阵营 =====================
 
         // 小丑
@@ -351,6 +381,11 @@ public class RoleInfoRegistry {
                 .addSkill("no_sanity") // 没有理智值
                 .addSkill("swallow_skill", "ability") // 吞噬玩家
                 .addSkill("moment")); // 触发饕餮时刻
+
+        RoleInfoData ferryman = r("noellesroles", "ferryman");
+        sk(ferryman, "noellesroles", "ferryman", "netherwalker", "ability");
+        sk(ferryman, "noellesroles", "ferryman", "ferry", "ability");
+        m.put("noellesroles:ferryman", ferryman);
 
         return m;
     }

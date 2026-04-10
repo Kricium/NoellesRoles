@@ -7,8 +7,10 @@ import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.client.WatheClient;
 import dev.doctor4t.wathe.entity.PlayerBodyEntity;
+import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -43,7 +45,9 @@ import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.client.screen.AssassinScreen;
+import org.agmas.noellesroles.client.screen.CommanderScreen;
 import org.agmas.noellesroles.client.screen.CriminalReasonerScreen;
+import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
@@ -54,6 +58,7 @@ import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
+import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
@@ -65,6 +70,7 @@ import org.agmas.noellesroles.client.music.WorldMusicManager;
 import org.agmas.noellesroles.reporter.ReporterPlayerComponent;
 import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
+import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
@@ -83,6 +89,7 @@ import java.util.*;
 import java.util.List;
 
 public class NoellesrolesClient implements ClientModInitializer {
+    public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
     public static KeyBinding roleInfoBind;
@@ -96,12 +103,17 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     public static Map<UUID, UUID> SHUFFLED_PLAYER_ENTRIES_CACHE = Maps.newHashMap();
 
+    /** 客户端玩家是否处于被静语状态（由服务端同步） */
+    public static boolean isClientSilenced = false;
+
     // 不可见物品提示：切换到不可见物品时提示
     private static boolean wasHoldingInvisible = false;
 
 
     @Override
     public void onInitializeClient() {
+        ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
+
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
         roleInfoBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".role_info", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
         // 加载角色信息配置
@@ -124,6 +136,18 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(EngineerDoorHighlightS2CPacket.ID,
                 (payload, context) -> context.client().execute(() ->
                         EngineerDoorHighlightRenderer.onPacketReceived(payload.doorPos())
+                ));
+
+        // 注册职业广播 S2C 包接收：复用对讲机渲染器在屏幕上方显示
+        ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.RoleBroadcastS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        dev.doctor4t.wathe.client.gui.WalkieTalkieBroadcastRenderer.addMessage(payload.message())
+                ));
+
+        // 注册静语状态同步 S2C 包接收
+        ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.SilencedStateS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        isClientSilenced = payload.silenced()
                 ));
 
         // 注册实体渲染器
@@ -271,6 +295,21 @@ public class NoellesrolesClient implements ClientModInitializer {
                     return GetInstinctHighlight.HighlightResult.always(Noellesroles.SERIAL_KILLER.color());
                 }
             }
+
+            if (gameWorldComponent.canUseKillerFeatures(localPlayer)) {
+                if (gameWorldComponent.isRole(player, Noellesroles.COMMANDER) && player != localPlayer) {
+                    return GetInstinctHighlight.HighlightResult.withKeybind(0x1B2C58, GetInstinctHighlight.HighlightResult.PRIORITY_HIGH);
+                }
+
+                for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
+                    PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
+                    if (commander == null) continue;
+                    CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
+                    if (commanderComp.isThreatTarget(player.getUuid())) {
+                        return GetInstinctHighlight.HighlightResult.always(0x7E9ED8);
+                    }
+                }
+            }
             return null;
         });
         // 注册 GetInstinctHighlight 监听器：秃鹫的本能高亮逻辑（尸体高亮）
@@ -287,6 +326,23 @@ public class NoellesrolesClient implements ClientModInitializer {
             return null;
         });
         // 注册 GetInstinctHighlight 监听器：秃鹫吃尸体后透视所有存活玩家
+        GetInstinctHighlight.EVENT.register(entity -> {
+            if (!(entity instanceof PlayerBodyEntity body)) return null;
+            if (MinecraftClient.getInstance().player == null) return null;
+            if (!WatheClient.isPlayerPlayingAndAlive()) return null;
+
+            PlayerEntity localPlayer = MinecraftClient.getInstance().player;
+            GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
+            if (!gameWorldComponent.isRole(localPlayer, Noellesroles.FERRYMAN)) return null;
+
+            FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(localPlayer);
+            if (ferrymanComponent.hasFerriedBody(body.getUuid())) return null;
+
+            int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
+            if (body.age >= decomposedAge) return null;
+
+            return GetInstinctHighlight.HighlightResult.withKeybind(Noellesroles.FERRYMAN.color());
+        });
         GetInstinctHighlight.EVENT.register(entity -> {
             if (!(entity instanceof PlayerEntity player) || player.isSpectator()) return null;
             if (MinecraftClient.getInstance().player == null) return null;
@@ -558,9 +614,27 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
 
                     // 记者角色按G发送标记数据包
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
+                        if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
+                        ClientPlayNetworking.send(new AbilityC2SPacket());
+                        return;
+                    }
+
                     if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.REPORTER)) {
                         if (crosshairTarget != null && crosshairTargetDistance <= 3.0) {
                             ClientPlayNetworking.send(new ReporterMarkC2SPacket(crosshairTarget.getUuid()));
+                        }
+                        return;
+                    }
+
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.COMMANDER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
+                            AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                            if (abilityComp.getCooldown() <= 0 && commanderComp.canMarkMore()) {
+                                MinecraftClient.getInstance().setScreen(new CommanderScreen((net.minecraft.client.network.ClientPlayerEntity) MinecraftClient.getInstance().player));
+                            }
                         }
                         return;
                     }
