@@ -2,8 +2,8 @@ package org.agmas.noellesroles.mixin.saint;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.network.ServerPlayerEntity;
+import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,10 +18,13 @@ public class SaintAttackBlockMixin {
         if (player.getWorld().isClient) {
             return;
         }
-        if (!SaintPlayerComponent.KEY.get(player).isKarmaLocked()) {
+        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
             return;
         }
-        player.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, SaintPlayerComponent.KEY.get(player).getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        if (!SaintPlayerComponent.KEY.get(serverPlayer).isKarmaLocked()) {
+            return;
+        }
+        SaintHelper.sendKarmaLockedMessage(serverPlayer);
         ci.cancel();
     }
 }

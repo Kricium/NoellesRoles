@@ -590,11 +590,8 @@ public class Noellesroles implements ModInitializer {
             return null;
         }));
         CanSeePoison.EVENT.register((player) -> {
-            GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
-            if (gameWorldComponent.isRole((PlayerEntity) player, Noellesroles.TOXICOLOGIST)) {
-                return true;
-            }
-            return false;
+            GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
+            return gameWorldComponent.isRole((PlayerEntity) player, Noellesroles.TOXICOLOGIST);
         });
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             Box box = new Box(hitResult.getBlockPos()).expand(1.5);
@@ -652,48 +649,29 @@ public class Noellesroles implements ModInitializer {
                 vulturePlayerComponent.reset();
                 vulturePlayerComponent.setBodiesRequired(gameWorldComponent.getAllPlayers().size() / 2);
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
-            }
-            if (role.equals(FERRYMAN)) {
+            } else if (role.equals(FERRYMAN)) {
                 FerrymanPlayerComponent ferrymanPlayerComponent = FerrymanPlayerComponent.KEY.get(player);
                 ferrymanPlayerComponent.reset();
                 ferrymanPlayerComponent.setFerriedRequired(Math.max(1, gameWorldComponent.getAllPlayers().size() / 2));
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
-            }
-            if (role.equals(CONDUCTOR)) {
+            } else if (role.equals(CONDUCTOR)) {
                 player.giveItemStack(ModItems.MASTER_KEY.getDefaultStack());
-            }
-            if (role.equals(AWESOME_BINGLUS)) {
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-                player.giveItemStack(WatheItems.NOTE.getDefaultStack());
-            }
-            if (role.equals(JESTER)) {
+            } else if (role.equals(AWESOME_BINGLUS)) {
+                for (int i = 0; i < 16; i++) {
+                    player.giveItemStack(WatheItems.NOTE.getDefaultStack());
+                }
+            } else if (role.equals(JESTER)) {
                 JesterPlayerComponent jesterComponent = JesterPlayerComponent.KEY.get(player);
                 jesterComponent.reset();
                 int totalPlayers = gameWorldComponent.getAllPlayers().size();
                 jesterComponent.psychoArmour = Math.max(1, totalPlayers / 5);
-            }
-            if (role.equals(CORRUPT_COP)) {
+            } else if (role.equals(CORRUPT_COP)) {
                 player.giveItemStack(WatheItems.REVOLVER.getDefaultStack());
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
                 // 初始化黑警时刻组件
                 CorruptCopPlayerComponent corruptCopComp = CorruptCopPlayerComponent.KEY.get(player);
                 corruptCopComp.initializeForGame(gameWorldComponent.getAllPlayers().size());
-            }
-            if (role.equals(PATHOGEN)) {
+            } else if (role.equals(PATHOGEN)) {
                 PathogenPlayerComponent pathogenComp = PathogenPlayerComponent.KEY.get(player);
                 pathogenComp.reset();
                 // Set base cooldown based on player count (6-11: 20s, 12-17: 15s, 18-24: 10s, 24+: 7s)
@@ -701,8 +679,7 @@ public class Noellesroles implements ModInitializer {
                 // Set initial cooldown to 10 seconds
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 10);
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
-            }
-            if (role.equals(ASSASSIN)) {
+            } else if (role.equals(ASSASSIN)) {
                 AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
                 assassinComp.reset();
                 int totalPlayers = gameWorldComponent.getAllPlayers().size();
@@ -710,61 +687,50 @@ public class Noellesroles implements ModInitializer {
                 // 刺客开局冷却30秒
                 assassinComp.setCooldown(GameConstants.getInTicks(0, 60));
                 // 刺客没有开局道具，只依靠猜测技能
-            }
-            if (role.equals(REPORTER)) {
+            } else if (role.equals(REPORTER)) {
                 ReporterPlayerComponent reporterComp = ReporterPlayerComponent.KEY.get(player);
                 reporterComp.reset();
                 // 记者开局冷却30秒
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 30);
-            }
-            if (role.equals(TOXICOLOGIST)) {
+            } else if (role.equals(TOXICOLOGIST)) {
                 // 毒理学家开局获得解毒剂，2分钟冷却
                 player.giveItemStack(ModItems.ANTIDOTE.getDefaultStack());
                 player.getItemCooldownManager().set(ModItems.ANTIDOTE, org.agmas.noellesroles.item.AntidoteItem.INITIAL_COOLDOWN_TICKS);
-            }
-            if (role.equals(SERIAL_KILLER)) {
+            } else if (role.equals(SERIAL_KILLER)) {
                 SerialKillerPlayerComponent serialKillerComp = SerialKillerPlayerComponent.KEY.get(player);
                 serialKillerComp.reset();
                 // 初始化透视目标
                 serialKillerComp.initializeTarget(gameWorldComponent);
-            }
-            if (role.equals(PROFESSOR)) {
+            } else if (role.equals(PROFESSOR)) {
                 // Professor starts with 1 Iron Man Vial
                 player.giveItemStack(ModItems.IRON_MAN_VIAL.getDefaultStack());
                 player.getItemCooldownManager().set(ModItems.IRON_MAN_VIAL, 20 * 60 * 3);
-            }
-            if (role.equals(ENGINEER)) {
+            } else if (role.equals(ENGINEER)) {
                 // 工程师开局获得维修工具，60秒开局冷却
                 EngineerPlayerComponent engineerComp = EngineerPlayerComponent.KEY.get(player);
                 engineerComp.reset();
                 player.giveItemStack(ModItems.REPAIR_TOOL.getDefaultStack());
                 player.getItemCooldownManager().set(ModItems.REPAIR_TOOL, GameConstants.getInTicks(0, 60));
-            }
-            if (role.equals(RIOT_PATROL)) {
+            } else if (role.equals(RIOT_PATROL)) {
                 RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(player);
                 riotPatrolComponent.reset();
                 player.giveItemStack(ModItems.RIOT_SHIELD.getDefaultStack());
                 player.giveItemStack(ModItems.RIOT_FORK.getDefaultStack());
-            }
-            if (role.equals(HUNTER)) {
+            } else if (role.equals(HUNTER)) {
                 HunterPlayerComponent hunterPlayerComponent = HunterPlayerComponent.KEY.get(player);
                 hunterPlayerComponent.reset();
-            }
-            if (role.equals(ORTHOPEDIST)) {
+            } else if (role.equals(ORTHOPEDIST)) {
                 OrthopedistPlayerComponent orthopedistPlayerComponent = OrthopedistPlayerComponent.KEY.get(player);
                 orthopedistPlayerComponent.reset();
-            }
-            if (role.equals(SAINT)) {
+            } else if (role.equals(SAINT)) {
                 SaintPlayerComponent saintPlayerComponent = SaintPlayerComponent.KEY.get(player);
                 saintPlayerComponent.reset();
                 gameWorldComponent.addToPreventGunPickup(player);
-            }
-            if (role.equals(COMMANDER)) {
+            } else if (role.equals(COMMANDER)) {
                 CommanderPlayerComponent commanderPlayerComponent = CommanderPlayerComponent.KEY.get(player);
                 commanderPlayerComponent.reset();
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 15);
-            }
-            if (role.equals(ATTENDANT)) {
+            } else if (role.equals(ATTENDANT)) {
                 // 乘务员开局获得一本房间信息书
                 ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
 
@@ -815,33 +781,26 @@ public class Noellesroles implements ModInitializer {
                 book.set(DataComponentTypes.WRITTEN_BOOK_CONTENT, bookContent);
 
                 player.giveItemStack(book);
-            }
-            if (role.equals(TAOTIE)) {
+            } else if (role.equals(TAOTIE)) {
                 TaotiePlayerComponent taotieComp = TaotiePlayerComponent.KEY.get(player);
                 taotieComp.initializeForGame(gameWorldComponent.getAllPlayers().size());
                 taotieComp.setSwallowCooldown(GameConstants.getInTicks(1, 0));
                 player.giveItemStack(ModItems.NEUTRAL_MASTER_KEY.getDefaultStack());
-            }
-            if (role.equals(BOMBER)) {
+            } else if (role.equals(BOMBER)) {
                 player.getItemCooldownManager().set(ModItems.TIMED_BOMB, 20 * 45);
-            }
-            if (role.equals(SILENCER)) {
+            } else if (role.equals(SILENCER)) {
                 // 静语者开局冷却45秒
                 abilityPlayerComponent.cooldown = GameConstants.getInTicks(0, 45);
-            }
-            if (role.equals(UNDERCOVER)) {
+            } else if (role.equals(UNDERCOVER)) {
                 player.giveItemStack(WatheItems.WALKIE_TALKIE.getDefaultStack());
-            }
-            if (role.equals(BODYGUARD)) {
+            } else if (role.equals(BODYGUARD)) {
                 BodyguardPlayerComponent bodyguardComp = BodyguardPlayerComponent.KEY.get(player);
                 bodyguardComp.reset();
-            }
-            if (role.equals(SURVIVAL_MASTER)) {
+            } else if (role.equals(SURVIVAL_MASTER)) {
                 SurvivalMasterPlayerComponent survivalComp = SurvivalMasterPlayerComponent.KEY.get(player);
                 survivalComp.reset();
                 survivalComp.initializeForGame(gameWorldComponent.getAllKillerTeamPlayers().size());
-            }
-            if (role.equals(POISONER)) {
+            } else if (role.equals(POISONER)) {
                 player.getItemCooldownManager().set(ModItems.POISON_NEEDLE, GameConstants.getInTicks(1, 0)); // 1分钟初始冷却
             }
         });

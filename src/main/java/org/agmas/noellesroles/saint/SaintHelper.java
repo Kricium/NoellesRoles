@@ -12,6 +12,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.ModSounds;
 import org.agmas.noellesroles.Noellesroles;
@@ -34,6 +35,12 @@ public final class SaintHelper {
         }
         Role role = gameWorldComponent.getRole(player);
         return role != null && !role.isInnocent();
+    }
+
+    public static void sendKarmaLockedMessage(ServerPlayerEntity player) {
+        SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(player);
+        player.sendMessage(Text.translatable("tip.saint.karma_locked",
+                Math.max(1, saintComponent.getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
     }
 
     public static void tryTriggerKarmaLock(ServerPlayerEntity player, GameWorldComponent gameWorldComponent) {
@@ -73,12 +80,25 @@ public final class SaintHelper {
         if (killer instanceof ServerPlayerEntity serverKiller) {
             SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(serverKiller);
             if (saintComponent.isKarmaLocked()) {
-                serverKiller.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20)), true);
+                sendKarmaLockedMessage(serverKiller);
                 return KillPlayer.KillResult.cancel();
             }
         }
 
         return null;
+    }
+
+    private static void sendSaintBellSound(ServerPlayerEntity player, float pitch) {
+        player.networkHandler.sendPacket(new PlaySoundS2CPacket(
+                RegistryEntry.of(ModSounds.SAINT_BELL),
+                SoundCategory.PLAYERS,
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                5.0F,
+                pitch,
+                player.getWorld().random.nextLong()
+        ));
     }
 
     /**
@@ -90,26 +110,8 @@ public final class SaintHelper {
                 && gameComponent.isRole(victim, Noellesroles.SAINT)
                 && shouldTrackKarma(serverKiller, gameComponent)) {
             SaintPlayerComponent.KEY.get(serverKiller).markKarma();
-            serverKiller.networkHandler.sendPacket(new PlaySoundS2CPacket(
-                    RegistryEntry.of(ModSounds.SAINT_BELL),
-                    SoundCategory.PLAYERS,
-                    serverKiller.getX(),
-                    serverKiller.getY(),
-                    serverKiller.getZ(),
-                    5.0F,
-                    1.0F,
-                    serverKiller.getWorld().random.nextLong()
-            ));
-            serverKiller.networkHandler.sendPacket(new PlaySoundS2CPacket(
-                    RegistryEntry.of(ModSounds.SAINT_BELL),
-                    SoundCategory.PLAYERS,
-                    serverKiller.getX(),
-                    serverKiller.getY(),
-                    serverKiller.getZ(),
-                    5.0F,
-                    0.97F,
-                    serverKiller.getWorld().random.nextLong()
-            ));
+            sendSaintBellSound(serverKiller, 1.0F);
+            sendSaintBellSound(serverKiller, 0.97F);
             serverKiller.sendMessage(Text.translatable("tip.saint.karmic_debt"), true);
             GameRecordManager.event("saint_karma")
                     .actor(serverVictim)

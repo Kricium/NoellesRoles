@@ -5,12 +5,11 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.ItemUsageContext;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
+import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,11 +23,10 @@ public class SaintItemUseMixin {
         if (!(user instanceof ServerPlayerEntity serverPlayer)) {
             return;
         }
-        SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(serverPlayer);
-        if (!saintComponent.isKarmaLocked()) {
+        if (!SaintPlayerComponent.KEY.get(serverPlayer).isKarmaLocked()) {
             return;
         }
-        serverPlayer.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        SaintHelper.sendKarmaLockedMessage(serverPlayer);
         cir.setReturnValue(TypedActionResult.fail(user.getStackInHand(hand)));
     }
 
@@ -37,11 +35,10 @@ public class SaintItemUseMixin {
         if (!(user instanceof ServerPlayerEntity serverPlayer)) {
             return;
         }
-        SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(serverPlayer);
-        if (!saintComponent.isKarmaLocked()) {
+        if (!SaintPlayerComponent.KEY.get(serverPlayer).isKarmaLocked()) {
             return;
         }
-        serverPlayer.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        SaintHelper.sendKarmaLockedMessage(serverPlayer);
         cir.setReturnValue(ActionResult.FAIL);
     }
 
@@ -50,11 +47,10 @@ public class SaintItemUseMixin {
         if (!(context.getPlayer() instanceof ServerPlayerEntity serverPlayer)) {
             return;
         }
-        SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(serverPlayer);
-        if (!saintComponent.isKarmaLocked()) {
+        if (!SaintPlayerComponent.KEY.get(serverPlayer).isKarmaLocked()) {
             return;
         }
-        serverPlayer.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        SaintHelper.sendKarmaLockedMessage(serverPlayer);
         cir.setReturnValue(ActionResult.FAIL);
     }
 }

@@ -8,24 +8,30 @@ import net.minecraft.server.world.ServerWorld;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 
+import java.util.Set;
+
 public final class RoleUtils {
     private RoleUtils() {}
 
+    private static final Set<Role> KILLER_ROLES = Set.of(
+            WatheRoles.KILLER,
+            Noellesroles.SWAPPER,
+            Noellesroles.PHANTOM,
+            Noellesroles.MORPHLING,
+            Noellesroles.THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES,
+            Noellesroles.BOMBER,
+            Noellesroles.ASSASSIN,
+            Noellesroles.SCAVENGER,
+            Noellesroles.SERIAL_KILLER,
+            Noellesroles.SILENCER,
+            Noellesroles.POISONER,
+            Noellesroles.BANDIT,
+            Noellesroles.HUNTER,
+            Noellesroles.COMMANDER
+    );
+
     public static boolean isActualKillerRole(Role role) {
-        return role == WatheRoles.KILLER
-                || role == Noellesroles.SWAPPER
-                || role == Noellesroles.PHANTOM
-                || role == Noellesroles.MORPHLING
-                || role == Noellesroles.THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES
-                || role == Noellesroles.BOMBER
-                || role == Noellesroles.ASSASSIN
-                || role == Noellesroles.SCAVENGER
-                || role == Noellesroles.SERIAL_KILLER
-                || role == Noellesroles.SILENCER
-                || role == Noellesroles.POISONER
-                || role == Noellesroles.BANDIT
-                || role == Noellesroles.HUNTER
-                || role == Noellesroles.COMMANDER;
+        return role != null && KILLER_ROLES.contains(role);
     }
 
     public static int countAliveAndNotSwallowed(ServerWorld serverWorld) {

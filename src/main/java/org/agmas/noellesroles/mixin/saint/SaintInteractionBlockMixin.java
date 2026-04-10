@@ -2,9 +2,8 @@ package org.agmas.noellesroles.mixin.saint;
 
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.network.ServerPlayerInteractionManager;
-import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
+import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +21,7 @@ public abstract class SaintInteractionBlockMixin {
         if (!SaintPlayerComponent.KEY.get(this.player).isKarmaLocked()) {
             return;
         }
-        this.player.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, SaintPlayerComponent.KEY.get(this.player).getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        SaintHelper.sendKarmaLockedMessage(this.player);
         cir.setReturnValue(ActionResult.FAIL);
     }
 
@@ -31,7 +30,7 @@ public abstract class SaintInteractionBlockMixin {
         if (!SaintPlayerComponent.KEY.get(this.player).isKarmaLocked()) {
             return;
         }
-        this.player.sendMessage(Text.translatable("tip.saint.karma_locked", Math.max(1, SaintPlayerComponent.KEY.get(this.player).getKarmaLockTicks() / 20)).formatted(Formatting.RED), true);
+        SaintHelper.sendKarmaLockedMessage(this.player);
         cir.setReturnValue(ActionResult.FAIL);
     }
 
