@@ -1,6 +1,7 @@
 package org.agmas.noellesroles.mixin.riotpatrol;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.index.WatheItems;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundEvents;
@@ -21,6 +22,17 @@ public class PlayerAttackMixin {
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void noellesroles$riotShieldKnockback(Entity target, CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
+        if (target instanceof PlayerEntity targetPlayer) {
+            RiotPatrolPlayerComponent targetComponent = RiotPatrolPlayerComponent.KEY.get(targetPlayer);
+            if (targetComponent.shouldBlockMeleeHit(player) && this.noellesroles$isBlockableMeleeAttack(player)) {
+                if (!player.getWorld().isClient) {
+                    targetComponent.playShieldBlockEffects(player);
+                }
+                ci.cancel();
+                return;
+            }
+        }
+
         if (!player.getMainHandStack().isOf(ModItems.RIOT_SHIELD)) {
             return;
         }
@@ -48,5 +60,10 @@ public class PlayerAttackMixin {
         }
 
         ci.cancel();
+    }
+
+    private boolean noellesroles$isBlockableMeleeAttack(PlayerEntity player) {
+        return player.getAttackCooldownProgress(0.5F) > 0.9F
+            || player.getMainHandStack().isOf(WatheItems.BAT);
     }
 }

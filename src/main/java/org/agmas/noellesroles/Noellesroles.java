@@ -537,11 +537,13 @@ public class Noellesroles implements ModInitializer {
             if (victim instanceof ServerPlayerEntity serverVictim3
                     && killer instanceof ServerPlayerEntity serverKiller
                     && (deathReason == GameConstants.DeathReasons.KNIFE
+                    || deathReason == GameConstants.DeathReasons.BAT
                     || deathReason == GameConstants.DeathReasons.GUN
                     || deathReason == GameConstants.DeathReasons.SHOT_INNOCENT
                     || deathReason == DEATH_REASON_THROWING_AXE)) {
                 RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(serverVictim3);
                 if (riotPatrolComponent.blocksAttacker(serverKiller)) {
+                    riotPatrolComponent.playShieldBlockEffects(serverKiller);
                     var deathBlockedEvent = GameRecordManager.event("death_blocked")
                         .actor(serverVictim3)
                         .put("block_reason", "riot_shield")
@@ -2299,6 +2301,18 @@ public class Noellesroles implements ModInitializer {
             if (actorUuid == null) return null;
             Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
             return Text.translatable("replay.item_use.noellesroles.throwing_axe", actorText);
+        });
+
+        Identifier riotForkId = Registries.ITEM.getId(ModItems.RIOT_FORK);
+        ReplayRegistry.registerItemUseFormatter(riotForkId, (event, match, world) -> {
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            UUID targetUuid = data.containsUuid("target") ? data.getUuid("target") : null;
+            if (actorUuid == null || targetUuid == null) return null;
+            Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            Text targetText = ReplayGenerator.formatPlayerName(targetUuid, playerInfoCache);
+            return Text.translatable("replay.item_use.noellesroles.riot_fork", actorText, targetText);
         });
 
         Identifier hunterTrapId = Registries.ITEM.getId(ModItems.HUNTER_TRAP);

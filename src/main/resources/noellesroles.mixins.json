@@ -20,6 +20,7 @@
     "equipment.EntityTrackerEntryMixin",
     "equipment.EntityTrackerMixin",
     "hunter.HunterPlayerMoveMixin",
+    "riotpatrol.LivingEntityRiotShieldMixin",
     "riotpatrol.PlayerAttackMixin",
     "taotie.SpectatorTeleportMixin",
     "taotie.SwallowedPlayerEntityMixin",
