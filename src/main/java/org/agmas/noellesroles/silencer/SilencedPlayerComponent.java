@@ -21,7 +21,7 @@ import java.util.UUID;
 /**
  * Component for players who have been silenced by a Silencer.
  * Tracks silence duration and the silencer who applied it.
- * Server-side only - no client sync needed.
+ * Syncs silenced state to client via {@link SilencedStateS2CPacket} for broadcast filtering.
  */
 public class SilencedPlayerComponent implements Component, ServerTickingComponent {
     public static final ComponentKey<SilencedPlayerComponent> KEY = ComponentRegistry.getOrCreate(
