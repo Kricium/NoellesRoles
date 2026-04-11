@@ -27,7 +27,15 @@ public abstract class SaintHudMixin {
         if (!saintComponent.isKarmaLocked()) return;
 
         Text line = Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20));
-        int drawY = context.getScaledWindowHeight() - getTextRenderer().fontHeight;
-        context.drawTextWithShadow(getTextRenderer(), line, context.getScaledWindowWidth() - getTextRenderer().getWidth(line), drawY, 0xF29A64);
+        int lineHeight = getTextRenderer().getWrappedLinesHeight(line, 999999);
+        int skillHudTopY = HudRenderHelper.getBottomRightSkillHudTopY(context, getTextRenderer(), player);
+        int drawY = skillHudTopY < context.getScaledWindowHeight()
+                ? skillHudTopY - lineHeight - 2
+                : context.getScaledWindowHeight() - lineHeight;
+        int drawX = context.getScaledWindowWidth()
+                - getTextRenderer().getWidth(line)
+                - HudRenderHelper.getBottomRightSkillHudRightPadding(player);
+
+        context.drawTextWithShadow(getTextRenderer(), line, drawX, drawY, 0xF29A64);
     }
 }

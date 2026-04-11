@@ -5,6 +5,15 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
 
 public final class RoleScreenHelper {
+    public static final int MENU_CONTENT_SHIFT_Y = 10;
+    public static final int MENU_BUTTON_Y_OFFSET = 42;
+
+    private static final int MENU_TITLE_SHIFT_Y = 5;
+    private static final int MENU_TITLE_OFFSET_Y = 115;
+    private static final int MENU_SUBTITLE_GAP_Y = 15;
+    private static final int MENU_VIEW_TOP_OFFSET = 72;
+    private static final int MENU_VIEW_BOTTOM_GAP = 4;
+
     private RoleScreenHelper() {
     }
 
@@ -27,5 +36,29 @@ public final class RoleScreenHelper {
     public static int getGridStartY(int itemCount, int columns, int spacingY, int centerY) {
         int totalRows = (itemCount + columns - 1) / columns;
         return centerY - (totalRows * spacingY / 2) + 20;
+    }
+
+    public static int getMenuTitleY(int centerY) {
+        return centerY - MENU_TITLE_OFFSET_Y - MENU_TITLE_SHIFT_Y;
+    }
+
+    public static int getMenuSubtitleY(int centerY) {
+        return getMenuTitleY(centerY) + MENU_SUBTITLE_GAP_Y;
+    }
+
+    public static int getMenuStatusY(int centerY) {
+        return getMenuSubtitleY(centerY) + MENU_SUBTITLE_GAP_Y;
+    }
+
+    public static int getMenuViewTop(int height) {
+        return height / 2 - MENU_VIEW_TOP_OFFSET - MENU_TITLE_SHIFT_Y;
+    }
+
+    public static int getMenuViewBottom(int height) {
+        return height - MENU_BUTTON_Y_OFFSET - MENU_VIEW_BOTTOM_GAP;
+    }
+
+    public static int getMenuButtonY(int height) {
+        return height - MENU_BUTTON_Y_OFFSET;
     }
 }

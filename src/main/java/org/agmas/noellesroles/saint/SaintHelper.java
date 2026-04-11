@@ -52,7 +52,7 @@ public final class SaintHelper {
         GameRecordManager.event("saint_karma")
                 .actor(player)
                 .put("action", "triggered")
-                .put("duration", Integer.toString(saintComponent.getKarmaLockTicks()))
+                .putInt("duration", saintComponent.getKarmaLockTicks())
                 .record();
         player.sendMessage(Text.translatable("tip.saint.karma_triggered", Math.max(1, saintComponent.getKarmaLockTicks() / 20)), true);
     }

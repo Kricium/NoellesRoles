@@ -23,11 +23,17 @@ import java.util.List;
 import java.util.UUID;
 
 public class CommanderScreen extends Screen {
+    private static final int TOP_BAR_HEIGHT = 20;
+    private static final int BOTTOM_BAR_HEIGHT = 20;
+    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
     private static final int COLUMNS = 6;
     private static final int SPACING_X = 36;
     private static final int SPACING_Y = 45;
+    private static final double SCROLL_STEP = 24.0;
 
     private final ClientPlayerEntity player;
+    private int scrollOffset;
+    private int maxScroll;
 
     public CommanderScreen(ClientPlayerEntity player) {
         super(Text.translatable("screen.commander.title"));
@@ -57,38 +63,41 @@ public class CommanderScreen extends Screen {
                 || commanderComp.isThreatTarget(uuid));
 
         int centerX = this.width / 2;
-        int centerY = this.height / 2;
-        int rows = (int) Math.ceil((double) Math.max(1, targets.size()) / COLUMNS);
-        int startX = centerX - ((Math.min(Math.max(targets.size(), 1), COLUMNS) * SPACING_X) / 2) + 9;
-        int startY = centerY - (rows * SPACING_Y / 2) + 20;
+        int rows = Math.max(1, (targets.size() + COLUMNS - 1) / COLUMNS);
+        int contentHeight = rows * SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
+        int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
+        int viewHeight = Math.max(1, viewBottom - viewTop);
+        maxScroll = Math.max(0, contentHeight - viewHeight);
+        scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
+        int startX = RoleScreenHelper.getGridStartX(targets.size(), COLUMNS, SPACING_X, centerX);
+        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - scrollOffset;
 
         for (int i = 0; i < targets.size(); i++) {
             UUID targetUuid = targets.get(i);
             int row = i / COLUMNS;
             int col = i % COLUMNS;
-            addDrawableChild(new CommanderTargetWidget(
+            CommanderTargetWidget widget = new CommanderTargetWidget(
                     startX + col * SPACING_X,
                     startY + row * SPACING_Y,
                     targetUuid,
                     selectedUuid -> {
                         ClientPlayNetworking.send(new CommanderMarkC2SPacket(selectedUuid));
                         this.close();
-                    }
-            ));
+                    });
+            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+            addDrawableChild(widget);
         }
 
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.commander.button.close"), button -> this.close())
-                .dimensions(centerX - 40, this.height - 42, 80, 20)
+                .dimensions(centerX - 40, RoleScreenHelper.getMenuButtonY(this.height), 80, 20)
                 .build());
     }
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        context.fill(0, 0, this.width, this.height, 0xF0000000);
         int accentColor = 0xFF2E006B;
-        context.fill(0, 0, this.width, 20, accentColor);
-        context.fill(0, this.height - 20, this.width, this.height, accentColor);
-
+        renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         int centerX = this.width / 2;
@@ -96,25 +105,48 @@ public class CommanderScreen extends Screen {
         TextRenderer font = MinecraftClient.getInstance().textRenderer;
         CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(this.player);
 
-        drawCenteredTitle(context, font, Text.translatable("screen.commander.title.select_target"), centerX, centerY - 92);
-        drawCenteredSubTitle(context, font,
+        RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.commander.title.select_target"), centerX, RoleScreenHelper.getMenuTitleY(centerY));
+        RoleScreenHelper.drawCenteredSubTitle(context, font,
                 Text.translatable("screen.commander.subtitle.remaining", commanderComp.getRemainingMarks()),
-                centerX, centerY - 76);
+                centerX, RoleScreenHelper.getMenuSubtitleY(centerY));
 
         if (children().size() <= 1) {
-            drawCenteredSubTitle(context, font, Text.translatable("screen.commander.empty"), centerX, centerY);
+            RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.commander.empty"), centerX, centerY);
         }
 
         List<String> markedNames = commanderComp.getThreatTargetNames();
         if (!markedNames.isEmpty()) {
             String joined = String.join(" / ", markedNames);
-            drawCenteredSubTitle(context, font, Text.translatable("screen.commander.current_targets", joined), centerX, this.height - 64);
+            RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.commander.current_targets", joined), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
+
+        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
+        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
     }
 
     @Override
     public boolean shouldPause() {
         return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (maxScroll > 0) {
+            int nextOffset = scrollOffset - (int) Math.round(verticalAmount * SCROLL_STEP);
+            nextOffset = Math.max(0, Math.min(nextOffset, maxScroll));
+            if (nextOffset != scrollOffset) {
+                scrollOffset = nextOffset;
+                this.clearAndInit();
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderBackground(context, mouseX, mouseY, delta);
+        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
     }
 
     @Override
@@ -124,15 +156,4 @@ public class CommanderScreen extends Screen {
         }
     }
 
-    private void drawCenteredTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
-        context.getMatrices().push();
-        context.getMatrices().translate(x, y, 0);
-        context.getMatrices().scale(1.5f, 1.5f, 1.5f);
-        context.drawCenteredTextWithShadow(font, text, 0, 0, 0xFFFFFF);
-        context.getMatrices().pop();
-    }
-
-    private void drawCenteredSubTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
-        context.drawCenteredTextWithShadow(font, text, x, y, 0xCAA1FF);
-    }
 }
