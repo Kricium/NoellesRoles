@@ -1,6 +1,7 @@
 package org.agmas.noellesroles.chat;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.game.GameFunctions;
 import net.fabricmc.fabric.api.message.v1.ServerMessageEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -66,7 +67,7 @@ public class RoleChatHandler {
             // 优先级3：大嗓门广播（仅在不在肚子里时生效）
             if (gwc.isRole(sender, Noellesroles.NOISEMAKER)) {
                 NoisemakerPlayerComponent noisemakerComp = NoisemakerPlayerComponent.KEY.get(sender);
-                if (noisemakerComp.isBroadcasting()) {
+                if (GameFunctions.isPlayerPlayingAndAlive(sender) && noisemakerComp.isBroadcasting()) {
                     broadcastToAll(sender, chatMessage, world, gwc);
                     return false; // 拦截原版聊天
                 }

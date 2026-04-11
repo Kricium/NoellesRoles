@@ -17,6 +17,7 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,6 +30,7 @@ public abstract class NoisemakerKillMixin {
     private static void noisemakerKill(ServerPlayerEntity victim, boolean spawnBody, ServerPlayerEntity killer, Identifier identifier, boolean force, CallbackInfo ci, @Local PlayerBodyEntity body) {
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
         if (gameWorldComponent.isRole(victim, Noellesroles.NOISEMAKER)) {
+           NoisemakerPlayerComponent.KEY.get(victim).reset();
            body.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, 20*60, 0));
            if (victim.getWorld() instanceof ServerWorld serverWorld) {
                RegistryEntry<SoundEvent> soundEntry = RegistryEntry.of(SoundEvents.ENTITY_ALLAY_DEATH);

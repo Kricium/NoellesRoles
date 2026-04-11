@@ -1,22 +1,33 @@
 package org.agmas.noellesroles.client.util;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.cca.PlayerShopComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
+import org.agmas.noellesroles.ModEffects;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
+import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
+import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
+import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
+import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
+import org.agmas.noellesroles.recaller.RecallerPlayerComponent;
+import org.agmas.noellesroles.reporter.ReporterPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencerPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.agmas.noellesroles.taotie.TaotiePlayerComponent;
+import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.jetbrains.annotations.Nullable;
 
 public final class HudRenderHelper {
@@ -58,10 +69,18 @@ public final class HudRenderHelper {
         if (gameWorld.isRole(player, Noellesroles.ASSASSIN))    return getAssassinHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.COMMANDER))   return getCommanderHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.CORRUPT_COP)) return getCorruptCopHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.CRIMINAL_REASONER)) return getCriminalReasonerHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.FERRYMAN))    return getFerrymanHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.MORPHLING))   return getMorphlingHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.NOISEMAKER))  return getNoisemakerHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.ORTHOPEDIST)) return getOrthopedistHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.PHANTOM))     return getPhantomHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.PATHOGEN))    return getPathogenHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.RECALLER))    return getRecallerHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.REPORTER))    return getReporterHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.SILENCER))    return getSilencerHudTopY(renderer, player, bottom);
         if (gameWorld.isRole(player, Noellesroles.TAOTIE))      return getTaotieHudTopY(renderer, player, bottom);
+        if (gameWorld.isRole(player, Noellesroles.VULTURE))     return getVultureHudTopY(renderer, player, bottom);
 
         return bottom;
     }
@@ -160,6 +179,57 @@ public final class HudRenderHelper {
         return stackLine(drawY, renderer, corpseHint, 0);
     }
 
+    private static int getPhantomHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(player);
+        Text line = Text.translatable("tip.phantom", getAbilityKeyText());
+
+        var invisEffect = player.getStatusEffect(StatusEffects.INVISIBILITY);
+        if (invisEffect != null) {
+            line = Text.translatable("tip.phantom.active", invisEffect.getDuration() / 20);
+        } else if (abilityComp.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", abilityComp.getCooldown() / 20);
+        }
+
+        return stackLine(bottom, renderer, line, 0);
+    }
+
+    private static int getCriminalReasonerHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        CriminalReasonerPlayerComponent comp = CriminalReasonerPlayerComponent.KEY.get(player);
+        AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(player);
+
+        Text cooldownText = abilityComp.getCooldown() > 0
+                ? Text.translatable("tip.noellesroles.cooldown", abilityComp.getCooldown() / 20)
+                : Text.translatable("hud.criminal_reasoner.press_key_hint", getAbilityKeyName());
+
+        int requiredReasoningCount = Math.floorDiv(GameWorldComponent.KEY.get(player.getWorld()).getAllPlayers().size(), 3);
+        Text progressText = Text.translatable(
+                "hud.criminal_reasoner.progress",
+                comp.getSuccessfulReasoningCount(),
+                requiredReasoningCount
+        );
+
+        int drawY = stackLine(bottom, renderer, cooldownText, 0);
+        return stackLine(drawY, renderer, progressText, 0);
+    }
+
+    private static int getFerrymanHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        FerrymanPlayerComponent ferryman = FerrymanPlayerComponent.KEY.get(player);
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(player);
+
+        Text line;
+        if (ferryman.isReactionActive()) {
+            line = Text.translatable("tip.ferryman.reaction_ready", getAbilityKeyText());
+        } else if (ability.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", ability.getCooldown() / 20);
+        } else if (NoellesrolesClient.targetBody != null) {
+            line = Text.translatable("tip.ferryman.ferry", getAbilityKeyText());
+        } else {
+            line = Text.translatable("tip.ferryman.progress", ferryman.getFerriedCount(), ferryman.getFerriedRequired(), ferryman.getBlessingStacks());
+        }
+
+        return stackLine(bottom, renderer, line, 0);
+    }
+
     private static int getPathogenHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
         AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(player);
         Text line = null;
@@ -180,6 +250,45 @@ public final class HudRenderHelper {
         }
 
         return line == null ? bottom : stackLine(bottom, renderer, line, 0);
+    }
+
+    private static int getNoisemakerHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(player);
+        NoisemakerPlayerComponent noisemakerComp = NoisemakerPlayerComponent.KEY.get(player);
+
+        Text line = Text.translatable("tip.noisemaker", getAbilityKeyText());
+        if (noisemakerComp.isBroadcasting()) {
+            line = Text.translatable("tip.noisemaker.active", noisemakerComp.getBroadcastTicksRemaining() / 20);
+        } else if (abilityComp.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", abilityComp.getCooldown() / 20);
+        }
+
+        return stackLine(bottom, renderer, line, 0);
+    }
+
+    private static int getOrthopedistHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(player);
+        Text line;
+
+        if (ability.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", ability.getCooldown() / 20);
+        } else {
+            PlayerEntity target = NoellesrolesClient.crosshairTarget;
+            if (target != null && NoellesrolesClient.crosshairTargetDistance <= 3.0 && player.canSee(target)) {
+                HunterPlayerComponent hunter = HunterPlayerComponent.KEY.get(target);
+                if (hunter.getFractureLayers() > 0) {
+                    line = Text.translatable("tip.orthopedist.heal", getAbilityKeyText(), target.getName());
+                } else if (!target.hasStatusEffect(ModEffects.BONE_SETTING)) {
+                    line = Text.translatable("tip.orthopedist.buff", getAbilityKeyText(), target.getName());
+                } else {
+                    line = Text.translatable("tip.orthopedist.target_active", target.getName());
+                }
+            } else {
+                line = Text.translatable("tip.orthopedist.no_target");
+            }
+        }
+
+        return stackLine(bottom, renderer, line, 0);
     }
 
     private static int getSilencerHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
@@ -206,6 +315,53 @@ public final class HudRenderHelper {
             line = Text.translatable("tip.silencer.ready", getAbilityKeyName());
         }
         return stackLine(bottom, renderer, line, 0);
+    }
+
+    private static int getRecallerHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(player);
+        RecallerPlayerComponent recaller = RecallerPlayerComponent.KEY.get(player);
+        PlayerShopComponent shop = PlayerShopComponent.KEY.get(player);
+
+        Text line = Text.translatable("tip.recaller.teleport", getAbilityKeyText());
+        if (!recaller.placed) {
+            line = Text.translatable("tip.recaller.place", getAbilityKeyText());
+        } else if (shop.balance < 100) {
+            line = Text.translatable("tip.recaller.not_enough_money");
+        }
+
+        if (ability.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", ability.getCooldown() / 20);
+        }
+
+        return stackLine(bottom, renderer, line, 0);
+    }
+
+    private static int getReporterHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(player);
+        ReporterPlayerComponent reporter = ReporterPlayerComponent.KEY.get(player);
+        int drawY = bottom;
+
+        if (reporter.hasMarkedTarget()) {
+            PlayerEntity markedTarget = player.getWorld().getPlayerByUuid(reporter.getMarkedTarget());
+            if (markedTarget != null) {
+                Text line2 = Text.translatable("tip.reporter.marked", markedTarget.getName());
+                drawY = stackLine(drawY, renderer, line2, 0);
+            }
+        }
+
+        Text line1;
+        if (ability.getCooldown() > 0) {
+            line1 = Text.translatable("tip.noellesroles.cooldown", ability.getCooldown() / 20);
+        } else {
+            PlayerEntity target = NoellesrolesClient.crosshairTarget;
+            if (target != null && NoellesrolesClient.crosshairTargetDistance <= 3.0) {
+                line1 = Text.translatable("tip.reporter.target", target.getName(), getAbilityKeyText());
+            } else {
+                line1 = Text.translatable("tip.reporter.no_target");
+            }
+        }
+
+        return stackLine(drawY, renderer, line1, 0);
     }
 
     private static int getTaotieHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
@@ -236,6 +392,18 @@ public final class HudRenderHelper {
             }
         }
         return drawY;
+    }
+
+    private static int getVultureHudTopY(TextRenderer renderer, ClientPlayerEntity player, int bottom) {
+        VulturePlayerComponent vulture = VulturePlayerComponent.KEY.get(player);
+        AbilityPlayerComponent ability = AbilityPlayerComponent.KEY.get(player);
+
+        Text line = Text.translatable("tip.vulture", vulture.getBodiesEaten(), vulture.getBodiesRequired());
+        if (ability.getCooldown() > 0) {
+            line = Text.translatable("tip.noellesroles.cooldown", ability.getCooldown() / 20);
+        }
+
+        return stackLine(bottom, renderer, line, 0);
     }
 
     private static String getAbilityKeyName() {
