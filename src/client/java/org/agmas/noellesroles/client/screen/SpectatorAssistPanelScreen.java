@@ -69,7 +69,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         pendingRequestId = NEXT_REQUEST_ID++;
         serverSyncByUuid.clear();
         rebuildEntries(client, gwc);
-        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId));
+        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId, -1L));
         nextRefreshTick = client.world.getTime() + REFRESH_INTERVAL_TICKS;
 
         int buttonY = this.height - 30;
@@ -299,7 +299,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         long nowTick = client.world.getTime();
         if (nowTick >= nextRefreshTick) {
             pendingRequestId = NEXT_REQUEST_ID++;
-            ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId));
+            ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId, -1L));
             nextRefreshTick = nowTick + REFRESH_INTERVAL_TICKS;
         }
     }

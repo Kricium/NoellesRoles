@@ -479,6 +479,7 @@
   "screen.spectator_assist_panel.death_with_age": "死于 %s，%s 秒前",
   "screen.spectator_assist_panel.replay_title": "回放记录",
   "screen.spectator_assist_panel.replay_summary_none": "暂无与该玩家相关的回放记录",
+  "screen.spectator_assist_panel.toast.kill": "%s 使用%s击杀了 %s",
 
   "roleinfo.skill.assassin.guess_identity.effect": "打开一个猜测界面，你可以选择一名玩家并猜测他的身份。如果成功识破，则立即刺杀该玩家，否则刺杀失败，你立即死亡。",
   "roleinfo.skill.assassin.guess_identity.name": "识破",

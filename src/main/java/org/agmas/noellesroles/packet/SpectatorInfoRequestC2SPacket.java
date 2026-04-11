@@ -7,7 +7,7 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.Noellesroles;
 
-public record SpectatorInfoRequestC2SPacket(long requestId) implements CustomPayload {
+public record SpectatorInfoRequestC2SPacket(long requestId, long lastSeenReplayTick) implements CustomPayload {
     public static final Id<SpectatorInfoRequestC2SPacket> ID =
             new Id<>(Identifier.of(Noellesroles.MOD_ID, "spectator_info_request"));
 
@@ -21,10 +21,11 @@ public record SpectatorInfoRequestC2SPacket(long requestId) implements CustomPay
 
     private void write(PacketByteBuf buf) {
         buf.writeVarLong(requestId);
+        buf.writeVarLong(lastSeenReplayTick);
     }
 
     private static SpectatorInfoRequestC2SPacket read(PacketByteBuf buf) {
-        return new SpectatorInfoRequestC2SPacket(buf.readVarLong());
+        return new SpectatorInfoRequestC2SPacket(buf.readVarLong(), buf.readVarLong());
     }
 }
 

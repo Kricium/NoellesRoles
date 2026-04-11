@@ -41,6 +41,7 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
+import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
@@ -52,10 +53,11 @@ import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
-import org.agmas.noellesroles.client.render.EngineerDoorHighlightRenderer;
+import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
@@ -110,6 +112,8 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     // 不可见物品提示：切换到不可见物品时提示
     private static boolean wasHoldingInvisible = false;
+    private static long spectatorReplayPollRequestId = 10_000L;
+    private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
 
 
     @Override
@@ -154,9 +158,10 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册观战信息同步 S2C 包接收
         ClientPlayNetworking.registerGlobalReceiver(SpectatorInfoSyncS2CPacket.ID,
-                (payload, context) -> context.client().execute(() ->
-                        SpectatorAssistPanelScreen.applyServerSync(payload)
-                ));
+                (payload, context) -> context.client().execute(() -> {
+                    SpectatorAssistPanelScreen.applyServerSync(payload);
+                    SpectatorReplayToastOverlay.onSpectatorSync(payload);
+                }));
 
         // 注册实体渲染器
         EntityRendererRegistry.register(NoellesRolesEntities.POISON_GAS_BOMB_ENTITY, FlyingItemEntityRenderer::new);
@@ -577,6 +582,30 @@ public class NoellesrolesClient implements ClientModInitializer {
                         crosshairTarget = sleepingPlayer.get();
                         crosshairTargetDistance = eyePos.distanceTo(blockHitResult.getPos());
                     }
+                }
+            }
+
+            ClientPlayerEntity spectatorCandidate = MinecraftClient.getInstance().player;
+            if (spectatorCandidate != null) {
+                GameWorldComponent spectatorWorld = GameWorldComponent.KEY.get(spectatorCandidate.getWorld());
+                boolean isDeadSpectator = spectatorCandidate.isSpectator()
+                        && spectatorWorld.isPlayerDead(spectatorCandidate.getUuid())
+                        && spectatorWorld.hasAnyRole(spectatorCandidate);
+                if (isDeadSpectator) {
+                    long nowTick = spectatorCandidate.getWorld().getTime();
+                    if (nextSpectatorReplayPollTick == Long.MAX_VALUE) {
+                        nextSpectatorReplayPollTick = nowTick;
+                    }
+                    if (nowTick >= nextSpectatorReplayPollTick) {
+                        spectatorReplayPollRequestId++;
+                        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(
+                                spectatorReplayPollRequestId,
+                                SpectatorReplayToastOverlay.getLastSeenReplayTick()
+                        ));
+                        nextSpectatorReplayPollTick = nowTick + 20L;
+                    }
+                } else {
+                    nextSpectatorReplayPollTick = Long.MAX_VALUE;
                 }
             }
 

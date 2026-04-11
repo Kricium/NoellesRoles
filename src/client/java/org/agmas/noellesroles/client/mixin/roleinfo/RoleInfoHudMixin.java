@@ -9,6 +9,7 @@ import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -27,6 +28,7 @@ public abstract class RoleInfoHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     public void renderAssistInterfaceHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         MinecraftClient mc = MinecraftClient.getInstance();
+        SpectatorReplayToastOverlay.render(context, getTextRenderer());
         if (mc.player == null) return;
         // Don't show hint when a screen is open
         if (mc.currentScreen != null) return;

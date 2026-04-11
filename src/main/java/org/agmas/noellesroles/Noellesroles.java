@@ -1496,12 +1496,15 @@ public class Noellesroles implements ModInitializer {
                     match != null ? ReplayGenerator.getPlayerInfoCache(match) : Map.of();
             // Spectator sync formats events directly through ReplayRegistry, so refresh default formatter cache here.
             DefaultReplayFormatters.setPlayerInfoCache(playerInfoCache);
+            List<SpectatorInfoSyncS2CPacket.ReplayToast> replayToasts =
+                    buildSpectatorReplayToasts(match, payload.lastSeenReplayTick(), playerInfoCache, requester.getServerWorld());
+            long latestReplayTick = getLatestReplayTick(match);
 
             List<SpectatorInfoSyncS2CPacket.Entry> entries = new ArrayList<>();
             for (UUID uuid : gameWorld.getAllPlayers()) {
                 entries.add(buildSpectatorEntry(uuid, match, requester.getServerWorld(), playerInfoCache));
             }
-            ServerPlayNetworking.send(requester, new SpectatorInfoSyncS2CPacket(payload.requestId(), matchStartTick, entries));
+            ServerPlayNetworking.send(requester, new SpectatorInfoSyncS2CPacket(payload.requestId(), matchStartTick, latestReplayTick, entries, replayToasts));
         });
 
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.MORPH_PACKET, (payload, context) -> {
@@ -2295,6 +2298,64 @@ public class Noellesroles implements ModInitializer {
             return player.containsUuid("uuid") && targetUuid.equals(player.getUuid("uuid"));
         }
         return false;
+    }
+
+    private static long getLatestReplayTick(GameRecordManager.MatchRecord match) {
+        if (match == null || match.getEvents().isEmpty()) {
+            return -1L;
+        }
+        return match.getEvents().stream()
+                .mapToLong(GameRecordEvent::worldTick)
+                .max()
+                .orElse(-1L);
+    }
+
+    private static List<SpectatorInfoSyncS2CPacket.ReplayToast> buildSpectatorReplayToasts(GameRecordManager.MatchRecord match,
+                                                                                            long lastSeenReplayTick,
+                                                                                            Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache,
+                                                                                            ServerWorld world) {
+        if (match == null) {
+            return List.of();
+        }
+
+        List<SpectatorInfoSyncS2CPacket.ReplayToast> toasts = new ArrayList<>();
+        List<GameRecordEvent> events = new ArrayList<>(match.getEvents());
+        events.sort(Comparator.comparingLong(GameRecordEvent::worldTick));
+
+        for (GameRecordEvent event : events) {
+            if (event.worldTick() <= lastSeenReplayTick) {
+                continue;
+            }
+            if (!GameRecordTypes.DEATH.equals(event.type())) {
+                continue;
+            }
+
+            NbtCompound data = event.data();
+            if (!data.containsUuid("actor") || !data.containsUuid("target")) {
+                continue;
+            }
+
+            UUID actorUuid = data.getUuid("actor");
+            UUID targetUuid = data.getUuid("target");
+            ReplayGenerator.PlayerInfo actorInfo = playerInfoCache.get(actorUuid);
+            ReplayGenerator.PlayerInfo targetInfo = playerInfoCache.get(targetUuid);
+            String actorRoleKey = actorInfo != null ? actorInfo.roleTranslationKey() : "screen.spectator_assist_panel.role_unknown";
+            String targetRoleKey = targetInfo != null ? targetInfo.roleTranslationKey() : "screen.spectator_assist_panel.role_unknown";
+            String deathReasonRaw = data.getString("death_reason");
+
+            toasts.add(new SpectatorInfoSyncS2CPacket.ReplayToast(
+                    event.worldTick(),
+                    actorRoleKey,
+                    targetRoleKey,
+                    deathReasonRaw == null ? "" : deathReasonRaw
+            ));
+        }
+
+        int maxToasts = 6;
+        if (toasts.size() > maxToasts) {
+            return List.copyOf(toasts.subList(toasts.size() - maxToasts, toasts.size()));
+        }
+        return toasts;
     }
 
     /**

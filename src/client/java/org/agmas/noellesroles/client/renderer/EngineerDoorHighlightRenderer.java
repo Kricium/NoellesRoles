@@ -1,4 +1,4 @@
-package org.agmas.noellesroles.client.render;
+package org.agmas.noellesroles.client.renderer;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.doctor4t.wathe.block.SmallDoorBlock;
@@ -223,3 +223,4 @@ public class EngineerDoorHighlightRenderer {
         }
     }
 }
+
