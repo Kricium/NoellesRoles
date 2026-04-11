@@ -19,7 +19,10 @@ import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.index.WatheItems;
 import dev.doctor4t.wathe.index.WatheSounds;
 import dev.doctor4t.wathe.record.GameRecordManager;
+import dev.doctor4t.wathe.record.GameRecordEvent;
+import dev.doctor4t.wathe.record.GameRecordTypes;
 import dev.doctor4t.wathe.record.replay.ReplayGenerator;
+import dev.doctor4t.wathe.record.replay.DefaultReplayFormatters;
 import dev.doctor4t.wathe.record.replay.ReplayEventFormatter;
 import dev.doctor4t.wathe.record.replay.ReplayRegistry;
 import net.fabricmc.api.ModInitializer;
@@ -84,6 +87,8 @@ import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
 import org.agmas.noellesroles.packet.RoleBroadcastS2CPacket;
 import org.agmas.noellesroles.packet.SilencedStateS2CPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
 import org.agmas.noellesroles.reporter.ReporterPlayerComponent;
 import org.agmas.noellesroles.reporter.ReporterShopHandler;
@@ -343,9 +348,11 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(CriminalReasonerReasonC2SPacket.ID, CriminalReasonerReasonC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(TaotieSwallowC2SPacket.ID, TaotieSwallowC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SilencerSilenceC2SPacket.ID, SilencerSilenceC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(SpectatorInfoRequestC2SPacket.ID, SpectatorInfoRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SilencedStateS2CPacket.ID, SilencedStateS2CPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(SpectatorInfoSyncS2CPacket.ID, SpectatorInfoSyncS2CPacket.CODEC);
 
         registerEvents();
 
@@ -1473,6 +1480,30 @@ public class Noellesroles implements ModInitializer {
     }
 
     public void registerPackets() {
+        ServerPlayNetworking.registerGlobalReceiver(SpectatorInfoRequestC2SPacket.ID, (payload, context) -> {
+            ServerPlayerEntity requester = context.player();
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
+            if (!requester.isSpectator() || !gameWorld.isPlayerDead(requester.getUuid()) || !gameWorld.hasAnyRole(requester)) {
+                return;
+            }
+
+            GameRecordManager.MatchRecord match = GameRecordManager.getCurrentMatch();
+            if (match == null) {
+                match = GameRecordManager.getLastFinishedMatch();
+            }
+            long matchStartTick = match != null ? match.getStartTick() : -1L;
+            Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache =
+                    match != null ? ReplayGenerator.getPlayerInfoCache(match) : Map.of();
+            // Spectator sync formats events directly through ReplayRegistry, so refresh default formatter cache here.
+            DefaultReplayFormatters.setPlayerInfoCache(playerInfoCache);
+
+            List<SpectatorInfoSyncS2CPacket.Entry> entries = new ArrayList<>();
+            for (UUID uuid : gameWorld.getAllPlayers()) {
+                entries.add(buildSpectatorEntry(uuid, match, requester.getServerWorld(), playerInfoCache));
+            }
+            ServerPlayNetworking.send(requester, new SpectatorInfoSyncS2CPacket(payload.requestId(), matchStartTick, entries));
+        });
+
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.MORPH_PACKET, (payload, context) -> {
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(context.player());
@@ -2193,6 +2224,77 @@ public class Noellesroles implements ModInitializer {
                     true
             );
         });
+    }
+
+    private static SpectatorInfoSyncS2CPacket.Entry buildSpectatorEntry(UUID targetUuid,
+                                                                         GameRecordManager.MatchRecord match,
+                                                                         ServerWorld world,
+                                                                         Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache) {
+        if (match == null) {
+            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1, List.of());
+        }
+
+        long nowTick = world.getTime();
+        String deathReasonRaw = "";
+        long deathTick = -1L;
+        List<String> replayLines = new ArrayList<>();
+        ReplayGenerator.PlayerInfo playerInfo = playerInfoCache.get(targetUuid);
+        String roleTranslationKey = playerInfo != null ? playerInfo.roleTranslationKey() : "";
+        int roleColor = playerInfo != null ? (0xFF000000 | playerInfo.roleColor()) : 0xFFAAAAAA;
+        List<GameRecordEvent> events = new ArrayList<>(match.getEvents());
+        events.sort(Comparator.comparingLong(GameRecordEvent::worldTick));
+
+        for (GameRecordEvent event : events) {
+            if (GameRecordTypes.DEATH.equals(event.type())
+                    && event.data().containsUuid("target")
+                    && targetUuid.equals(event.data().getUuid("target"))) {
+                deathReasonRaw = event.data().getString("death_reason");
+                deathTick = event.worldTick();
+            }
+
+            if (!isReplayEventRelatedToPlayer(targetUuid, event)) {
+                continue;
+            }
+
+            ReplayEventFormatter formatter = ReplayRegistry.getFormatter(event.type());
+            if (formatter == null) {
+                continue;
+            }
+
+            Text formatted = formatter.format(event, match, world);
+            if (formatted == null) {
+                continue;
+            }
+
+            String time = ReplayGenerator.formatTime(event.worldTick(), match.getStartTick());
+            replayLines.add("[" + time + "]" + formatted.getString());
+        }
+
+        int deathAgeSeconds = deathTick >= 0 ? (int) Math.max(0, (nowTick - deathTick) / 20L) : -1;
+
+        return new SpectatorInfoSyncS2CPacket.Entry(
+                targetUuid,
+                roleTranslationKey,
+                roleColor,
+                deathReasonRaw == null ? "" : deathReasonRaw,
+                deathAgeSeconds,
+                replayLines
+        );
+    }
+
+    private static boolean isReplayEventRelatedToPlayer(UUID targetUuid, GameRecordEvent event) {
+        NbtCompound data = event.data();
+        if (data.containsUuid("actor") && targetUuid.equals(data.getUuid("actor"))) {
+            return true;
+        }
+        if (data.containsUuid("target") && targetUuid.equals(data.getUuid("target"))) {
+            return true;
+        }
+        if (GameRecordTypes.ROLE_ASSIGNED.equals(event.type()) && data.contains("player")) {
+            NbtCompound player = data.getCompound("player");
+            return player.containsUuid("uuid") && targetUuid.equals(player.getUuid("uuid"));
+        }
+        return false;
     }
 
     /**

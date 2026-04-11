@@ -42,6 +42,7 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
+import org.agmas.noellesroles.client.screen.SpectatorRoleInfoScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.client.screen.AssassinScreen;
@@ -59,6 +60,7 @@ import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
@@ -148,6 +150,12 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.SilencedStateS2CPacket.ID,
                 (payload, context) -> context.client().execute(() ->
                         isClientSilenced = payload.silenced()
+                ));
+
+        // 注册观战信息同步 S2C 包接收
+        ClientPlayNetworking.registerGlobalReceiver(SpectatorInfoSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        SpectatorRoleInfoScreen.applyServerSync(payload)
                 ));
 
         // 注册实体渲染器
@@ -680,15 +688,19 @@ public class NoellesrolesClient implements ClientModInitializer {
                 if (MinecraftClient.getInstance().player == null) {
                     return;
                 }
-                if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) {
-                    return;
-                }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
                 if (!gwc.hasAnyRole(MinecraftClient.getInstance().player)) {
                     return;
                 }
                 if (MinecraftClient.getInstance().currentScreen == null) {
-                    MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                    boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
+                    boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator();
+
+                    if (isAlive) {
+                        MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                    } else if (isDeadSpectator) {
+                        MinecraftClient.getInstance().setScreen(new SpectatorRoleInfoScreen());
+                    }
                 };
             }
 

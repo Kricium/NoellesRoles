@@ -28,18 +28,20 @@ public abstract class RoleInfoHudMixin {
     public void renderRoleInfoHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
-        if (!GameFunctions.isPlayerPlayingAndAlive(mc.player)) return;
         // Don't show hint when a screen is open
         if (mc.currentScreen != null) return;
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(mc.player.getWorld());
-
-        // Only show hint if the player has a role
-        if (!gwc.hasAnyRole(mc.player)) return;
         if (NoellesrolesClient.roleInfoBind == null) return;
 
+        boolean isAlivePlayer = GameFunctions.isPlayerPlayingAndAlive(mc.player) && gwc.hasAnyRole(mc.player);
+        boolean isDeadSpectator = mc.player.isSpectator() && gwc.isPlayerDead(mc.player.getUuid()) && gwc.hasAnyRole(mc.player);
+        if (!isAlivePlayer && !isDeadSpectator) return;
+
         String keyName = NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
-        Text hintText = Text.translatable("roleinfo.hint", keyName);
+        Text hintText = isDeadSpectator
+                ? Text.translatable("roleinfo.spectator_hint", keyName)
+                : Text.translatable("roleinfo.hint", keyName);
 
         int drawY = context.getScaledWindowHeight();
         drawY -= getTextRenderer().getWrappedLinesHeight(hintText, 999999);
