@@ -24,7 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class SpectatorRoleInfoScreen extends Screen {
+public class SpectatorAssistPanelScreen extends Screen {
+    private static final long REFRESH_INTERVAL_TICKS = 20L;
     private static final int PADDING = 30;
     private static final int COLUMNS = 3;
     private static final int COLUMN_GAP = 6;
@@ -33,7 +34,7 @@ public class SpectatorRoleInfoScreen extends Screen {
     private static final int HOVER_LINE_HEIGHT = 9;
 
     private static long NEXT_REQUEST_ID = 1L;
-    private static SpectatorRoleInfoScreen ACTIVE_INSTANCE;
+    private static SpectatorAssistPanelScreen ACTIVE_INSTANCE;
 
     private final List<EntryData> entries = new ArrayList<>();
     private final Map<UUID, ServerSyncData> serverSyncByUuid = new HashMap<>();
@@ -41,9 +42,11 @@ public class SpectatorRoleInfoScreen extends Screen {
     private int pageCount = 1;
     private int entriesPerPage = COLUMNS;
     private long pendingRequestId = -1L;
+    private long lastAppliedRequestId = -1L;
+    private long nextRefreshTick = Long.MAX_VALUE;
 
-    public SpectatorRoleInfoScreen() {
-        super(Text.translatable("screen.spectator_role_info.title"));
+    public SpectatorAssistPanelScreen() {
+        super(Text.translatable("screen.spectator_assist_panel.title"));
     }
 
     @Override
@@ -67,16 +70,17 @@ public class SpectatorRoleInfoScreen extends Screen {
         serverSyncByUuid.clear();
         rebuildEntries(client, gwc);
         ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId));
+        nextRefreshTick = client.world.getTime() + REFRESH_INTERVAL_TICKS;
 
         int buttonY = this.height - 30;
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_role_info.prev"), button -> {
+        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_assist_panel.prev"), button -> {
                     if (page > 0) {
                         page--;
                     }
                 })
                 .dimensions(this.width / 2 - 95, buttonY, 90, 20)
                 .build());
-        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_role_info.next"), button -> {
+        addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_assist_panel.next"), button -> {
                     if (page < pageCount - 1) {
                         page++;
                     }
@@ -131,15 +135,15 @@ public class SpectatorRoleInfoScreen extends Screen {
 
         context.drawCenteredTextWithShadow(font, this.title, centerX, 10, 0xFFFFFFFF);
         context.drawCenteredTextWithShadow(font,
-                Text.translatable("screen.spectator_role_info.subtitle"),
+                Text.translatable("screen.spectator_assist_panel.subtitle"),
                 centerX, 21, 0xFFD0D0D0);
         context.drawCenteredTextWithShadow(font,
-                Text.translatable("screen.spectator_role_info.page", page + 1, pageCount),
+                Text.translatable("screen.spectator_assist_panel.page", page + 1, pageCount),
                 centerX, this.height - 52, 0xFFBBBBBB);
 
         if (entries.isEmpty()) {
             context.drawCenteredTextWithShadow(font,
-                    Text.translatable("screen.spectator_role_info.empty"),
+                    Text.translatable("screen.spectator_assist_panel.empty"),
                     centerX, this.height / 2, 0xFFAAAAAA);
             return;
         }
@@ -172,10 +176,10 @@ public class SpectatorRoleInfoScreen extends Screen {
             int nameColor = entry.online ? 0xFFFFFFFF : 0xFF888888;
             int textX = avatarX + AVATAR_SIZE + 6;
             int textWidth = layout.columnWidth - (textX - x) - 4;
-            context.drawTextWithShadow(font, Text.literal(font.trimToWidth(entry.nameText.getString(), textWidth)), textX, y + 6, nameColor);
+            context.drawTextWithShadow(font, Text.literal(font.trimToWidth(entry.nameText.getString(), textWidth)), textX, y + 4, nameColor);
 
-            Text deadTag = Text.translatable("screen.spectator_role_info.dead_tag");
-            Text selfTag = Text.translatable("screen.spectator_role_info.self_tag");
+            Text deadTag = Text.translatable("screen.spectator_assist_panel.dead_tag");
+            Text selfTag = Text.translatable("screen.spectator_assist_panel.self_tag");
             String deadTagText = entry.dead ? deadTag.getString() : "";
             int deadTagWidth = entry.dead ? font.getWidth(deadTagText) : 0;
             String selfTagText = entry.self ? selfTag.getString() : "";
@@ -189,19 +193,19 @@ public class SpectatorRoleInfoScreen extends Screen {
             }
             int roleWidth = Math.max(0, textWidth - reservedTagWidth);
             String roleLine = font.trimToWidth(entry.roleText.getString(), roleWidth);
-            context.drawTextWithShadow(font, Text.literal(roleLine), textX, y + 17, entry.roleColor);
+            context.drawTextWithShadow(font, Text.literal(roleLine), textX, y + 15, entry.roleColor);
             int tagX = textX + font.getWidth(roleLine) + 2;
             if (entry.dead) {
-                context.drawTextWithShadow(font, deadTag, tagX, y + 17, 0xFFFF5555);
+                context.drawTextWithShadow(font, deadTag, tagX, y + 15, 0xFFFF5555);
                 tagX += deadTagWidth + 2;
             }
             if (entry.self) {
-                context.drawTextWithShadow(font, selfTag, tagX, y + 17, 0xFFFFDD55);
+                context.drawTextWithShadow(font, selfTag, tagX, y + 15, 0xFFFFDD55);
             }
 
             if (hoverTooltip == null && entry.dead && isInRect(mouseX, mouseY, textX + font.getWidth(roleLine) + 2, y + 17, deadTagWidth)) {
                 hoverTooltip = List.of(
-                        Text.translatable("screen.spectator_role_info.death_reason_title"),
+                        Text.translatable("screen.spectator_assist_panel.death_reason_title"),
                         entry.deathReasonText
                 );
             }
@@ -209,9 +213,9 @@ public class SpectatorRoleInfoScreen extends Screen {
             int nameWidth = Math.min(textWidth, font.getWidth(font.trimToWidth(entry.nameText.getString(), textWidth)));
             if (hoverTooltip == null && isInRect(mouseX, mouseY, textX, y + 6, nameWidth)) {
                 List<Text> replayTooltip = new ArrayList<>();
-                replayTooltip.add(Text.translatable("screen.spectator_role_info.replay_title"));
+                replayTooltip.add(Text.translatable("screen.spectator_assist_panel.replay_title"));
                 if (entry.replayLines.isEmpty()) {
-                    replayTooltip.add(Text.translatable("screen.spectator_role_info.replay_summary_none"));
+                    replayTooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
                 } else {
                     replayTooltip.addAll(entry.replayLines);
                 }
@@ -219,7 +223,7 @@ public class SpectatorRoleInfoScreen extends Screen {
             }
 
             if (hoverTooltip == null && isInAvatar(mouseX, mouseY, avatarX, avatarY) && entry.online) {
-                hoverTooltip = List.of(entry.nameText, Text.translatable("screen.spectator_role_info.avatar_tooltip"));
+                hoverTooltip = List.of(entry.nameText, Text.translatable("screen.spectator_assist_panel.avatar_tooltip"));
             }
         }
 
@@ -278,6 +282,29 @@ public class SpectatorRoleInfoScreen extends Screen {
     }
 
     @Override
+    public void tick() {
+        super.tick();
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null || client.world == null) {
+            close();
+            return;
+        }
+
+        GameWorldComponent gwc = GameWorldComponent.KEY.get(client.player.getWorld());
+        if (!isDeadSpectator(client.player, gwc)) {
+            close();
+            return;
+        }
+
+        long nowTick = client.world.getTime();
+        if (nowTick >= nextRefreshTick) {
+            pendingRequestId = NEXT_REQUEST_ID++;
+            ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId));
+            nextRefreshTick = nowTick + REFRESH_INTERVAL_TICKS;
+        }
+    }
+
+    @Override
     public void close() {
         if (this.client != null) {
             this.client.setScreen(null);
@@ -302,7 +329,7 @@ public class SpectatorRoleInfoScreen extends Screen {
 
     private static Text resolveRoleText(ServerSyncData syncData) {
         if (syncData == null || syncData.roleTranslationKey().isBlank()) {
-            return Text.translatable("screen.spectator_role_info.role_unknown");
+            return Text.translatable("screen.spectator_assist_panel.role_unknown");
         }
         return Text.translatable(syncData.roleTranslationKey());
     }
@@ -323,14 +350,14 @@ public class SpectatorRoleInfoScreen extends Screen {
             Text reason = convertDeathReason(syncData.deathReasonRaw());
             if (reason != null) {
                 if (syncData.deathAgeSeconds() >= 0) {
-                    return Text.translatable("screen.spectator_role_info.death_with_age", reason, syncData.deathAgeSeconds());
+                    return Text.translatable("screen.spectator_assist_panel.death_with_age", reason, syncData.deathAgeSeconds());
                 }
                 return reason;
             }
         }
 
         if (gwc.isPlayerDead(uuid)) {
-            return Text.translatable("screen.spectator_role_info.death_reason_unknown");
+            return Text.translatable("screen.spectator_assist_panel.death_reason_unknown");
         }
         return Text.empty();
     }
@@ -403,9 +430,11 @@ public class SpectatorRoleInfoScreen extends Screen {
     }
 
     private void applyServerSyncInternal(SpectatorInfoSyncS2CPacket payload) {
-        if (payload.requestId() != pendingRequestId) {
+        long requestId = payload.requestId();
+        if (requestId < lastAppliedRequestId || requestId > pendingRequestId) {
             return;
         }
+        lastAppliedRequestId = requestId;
 
         serverSyncByUuid.clear();
         for (SpectatorInfoSyncS2CPacket.Entry entry : payload.entries()) {
@@ -453,4 +482,5 @@ public class SpectatorRoleInfoScreen extends Screen {
     private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, List<String> replayLines) {
     }
 }
+
 

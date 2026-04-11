@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * HUD mixin that shows "Press [H] to view role info" hint above the hotbar
+ * HUD mixin that shows the assist-interface hint above the hotbar
  * when the player is alive and has a role assigned during an active game.
  */
 @Mixin(InGameHud.class)
@@ -25,23 +25,23 @@ public abstract class RoleInfoHudMixin {
     public abstract TextRenderer getTextRenderer();
 
     @Inject(method = "render", at = @At("TAIL"))
-    public void renderRoleInfoHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+    public void renderAssistInterfaceHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return;
         // Don't show hint when a screen is open
         if (mc.currentScreen != null) return;
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(mc.player.getWorld());
-        if (NoellesrolesClient.roleInfoBind == null) return;
+        if (NoellesrolesClient.assistInterfaceBind == null) return;
 
         boolean isAlivePlayer = GameFunctions.isPlayerPlayingAndAlive(mc.player) && gwc.hasAnyRole(mc.player);
         boolean isDeadSpectator = mc.player.isSpectator() && gwc.isPlayerDead(mc.player.getUuid()) && gwc.hasAnyRole(mc.player);
         if (!isAlivePlayer && !isDeadSpectator) return;
 
-        String keyName = NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
+        String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
         Text hintText = isDeadSpectator
-                ? Text.translatable("roleinfo.spectator_hint", keyName)
-                : Text.translatable("roleinfo.hint", keyName);
+                ? Text.translatable("assist_interface.spectator_hint", keyName)
+                : Text.translatable("assist_interface.hint", keyName);
 
         int drawY = context.getScaledWindowHeight();
         drawY -= getTextRenderer().getWrappedLinesHeight(hintText, 999999);

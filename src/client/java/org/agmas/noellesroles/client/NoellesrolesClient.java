@@ -42,7 +42,7 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
-import org.agmas.noellesroles.client.screen.SpectatorRoleInfoScreen;
+import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.client.screen.AssassinScreen;
@@ -94,7 +94,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
-    public static KeyBinding roleInfoBind;
+    public static KeyBinding assistInterfaceBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
     public static double pathogenNearestTargetDistance;
@@ -117,7 +117,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
-        roleInfoBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".role_info", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
+        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
 
@@ -155,7 +155,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         // 注册观战信息同步 S2C 包接收
         ClientPlayNetworking.registerGlobalReceiver(SpectatorInfoSyncS2CPacket.ID,
                 (payload, context) -> context.client().execute(() ->
-                        SpectatorRoleInfoScreen.applyServerSync(payload)
+                        SpectatorAssistPanelScreen.applyServerSync(payload)
                 ));
 
         // 注册实体渲染器
@@ -684,7 +684,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     ClientPlayNetworking.send(new AbilityC2SPacket());
                 });
             }
-            if (roleInfoBind.wasPressed()) {
+            if (assistInterfaceBind.wasPressed()) {
                 if (MinecraftClient.getInstance().player == null) {
                     return;
                 }
@@ -699,7 +699,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     if (isAlive) {
                         MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
                     } else if (isDeadSpectator) {
-                        MinecraftClient.getInstance().setScreen(new SpectatorRoleInfoScreen());
+                        MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
                     }
                 };
             }

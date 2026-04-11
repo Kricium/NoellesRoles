@@ -41,7 +41,7 @@ public class RoleInfoRegistry {
         MinecraftClient mc = MinecraftClient.getInstance();
         return switch (keybindId) {
             case "ability" -> NoellesrolesClient.abilityBind.getBoundKeyLocalizedText().getString();
-            case "role_info" -> NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
+            case "assist_interface", "role_info" -> NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
             case "inventory" -> mc.options.inventoryKey.getBoundKeyLocalizedText().getString();
             case "use" -> mc.options.useKey.getBoundKeyLocalizedText().getString();
             case "attack" -> mc.options.attackKey.getBoundKeyLocalizedText().getString();
