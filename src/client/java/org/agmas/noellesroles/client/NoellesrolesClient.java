@@ -41,7 +41,9 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
+import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
+import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.client.screen.AssassinScreen;
@@ -51,14 +53,17 @@ import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
-import org.agmas.noellesroles.client.render.EngineerDoorHighlightRenderer;
+import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
+import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
@@ -92,7 +97,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
-    public static KeyBinding roleInfoBind;
+    public static KeyBinding assistInterfaceBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
     public static double pathogenNearestTargetDistance;
@@ -108,6 +113,9 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     // 不可见物品提示：切换到不可见物品时提示
     private static boolean wasHoldingInvisible = false;
+    private static long spectatorReplayPollRequestId = 10_000L;
+    private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
+    private static boolean wasDeadSpectatorLastTick = false;
 
 
     @Override
@@ -115,7 +123,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
-        roleInfoBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".role_info", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
+        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
 
@@ -148,6 +156,17 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.SilencedStateS2CPacket.ID,
                 (payload, context) -> context.client().execute(() ->
                         isClientSilenced = payload.silenced()
+                ));
+
+        // 注册观战信息同步 S2C 包接收
+        ClientPlayNetworking.registerGlobalReceiver(SpectatorInfoSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() -> {
+                    SpectatorAssistPanelScreen.applyServerSync(payload);
+                    SpectatorReplayToastOverlay.onSpectatorSync(payload);
+                }));
+        ClientPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        SpectatorAssistPanelScreen.applyReplayDetailSync(payload)
                 ));
 
         // 注册实体渲染器
@@ -577,6 +596,36 @@ public class NoellesrolesClient implements ClientModInitializer {
                 }
             }
 
+            ClientPlayerEntity spectatorCandidate = MinecraftClient.getInstance().player;
+            if (spectatorCandidate != null) {
+                GameWorldComponent spectatorWorld = GameWorldComponent.KEY.get(spectatorCandidate.getWorld());
+                boolean isInGameSpectator = spectatorCandidate.isSpectator()
+                        && spectatorWorld.isRunning()
+                        && !SwallowedPlayerComponent.isPlayerSwallowed(spectatorCandidate);
+                if (isInGameSpectator) {
+                    if (!wasDeadSpectatorLastTick) {
+                        SpectatorReplayToastOverlay.beginSpectatorSession();
+                    }
+                    long nowTick = spectatorCandidate.getWorld().getTime();
+                    if (nextSpectatorReplayPollTick == Long.MAX_VALUE) {
+                        nextSpectatorReplayPollTick = nowTick;
+                    }
+                    if (nowTick >= nextSpectatorReplayPollTick) {
+                        spectatorReplayPollRequestId++;
+                        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(
+                                spectatorReplayPollRequestId,
+                                SpectatorReplayToastOverlay.getLastSeenReplayTick()
+                        ));
+                        nextSpectatorReplayPollTick = nowTick + 20L;
+                    }
+                } else {
+                    nextSpectatorReplayPollTick = Long.MAX_VALUE;
+                }
+                wasDeadSpectatorLastTick = isInGameSpectator;
+            } else {
+                wasDeadSpectatorLastTick = false;
+            }
+
             if (abilityBind.wasPressed()) {
                 client.execute(() -> {
                     if (MinecraftClient.getInstance().player == null) return;
@@ -681,19 +730,25 @@ public class NoellesrolesClient implements ClientModInitializer {
                     ClientPlayNetworking.send(new AbilityC2SPacket());
                 });
             }
-            if (roleInfoBind.wasPressed()) {
+            if (assistInterfaceBind.wasPressed()) {
                 if (MinecraftClient.getInstance().player == null) {
                     return;
                 }
-                if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) {
-                    return;
-                }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
-                if (!gwc.hasAnyRole(MinecraftClient.getInstance().player)) {
+                if (!gwc.isRunning()) {
                     return;
                 }
                 if (MinecraftClient.getInstance().currentScreen == null) {
-                    MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                    boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
+                    boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
+                    boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
+                    boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator() && !isSwallowed;
+
+                    if (canOpenRoleInfo) {
+                        MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                    } else if (isDeadSpectator) {
+                        MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
+                    }
                 };
             }
 

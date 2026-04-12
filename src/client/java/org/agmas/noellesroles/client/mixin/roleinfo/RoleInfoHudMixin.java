@@ -9,6 +9,8 @@ import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * HUD mixin that shows "Press [H] to view role info" hint above the hotbar
+ * HUD mixin that shows the assist-interface hint above the hotbar
  * when the player is alive and has a role assigned during an active game.
  */
 @Mixin(InGameHud.class)
@@ -25,21 +27,25 @@ public abstract class RoleInfoHudMixin {
     public abstract TextRenderer getTextRenderer();
 
     @Inject(method = "render", at = @At("TAIL"))
-    public void renderRoleInfoHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+    public void renderAssistInterfaceHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         MinecraftClient mc = MinecraftClient.getInstance();
+        SpectatorReplayToastOverlay.render(context, getTextRenderer());
         if (mc.player == null) return;
-        if (!GameFunctions.isPlayerPlayingAndAlive(mc.player)) return;
         // Don't show hint when a screen is open
         if (mc.currentScreen != null) return;
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(mc.player.getWorld());
+        if (NoellesrolesClient.assistInterfaceBind == null) return;
 
-        // Only show hint if the player has a role
-        if (!gwc.hasAnyRole(mc.player)) return;
-        if (NoellesrolesClient.roleInfoBind == null) return;
+        boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
+        boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
+        boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning() && !isSwallowed;
+        if (!canOpenRoleInfo && !isInGameSpectator) return;
 
-        String keyName = NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
-        Text hintText = Text.translatable("roleinfo.hint", keyName);
+        String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
+        Text hintText = isInGameSpectator
+                ? Text.translatable("assist_interface.spectator_hint", keyName)
+                : Text.translatable("assist_interface.hint", keyName);
 
         int drawY = context.getScaledWindowHeight();
         drawY -= getTextRenderer().getWrappedLinesHeight(hintText, 999999);
