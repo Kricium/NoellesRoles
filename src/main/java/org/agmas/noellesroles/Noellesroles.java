@@ -2261,12 +2261,13 @@ public class Noellesroles implements ModInitializer {
                                                                          ServerWorld world,
                                                                          Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache) {
         if (match == null) {
-            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1, "");
+            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1, -1L, "");
         }
 
         long nowTick = world.getTime();
         String deathReasonRaw = "";
         long deathTick = -1L;
+        long latestRelevantReplayTick = -1L;
         String replaySummary = "";
         ReplayGenerator.PlayerInfo playerInfo = playerInfoCache.get(targetUuid);
         String roleTranslationKey = playerInfo != null ? playerInfo.roleTranslationKey() : "";
@@ -2288,6 +2289,7 @@ public class Noellesroles implements ModInitializer {
 
             String formattedLine = formatSpectatorReplayLine(event, match, world);
             if (formattedLine != null) {
+                latestRelevantReplayTick = event.worldTick();
                 replaySummary = formattedLine;
             }
         }
@@ -2300,6 +2302,7 @@ public class Noellesroles implements ModInitializer {
                 roleColor,
                 deathReasonRaw == null ? "" : deathReasonRaw,
                 deathAgeSeconds,
+                latestRelevantReplayTick,
                 replaySummary
         );
     }

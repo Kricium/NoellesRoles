@@ -42,7 +42,6 @@ public class SpectatorAssistPanelScreen extends Screen {
     private int page = 0;
     private int pageCount = 1;
     private int entriesPerPage = COLUMNS;
-    private long pendingRequestId = -1L;
     private long lastAppliedRequestId = -1L;
 
     public SpectatorAssistPanelScreen() {
@@ -66,13 +65,12 @@ public class SpectatorAssistPanelScreen extends Screen {
             return;
         }
 
-        pendingRequestId = NEXT_REQUEST_ID++;
         serverSyncByUuid.clear();
         replayDetailsByUuid.clear();
         pendingReplayDetailRequestIds.clear();
         lastAppliedReplayDetailRequestIds.clear();
         rebuildEntries(client, gwc);
-        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId, -1L));
+        ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(NEXT_REQUEST_ID++, -1L));
 
         int buttonY = this.height - 30;
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_assist_panel.prev"), button -> {
@@ -107,11 +105,12 @@ public class SpectatorAssistPanelScreen extends Screen {
             Text roleText = resolveRoleText(syncData);
             int roleColor = resolveRoleColor(syncData);
             Text deathReasonText = resolveDeathReasonText(gwc, uuid, dead, syncData);
+            long latestRelevantReplayTick = resolveLatestRelevantReplayTick(syncData);
             String replaySummary = resolveReplaySummary(syncData);
             Identifier skinTexture = playerEntry != null
                     ? playerEntry.getSkinTextures().texture()
                     : DefaultSkinHelper.getSkinTextures(new GameProfile(uuid, nameText.getString())).texture();
-            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, replaySummary, skinTexture));
+            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, latestRelevantReplayTick, replaySummary, skinTexture));
         }
 
         Layout layout = getLayout();
@@ -442,7 +441,7 @@ public class SpectatorAssistPanelScreen extends Screen {
 
     private void applyServerSyncInternal(SpectatorInfoSyncS2CPacket payload) {
         long requestId = payload.requestId();
-        if (requestId < lastAppliedRequestId || requestId > pendingRequestId) {
+        if (requestId < lastAppliedRequestId) {
             return;
         }
         lastAppliedRequestId = requestId;
@@ -454,6 +453,7 @@ public class SpectatorAssistPanelScreen extends Screen {
                     entry.roleColor(),
                     entry.deathReasonRaw(),
                     entry.deathAgeSeconds(),
+                    entry.latestRelevantReplayTick(),
                     entry.replaySummary()
             ));
         }
@@ -485,8 +485,8 @@ public class SpectatorAssistPanelScreen extends Screen {
         pendingReplayDetailRequestIds.remove(targetUuid);
 
         ServerSyncData syncData = serverSyncByUuid.get(targetUuid);
-        String summarySnapshot = syncData != null ? syncData.replaySummary() : "";
-        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(summarySnapshot, List.copyOf(payload.replayLines()), false));
+        long versionTick = syncData != null ? syncData.latestRelevantReplayTick() : -1L;
+        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(versionTick, List.copyOf(payload.replayLines()), false));
     }
 
     private List<Text> buildReplayTooltip(EntryData entry) {
@@ -494,10 +494,10 @@ public class SpectatorAssistPanelScreen extends Screen {
         tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_title"));
 
         ReplayDetailState detailState = replayDetailsByUuid.get(entry.uuid);
-        String summary = entry.replaySummary;
-        boolean hasSummary = summary != null && !summary.isBlank();
+        boolean hasSummary = entry.replaySummary != null && !entry.replaySummary.isBlank();
+        boolean hasReplayVersion = entry.latestRelevantReplayTick >= 0L;
 
-        if (detailState != null && !detailState.pending() && Objects.equals(detailState.summarySnapshot(), summary)) {
+        if (detailState != null && !detailState.pending() && detailState.versionTick() == entry.latestRelevantReplayTick) {
             List<Text> detailedLines = resolveReplayLines(detailState.replayLines());
             if (detailedLines.isEmpty()) {
                 tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
@@ -507,9 +507,9 @@ public class SpectatorAssistPanelScreen extends Screen {
             return tooltip;
         }
 
-        if (hasSummary) {
-            tooltip.add(Text.literal(summary));
-            requestReplayDetails(entry.uuid, summary);
+        if (hasSummary && hasReplayVersion) {
+            tooltip.add(Text.literal(entry.replaySummary));
+            requestReplayDetails(entry.uuid, entry.latestRelevantReplayTick);
             tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_loading"));
         } else {
             tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
@@ -517,22 +517,22 @@ public class SpectatorAssistPanelScreen extends Screen {
         return tooltip;
     }
 
-    private void requestReplayDetails(UUID targetUuid, String summarySnapshot) {
-        if (summarySnapshot == null || summarySnapshot.isBlank()) {
+    private void requestReplayDetails(UUID targetUuid, long versionTick) {
+        if (versionTick < 0L) {
             return;
         }
 
         ReplayDetailState currentState = replayDetailsByUuid.get(targetUuid);
-        if (currentState != null && currentState.pending() && Objects.equals(currentState.summarySnapshot(), summarySnapshot)) {
+        if (currentState != null && currentState.pending() && currentState.versionTick() == versionTick) {
             return;
         }
-        if (currentState != null && !currentState.pending() && Objects.equals(currentState.summarySnapshot(), summarySnapshot)) {
+        if (currentState != null && !currentState.pending() && currentState.versionTick() == versionTick) {
             return;
         }
 
         long requestId = NEXT_REQUEST_ID++;
         pendingReplayDetailRequestIds.put(targetUuid, requestId);
-        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(summarySnapshot, List.of(), true));
+        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(versionTick, List.of(), true));
         ClientPlayNetworking.send(new SpectatorReplayDetailRequestC2SPacket(requestId, targetUuid));
     }
 
@@ -541,13 +541,20 @@ public class SpectatorAssistPanelScreen extends Screen {
         while (iterator.hasNext()) {
             Map.Entry<UUID, ReplayDetailState> entry = iterator.next();
             ServerSyncData syncData = serverSyncByUuid.get(entry.getKey());
-            String currentSummary = syncData != null ? syncData.replaySummary() : "";
-            if (!Objects.equals(entry.getValue().summarySnapshot(), currentSummary)) {
+            long currentVersionTick = syncData != null ? syncData.latestRelevantReplayTick() : -1L;
+            if (entry.getValue().versionTick() != currentVersionTick) {
                 iterator.remove();
                 pendingReplayDetailRequestIds.remove(entry.getKey());
                 lastAppliedReplayDetailRequestIds.remove(entry.getKey());
             }
         }
+    }
+
+    private static long resolveLatestRelevantReplayTick(ServerSyncData syncData) {
+        if (syncData == null) {
+            return -1L;
+        }
+        return syncData.latestRelevantReplayTick();
     }
 
     private static String resolveReplaySummary(ServerSyncData syncData) {
@@ -569,6 +576,7 @@ public class SpectatorAssistPanelScreen extends Screen {
 
     private record EntryData(UUID uuid, Text nameText, Text roleText, int roleColor, boolean online, boolean dead, boolean self,
                              Text deathReasonText,
+                             long latestRelevantReplayTick,
                              String replaySummary,
                              Identifier skinTexture) {
     }
@@ -576,10 +584,10 @@ public class SpectatorAssistPanelScreen extends Screen {
     private record Layout(int startX, int listTop, int rowsPerPage, int columnWidth) {
     }
 
-    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, String replaySummary) {
+    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, long latestRelevantReplayTick, String replaySummary) {
     }
 
-    private record ReplayDetailState(String summarySnapshot, List<String> replayLines, boolean pending) {
+    private record ReplayDetailState(long versionTick, List<String> replayLines, boolean pending) {
     }
 }
 

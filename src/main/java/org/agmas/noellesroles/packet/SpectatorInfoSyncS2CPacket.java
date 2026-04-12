@@ -38,6 +38,7 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             buf.writeInt(entry.roleColor());
             buf.writeString(entry.deathReasonRaw(), 256);
             buf.writeVarInt(entry.deathAgeSeconds());
+            buf.writeVarLong(entry.latestRelevantReplayTick());
             buf.writeString(entry.replaySummary(), 512);
         }
         buf.writeVarInt(replayToasts.size());
@@ -61,8 +62,9 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             int roleColor = buf.readInt();
             String deathReasonRaw = buf.readString(256);
             int deathAgeSeconds = buf.readVarInt();
+            long latestRelevantReplayTick = buf.readVarLong();
             String replaySummary = buf.readString(512);
-            entries.add(new Entry(uuid, roleTranslationKey, roleColor, deathReasonRaw, deathAgeSeconds, replaySummary));
+            entries.add(new Entry(uuid, roleTranslationKey, roleColor, deathReasonRaw, deathAgeSeconds, latestRelevantReplayTick, replaySummary));
         }
         int toastCount = buf.readVarInt();
         List<ReplayToast> replayToasts = new ArrayList<>(toastCount);
@@ -76,7 +78,13 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
         return new SpectatorInfoSyncS2CPacket(requestId, matchStartTick, latestReplayTick, entries, replayToasts);
     }
 
-    public record Entry(UUID uuid, String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, String replaySummary) {
+    public record Entry(UUID uuid,
+                        String roleTranslationKey,
+                        int roleColor,
+                        String deathReasonRaw,
+                        int deathAgeSeconds,
+                        long latestRelevantReplayTick,
+                        String replaySummary) {
     }
 
     public record ReplayToast(long worldTick, String actorRoleKey, String targetRoleKey, String deathReasonRaw) {
