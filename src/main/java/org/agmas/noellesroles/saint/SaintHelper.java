@@ -114,7 +114,6 @@ public final class SaintHelper {
                 && gameComponent.isRole(victim, Noellesroles.SAINT)
                 && activatedHellfire
                 && shouldTrackKarma(serverKiller, gameComponent)) {
-            SaintPlayerComponent.KEY.get(serverVictim).clearHellfire();
             SaintPlayerComponent.KEY.get(serverKiller).markKarma();
             sendSaintBellSound(serverKiller, 1.0F);
             sendSaintBellSound(serverKiller, 0.97F);

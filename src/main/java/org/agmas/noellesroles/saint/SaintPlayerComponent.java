@@ -1,13 +1,13 @@
 package org.agmas.noellesroles.saint;
 
 import dev.doctor4t.wathe.game.GameConstants;
-import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
@@ -108,6 +108,11 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
         this.hellfireActiveTicks = buf.readInt();
     }
 
+    private void onHellfireExpired() {
+        AbilityPlayerComponent.KEY.get(this.player).setCooldown(HELLFIRE_COOLDOWN_TICKS);
+        this.sync();
+    }
+
     @Override
     public void serverTick() {
         if (this.karmaLockTicks > 0) {
@@ -120,15 +125,7 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
         if (this.hellfireActiveTicks > 0) {
             this.hellfireActiveTicks--;
             if (this.hellfireActiveTicks == 0) {
-                if (this.player instanceof ServerPlayerEntity serverPlayer) {
-                    if (GameFunctions.isPlayerPlayingAndAlive(serverPlayer)) {
-                        org.agmas.noellesroles.AbilityPlayerComponent.KEY.get(serverPlayer).setCooldown(HELLFIRE_COOLDOWN_TICKS);
-                    } else {
-                        this.sync();
-                    }
-                } else {
-                    this.sync();
-                }
+                onHellfireExpired();
             } else if (this.hellfireActiveTicks % 10 == 0) {
                 this.sync();
             }

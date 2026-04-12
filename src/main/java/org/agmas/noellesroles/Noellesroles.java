@@ -408,7 +408,7 @@ public class Noellesroles implements ModInitializer {
         KillPlayer.BEFORE.register(((victim, killer, deathReason) -> {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
             if (gameWorldComponent.isRole(victim, HUNTER)) {
-                noellesroles$removeHunterShotgunDrops(victim);
+                removeHunterShotgunDrops(victim);
             }
 
             // 黑警被杀时结束黑警时刻
@@ -2769,7 +2769,7 @@ public class Noellesroles implements ModInitializer {
         return Text.translatable("item.noellesroles.base_spirit");
     }
 
-    private static void noellesroles$removeHunterShotgunDrops(PlayerEntity player) {
+    private static void removeHunterShotgunDrops(PlayerEntity player) {
         for (int i = 0; i < player.getInventory().size(); i++) {
             ItemStack stack = player.getInventory().getStack(i);
             if (stack.isOf(ModItems.DOUBLE_BARREL_SHOTGUN) || stack.isOf(ModItems.DOUBLE_BARREL_SHELL)) {
