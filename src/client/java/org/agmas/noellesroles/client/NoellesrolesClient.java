@@ -594,7 +594,9 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity spectatorCandidate = MinecraftClient.getInstance().player;
             if (spectatorCandidate != null) {
                 GameWorldComponent spectatorWorld = GameWorldComponent.KEY.get(spectatorCandidate.getWorld());
-                boolean isInGameSpectator = spectatorCandidate.isSpectator() && spectatorWorld.isRunning();
+                boolean isInGameSpectator = spectatorCandidate.isSpectator()
+                        && spectatorWorld.isRunning()
+                        && !SwallowedPlayerComponent.isPlayerSwallowed(spectatorCandidate);
                 if (isInGameSpectator) {
                     if (!wasDeadSpectatorLastTick) {
                         SpectatorReplayToastOverlay.beginSpectatorSession();
@@ -733,12 +735,11 @@ public class NoellesrolesClient implements ClientModInitializer {
                 }
                 if (MinecraftClient.getInstance().currentScreen == null) {
                     boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
-                    boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator();
+                    boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
+                    boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
+                    boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator() && !isSwallowed;
 
-                    if (isAlive) {
-                        if (!gwc.hasAnyRole(MinecraftClient.getInstance().player)) {
-                            return;
-                        }
+                    if (canOpenRoleInfo) {
                         MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
                     } else if (isDeadSpectator) {
                         MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());

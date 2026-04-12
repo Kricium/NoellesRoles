@@ -1487,7 +1487,7 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorInfoRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!requester.isSpectator() || !gameWorld.isRunning()) {
+            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
                 return;
             }
 
@@ -1514,7 +1514,7 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!requester.isSpectator() || !gameWorld.isRunning()) {
+            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
                 return;
             }
 

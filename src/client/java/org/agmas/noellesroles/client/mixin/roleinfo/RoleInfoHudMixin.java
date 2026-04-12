@@ -10,6 +10,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -36,9 +37,10 @@ public abstract class RoleInfoHudMixin {
         GameWorldComponent gwc = GameWorldComponent.KEY.get(mc.player.getWorld());
         if (NoellesrolesClient.assistInterfaceBind == null) return;
 
-        boolean isAlivePlayer = GameFunctions.isPlayerPlayingAndAlive(mc.player) && gwc.hasAnyRole(mc.player);
-        boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning();
-        if (!isAlivePlayer && !isInGameSpectator) return;
+        boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
+        boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
+        boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning() && !isSwallowed;
+        if (!canOpenRoleInfo && !isInGameSpectator) return;
 
         String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
         Text hintText = isInGameSpectator

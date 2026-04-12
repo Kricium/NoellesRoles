@@ -20,6 +20,7 @@ import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 
 import java.util.*;
 
@@ -307,7 +308,7 @@ public class SpectatorAssistPanelScreen extends Screen {
     }
 
     private static boolean canOpenSpectatorPanel(ClientPlayerEntity player, GameWorldComponent gwc) {
-        return player.isSpectator() && gwc.isRunning();
+        return player.isSpectator() && gwc.isRunning() && !SwallowedPlayerComponent.isPlayerSwallowed(player);
     }
 
     private String resolveSortName(UUID uuid) {
