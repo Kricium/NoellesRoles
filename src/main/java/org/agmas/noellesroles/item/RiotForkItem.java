@@ -40,7 +40,7 @@ public class RiotForkItem extends Item {
         if (!GameWorldComponent.KEY.get(user.getWorld()).isRole(user, Noellesroles.RIOT_PATROL)) {
             return ActionResult.PASS;
         }
-        if (!GameFunctions.isPlayerAliveAndSurvival(user) || !GameFunctions.isPlayerAliveAndSurvival(target)) {
+        if (!GameFunctions.isPlayerPlayingAndAlive(user) || !GameFunctions.isPlayerPlayingAndAlive(target)) {
             return ActionResult.PASS;
         }
         if (user.squaredDistanceTo(target) > MAX_RANGE * MAX_RANGE) {

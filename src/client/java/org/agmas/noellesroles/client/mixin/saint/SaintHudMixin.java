@@ -7,7 +7,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
-import org.agmas.noellesroles.saint.SaintPlayerComponent;
+import org.agmas.noellesroles.client.util.SaintHudHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -23,10 +23,8 @@ public abstract class SaintHudMixin {
         ClientPlayerEntity player = HudRenderHelper.getActivePlayer();
         if (player == null) return;
 
-        SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(player);
-        if (!saintComponent.isKarmaLocked()) return;
-
-        Text line = Text.translatable("tip.saint.karma_locked", Math.max(1, saintComponent.getKarmaLockTicks() / 20));
+        Text line = SaintHudHelper.getHudLine(player);
+        if (line == null) return;
         int lineHeight = getTextRenderer().getWrappedLinesHeight(line, 999999);
         int skillHudTopY = HudRenderHelper.getBottomRightSkillHudTopY(context, getTextRenderer(), player);
         int drawY = skillHudTopY < context.getScaledWindowHeight()

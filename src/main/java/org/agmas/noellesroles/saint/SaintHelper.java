@@ -105,9 +105,14 @@ public final class SaintHelper {
      * Handles saint-related logic in KillPlayer.AFTER (karma tracking on kill).
      */
     public static void handleAfterKill(PlayerEntity victim, PlayerEntity killer, GameWorldComponent gameComponent) {
+        boolean activatedHellfire = victim instanceof ServerPlayerEntity serverVictim
+                && gameComponent.isRole(victim, Noellesroles.SAINT)
+                && SaintPlayerComponent.KEY.get(serverVictim).isHellfireActive();
+
         if (victim instanceof ServerPlayerEntity serverVictim
                 && killer instanceof ServerPlayerEntity serverKiller
                 && gameComponent.isRole(victim, Noellesroles.SAINT)
+                && activatedHellfire
                 && shouldTrackKarma(serverKiller, gameComponent)) {
             SaintPlayerComponent.KEY.get(serverKiller).markKarma();
             sendSaintBellSound(serverKiller, 1.0F);
@@ -118,6 +123,12 @@ public final class SaintHelper {
                     .target(serverKiller)
                     .put("action", "marked")
                     .record();
+        }
+
+        if (victim instanceof ServerPlayerEntity serverVictim
+                && gameComponent.isRole(victim, Noellesroles.SAINT)
+                && SaintPlayerComponent.KEY.get(serverVictim).isHellfireActive()) {
+            SaintPlayerComponent.KEY.get(serverVictim).clearHellfire();
         }
 
         if (killer instanceof ServerPlayerEntity serverKiller && shouldTrackKarma(serverKiller, gameComponent)) {
