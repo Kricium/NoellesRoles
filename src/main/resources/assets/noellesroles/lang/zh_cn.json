@@ -469,7 +469,7 @@
   "screen.spectator_assist_panel.prev": "上一页",
   "screen.spectator_assist_panel.next": "下一页",
   "screen.spectator_assist_panel.empty": "暂无可显示玩家",
-  "screen.spectator_assist_panel.role_unknown": "观战者?(未知身份)",
+  "screen.spectator_assist_panel.role_unknown": "观战者",
   "screen.spectator_assist_panel.spectator": "观战者",
   "screen.spectator_assist_panel.dead_tag": "[已死亡]",
   "screen.spectator_assist_panel.self_tag": "[我]",

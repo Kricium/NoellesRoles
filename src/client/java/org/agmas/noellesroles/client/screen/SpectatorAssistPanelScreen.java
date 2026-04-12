@@ -2,6 +2,7 @@ package org.agmas.noellesroles.client.screen;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
+import com.mojang.authlib.GameProfile;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -11,18 +12,14 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 public class SpectatorAssistPanelScreen extends Screen {
     private static final long REFRESH_INTERVAL_TICKS = 20L;
@@ -61,7 +58,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         }
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.player.getWorld());
-        if (!isDeadSpectator(client.player, gwc)) {
+        if (!canOpenSpectatorPanel(client.player, gwc)) {
             close();
             return;
         }
@@ -92,19 +89,12 @@ public class SpectatorAssistPanelScreen extends Screen {
     private void rebuildEntries(MinecraftClient client, GameWorldComponent gwc) {
         entries.clear();
 
-        List<PlayerListEntry> sortedPlayers = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.values());
-        sortedPlayers.sort(Comparator.comparing(entry -> {
-            if (entry.getDisplayName() != null) {
-                return entry.getDisplayName().getString();
-            }
-            return entry.getProfile().getName();
-        }, String.CASE_INSENSITIVE_ORDER));
+        List<UUID> sortedUuids = new ArrayList<>(serverSyncByUuid.keySet());
+        sortedUuids.sort(Comparator.comparing(this::resolveSortName, String.CASE_INSENSITIVE_ORDER));
 
-        for (PlayerListEntry playerEntry : sortedPlayers) {
-            UUID uuid = playerEntry.getProfile().getId();
-            Text nameText = playerEntry.getDisplayName() != null
-                    ? playerEntry.getDisplayName()
-                    : Text.literal(playerEntry.getProfile().getName());
+        for (UUID uuid : sortedUuids) {
+            PlayerListEntry playerEntry = WatheClient.PLAYER_ENTRIES_CACHE.get(uuid);
+            Text nameText = resolveNameText(uuid, playerEntry);
             boolean online = client.world.getPlayerByUuid(uuid) != null;
             boolean dead = gwc.isPlayerDead(uuid);
             boolean self = client.player != null && client.player.getUuid().equals(uuid);
@@ -113,7 +103,10 @@ public class SpectatorAssistPanelScreen extends Screen {
             int roleColor = resolveRoleColor(syncData);
             Text deathReasonText = resolveDeathReasonText(gwc, uuid, dead, syncData);
             List<Text> replayLines = resolveReplayLines(syncData);
-            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, replayLines, playerEntry));
+            Identifier skinTexture = playerEntry != null
+                    ? playerEntry.getSkinTextures().texture()
+                    : DefaultSkinHelper.getSkinTextures(new GameProfile(uuid, nameText.getString())).texture();
+            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, replayLines, skinTexture));
         }
 
         Layout layout = getLayout();
@@ -167,7 +160,7 @@ public class SpectatorAssistPanelScreen extends Screen {
             int borderColor = 0xFF000000 | (entry.roleColor & 0x00FFFFFF);
             context.fill(avatarX - 2, avatarY - 2, avatarX + AVATAR_SIZE + 2, avatarY + AVATAR_SIZE + 2, borderColor);
             context.fill(avatarX - 1, avatarY - 1, avatarX + AVATAR_SIZE + 1, avatarY + AVATAR_SIZE + 1, 0xFF111111);
-            PlayerSkinDrawer.draw(context, entry.playerEntry.getSkinTextures().texture(), avatarX, avatarY, AVATAR_SIZE);
+            PlayerSkinDrawer.draw(context, entry.skinTexture, avatarX, avatarY, AVATAR_SIZE);
 
             if (isInAvatar(mouseX, mouseY, avatarX, avatarY) && entry.online) {
                 context.fill(avatarX - 1, avatarY - 1, avatarX + AVATAR_SIZE + 1, avatarY + AVATAR_SIZE + 1, 0x55FFFFFF);
@@ -291,7 +284,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         }
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.player.getWorld());
-        if (!isDeadSpectator(client.player, gwc)) {
+        if (!canOpenSpectatorPanel(client.player, gwc)) {
             close();
             return;
         }
@@ -323,8 +316,29 @@ public class SpectatorAssistPanelScreen extends Screen {
         return width > 0 && mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + HOVER_LINE_HEIGHT;
     }
 
-    private static boolean isDeadSpectator(ClientPlayerEntity player, GameWorldComponent gwc) {
-        return player.isSpectator() && gwc.isPlayerDead(player.getUuid()) && gwc.hasAnyRole(player);
+    private static boolean canOpenSpectatorPanel(ClientPlayerEntity player, GameWorldComponent gwc) {
+        return player.isSpectator() && gwc.isRunning();
+    }
+
+    private String resolveSortName(UUID uuid) {
+        PlayerListEntry playerEntry = WatheClient.PLAYER_ENTRIES_CACHE.get(uuid);
+        if (playerEntry != null && playerEntry.getDisplayName() != null) {
+            return playerEntry.getDisplayName().getString();
+        }
+        if (playerEntry != null) {
+            return playerEntry.getProfile().getName();
+        }
+        return uuid.toString();
+    }
+
+    private static Text resolveNameText(UUID uuid, PlayerListEntry playerEntry) {
+        if (playerEntry != null && playerEntry.getDisplayName() != null) {
+            return playerEntry.getDisplayName();
+        }
+        if (playerEntry != null) {
+            return Text.literal(playerEntry.getProfile().getName());
+        }
+        return Text.literal(uuid.toString().substring(0, 8));
     }
 
     private static Text resolveRoleText(ServerSyncData syncData) {
@@ -452,7 +466,7 @@ public class SpectatorAssistPanelScreen extends Screen {
             return;
         }
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.player.getWorld());
-        if (!isDeadSpectator(client.player, gwc)) {
+        if (!canOpenSpectatorPanel(client.player, gwc)) {
             close();
             return;
         }
@@ -473,7 +487,7 @@ public class SpectatorAssistPanelScreen extends Screen {
     private record EntryData(UUID uuid, Text nameText, Text roleText, int roleColor, boolean online, boolean dead, boolean self,
                              Text deathReasonText,
                              List<Text> replayLines,
-                             PlayerListEntry playerEntry) {
+                             Identifier skinTexture) {
     }
 
     private record Layout(int startX, int listTop, int rowsPerPage, int columnWidth) {

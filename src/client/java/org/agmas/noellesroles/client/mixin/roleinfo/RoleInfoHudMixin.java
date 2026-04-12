@@ -37,11 +37,11 @@ public abstract class RoleInfoHudMixin {
         if (NoellesrolesClient.assistInterfaceBind == null) return;
 
         boolean isAlivePlayer = GameFunctions.isPlayerPlayingAndAlive(mc.player) && gwc.hasAnyRole(mc.player);
-        boolean isDeadSpectator = mc.player.isSpectator() && gwc.isPlayerDead(mc.player.getUuid()) && gwc.hasAnyRole(mc.player);
-        if (!isAlivePlayer && !isDeadSpectator) return;
+        boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning();
+        if (!isAlivePlayer && !isInGameSpectator) return;
 
         String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
-        Text hintText = isDeadSpectator
+        Text hintText = isInGameSpectator
                 ? Text.translatable("assist_interface.spectator_hint", keyName)
                 : Text.translatable("assist_interface.hint", keyName);
 

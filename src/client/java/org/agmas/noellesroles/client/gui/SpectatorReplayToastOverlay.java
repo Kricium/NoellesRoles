@@ -22,6 +22,9 @@ public final class SpectatorReplayToastOverlay {
     private static final List<ActiveToast> ACTIVE_TOASTS = new ArrayList<>();
     private static long lastSeenReplayTick = -1L;
 
+    private static boolean awaitingSessionBaseline = true;
+    private static long activeMatchStartTick = Long.MIN_VALUE;
+
     private SpectatorReplayToastOverlay() {
     }
 
@@ -29,9 +32,34 @@ public final class SpectatorReplayToastOverlay {
         return lastSeenReplayTick;
     }
 
+    public static void beginSpectatorSession() {
+        ACTIVE_TOASTS.clear();
+        lastSeenReplayTick = -1L;
+        awaitingSessionBaseline = true;
+        activeMatchStartTick = Long.MIN_VALUE;
+    }
+
     public static void onSpectatorSync(SpectatorInfoSyncS2CPacket payload) {
-        if (payload == null || payload.replayToasts().isEmpty()) {
-            lastSeenReplayTick = Math.max(lastSeenReplayTick, payload != null ? payload.latestReplayTick() : -1L);
+        if (payload == null) {
+            return;
+        }
+
+        if (activeMatchStartTick != payload.matchStartTick()) {
+            ACTIVE_TOASTS.clear();
+            lastSeenReplayTick = payload.latestReplayTick();
+            awaitingSessionBaseline = false;
+            activeMatchStartTick = payload.matchStartTick();
+            return;
+        }
+
+        if (awaitingSessionBaseline) {
+            lastSeenReplayTick = payload.latestReplayTick();
+            awaitingSessionBaseline = false;
+            return;
+        }
+
+        if (payload.replayToasts().isEmpty()) {
+            lastSeenReplayTick = Math.max(lastSeenReplayTick, payload.latestReplayTick());
             return;
         }
 
@@ -59,8 +87,8 @@ public final class SpectatorReplayToastOverlay {
         }
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(player.getWorld());
-        boolean isDeadSpectator = player.isSpectator() && gwc.isPlayerDead(player.getUuid()) && gwc.hasAnyRole(player);
-        if (!isDeadSpectator || ACTIVE_TOASTS.isEmpty()) {
+        boolean isInGameSpectator = player.isSpectator() && gwc.isRunning();
+        if (!isInGameSpectator || ACTIVE_TOASTS.isEmpty()) {
             return;
         }
 

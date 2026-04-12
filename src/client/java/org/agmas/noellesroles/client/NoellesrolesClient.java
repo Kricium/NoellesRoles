@@ -114,6 +114,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static boolean wasHoldingInvisible = false;
     private static long spectatorReplayPollRequestId = 10_000L;
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
+    private static boolean wasDeadSpectatorLastTick = false;
 
 
     @Override
@@ -588,10 +589,11 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity spectatorCandidate = MinecraftClient.getInstance().player;
             if (spectatorCandidate != null) {
                 GameWorldComponent spectatorWorld = GameWorldComponent.KEY.get(spectatorCandidate.getWorld());
-                boolean isDeadSpectator = spectatorCandidate.isSpectator()
-                        && spectatorWorld.isPlayerDead(spectatorCandidate.getUuid())
-                        && spectatorWorld.hasAnyRole(spectatorCandidate);
-                if (isDeadSpectator) {
+                boolean isInGameSpectator = spectatorCandidate.isSpectator() && spectatorWorld.isRunning();
+                if (isInGameSpectator) {
+                    if (!wasDeadSpectatorLastTick) {
+                        SpectatorReplayToastOverlay.beginSpectatorSession();
+                    }
                     long nowTick = spectatorCandidate.getWorld().getTime();
                     if (nextSpectatorReplayPollTick == Long.MAX_VALUE) {
                         nextSpectatorReplayPollTick = nowTick;
@@ -607,6 +609,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                 } else {
                     nextSpectatorReplayPollTick = Long.MAX_VALUE;
                 }
+                wasDeadSpectatorLastTick = isInGameSpectator;
+            } else {
+                wasDeadSpectatorLastTick = false;
             }
 
             if (abilityBind.wasPressed()) {
@@ -718,7 +723,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     return;
                 }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
-                if (!gwc.hasAnyRole(MinecraftClient.getInstance().player)) {
+                if (!gwc.isRunning()) {
                     return;
                 }
                 if (MinecraftClient.getInstance().currentScreen == null) {
@@ -726,6 +731,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                     boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator();
 
                     if (isAlive) {
+                        if (!gwc.hasAnyRole(MinecraftClient.getInstance().player)) {
+                            return;
+                        }
                         MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
                     } else if (isDeadSpectator) {
                         MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
