@@ -325,6 +325,8 @@ public class RoleInfoRegistry {
                 .addSkill("stealth") // 免疫杀手本能透视
                 .addSkill("survival_moment")); // 触发生存时刻
 
+        m.put("noellesroles:engineer", r("engineer"));
+
         m.put("noellesroles:riot_patrol", r("riot_patrol")
                 .addSkill("riot_shield", "use")
                 .addSkill("riot_fork", "use"));
@@ -339,7 +341,7 @@ public class RoleInfoRegistry {
 
         // 圣徒
         m.put("noellesroles:saint", r("saint")
-                .addSkill("hellfire")
+                .addSkill("hellfire", "ability")
                 .addSkill("divine_focus"));
 
         // ===================== 中立阵营 =====================
@@ -376,6 +378,8 @@ public class RoleInfoRegistry {
                 .addSkill("no_sanity") // 没有理智值
                 .addSkill("swallow_skill", "ability") // 吞噬玩家
                 .addSkill("moment")); // 触发饕餮时刻
+
+        m.put("noellesroles:criminal_reasoner", r("criminal_reasoner"));
 
         m.put("noellesroles:ferryman", r("ferryman")
                 .addSkill("netherwalker", "ability")

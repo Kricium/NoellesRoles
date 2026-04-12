@@ -7,6 +7,7 @@ import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Identifier;
+import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
@@ -22,10 +23,13 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
 
     public static final int NORMAL_KARMA_LOCK_TICKS = GameConstants.getInTicks(0, 5);
     public static final int BOMBER_KARMA_LOCK_TICKS = GameConstants.getInTicks(0, 20);
+    public static final int HELLFIRE_ACTIVE_TICKS = GameConstants.getInTicks(0, 15);
+    public static final int HELLFIRE_COOLDOWN_TICKS = GameConstants.getInTicks(1, 0);
 
     private final PlayerEntity player;
     private boolean karmaMarked;
     private int karmaLockTicks;
+    private int hellfireActiveTicks;
 
     public SaintPlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -34,6 +38,7 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
     public void reset() {
         this.karmaMarked = false;
         this.karmaLockTicks = 0;
+        this.hellfireActiveTicks = 0;
         this.sync();
     }
 
@@ -54,6 +59,27 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
         return this.karmaLockTicks;
     }
 
+    public boolean isHellfireActive() {
+        return this.hellfireActiveTicks > 0;
+    }
+
+    public int getHellfireActiveTicks() {
+        return this.hellfireActiveTicks;
+    }
+
+    public void activateHellfire() {
+        this.hellfireActiveTicks = HELLFIRE_ACTIVE_TICKS;
+        this.sync();
+    }
+
+    public void clearHellfire() {
+        if (this.hellfireActiveTicks <= 0) {
+            return;
+        }
+        this.hellfireActiveTicks = 0;
+        this.sync();
+    }
+
     public void triggerKarmaLock(boolean bomber) {
         this.karmaLockTicks = bomber ? BOMBER_KARMA_LOCK_TICKS : NORMAL_KARMA_LOCK_TICKS;
         this.sync();
@@ -72,12 +98,19 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
     public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
         buf.writeBoolean(this.karmaMarked);
         buf.writeInt(this.karmaLockTicks);
+        buf.writeInt(this.hellfireActiveTicks);
     }
 
     @Override
     public void applySyncPacket(RegistryByteBuf buf) {
         this.karmaMarked = buf.readBoolean();
         this.karmaLockTicks = buf.readInt();
+        this.hellfireActiveTicks = buf.readInt();
+    }
+
+    private void onHellfireExpired() {
+        AbilityPlayerComponent.KEY.get(this.player).setCooldown(HELLFIRE_COOLDOWN_TICKS);
+        this.sync();
     }
 
     @Override
@@ -88,6 +121,15 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
                 this.sync();
             }
         }
+
+        if (this.hellfireActiveTicks > 0) {
+            this.hellfireActiveTicks--;
+            if (this.hellfireActiveTicks == 0) {
+                onHellfireExpired();
+            } else if (this.hellfireActiveTicks % 10 == 0) {
+                this.sync();
+            }
+        }
     }
 
     @Override
@@ -95,17 +137,22 @@ public class SaintPlayerComponent implements AutoSyncedComponent, ServerTickingC
         if (this.karmaLockTicks > 0) {
             this.karmaLockTicks--;
         }
+        if (this.hellfireActiveTicks > 0) {
+            this.hellfireActiveTicks--;
+        }
     }
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putBoolean("karmaMarked", this.karmaMarked);
         tag.putInt("karmaLockTicks", this.karmaLockTicks);
+        tag.putInt("hellfireActiveTicks", this.hellfireActiveTicks);
     }
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.karmaMarked = tag.getBoolean("karmaMarked");
         this.karmaLockTicks = tag.getInt("karmaLockTicks");
+        this.hellfireActiveTicks = tag.contains("hellfireActiveTicks") ? tag.getInt("hellfireActiveTicks") : 0;
     }
 }

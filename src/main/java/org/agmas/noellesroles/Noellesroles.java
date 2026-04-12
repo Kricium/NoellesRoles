@@ -394,6 +394,7 @@ public class Noellesroles implements ModInitializer {
         ServerWorldEvents.LOAD.register((server, world) -> {
             GameWorldComponent.KEY.get(world).setRoleEnabled(THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES, false);
             GameWorldComponent.KEY.get(world).setRoleEnabled(AWESOME_BINGLUS, false);
+            GameWorldComponent.KEY.get(world).setRoleEnabled(JESTER, false);
         });
 
         // 修复：断线重连后清理语音群组 + 同步静语状态
@@ -417,6 +418,9 @@ public class Noellesroles implements ModInitializer {
 
         KillPlayer.BEFORE.register(((victim, killer, deathReason) -> {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
+            if (gameWorldComponent.isRole(victim, HUNTER)) {
+                removeHunterShotgunDrops(victim);
+            }
 
             // 黑警被杀时结束黑警时刻
             if (gameWorldComponent.isRole(victim, CORRUPT_COP)) {
@@ -1234,11 +1238,6 @@ public class Noellesroles implements ModInitializer {
             return null;
         });
 
-        ShouldDropOnDeath.EVENT.register((stack, victim) ->
-            stack.isOf(ModItems.DOUBLE_BARREL_SHOTGUN)
-                || stack.isOf(ModItems.DOUBLE_BARREL_SHELL)
-        );
-
         DoorInteraction.EVENT.register((DoorInteraction.DoorInteractionContext context) -> {
             if (context.isBlasted() || context.isJammed()) {
                 return DoorInteraction.DoorInteractionResult.PASS;
@@ -1726,6 +1725,13 @@ public class Noellesroles implements ModInitializer {
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(context.player());
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());
             if (abilityPlayerComponent.getCooldown() > 0) {
+                return;
+            }
+            if (gameWorldComponent.isRole(context.player(), SAINT) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                SaintPlayerComponent saintComponent = SaintPlayerComponent.KEY.get(context.player());
+                if (!saintComponent.isHellfireActive()) {
+                    saintComponent.activateHellfire();
+                }
                 return;
             }
             if (gameWorldComponent.isRole(context.player(), FERRYMAN) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
@@ -2988,6 +2994,15 @@ public class Noellesroles implements ModInitializer {
         net.minecraft.text.MutableText cocktailName = CocktailRegistry.getCocktailName(ingredients);
         if (cocktailName != null) return cocktailName;
         return Text.translatable("item.noellesroles.base_spirit");
+    }
+
+    private static void removeHunterShotgunDrops(PlayerEntity player) {
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.isOf(ModItems.DOUBLE_BARREL_SHOTGUN) || stack.isOf(ModItems.DOUBLE_BARREL_SHELL)) {
+                player.getInventory().setStack(i, ItemStack.EMPTY);
+            }
+        }
     }
 
 }

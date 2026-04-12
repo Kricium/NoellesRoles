@@ -47,12 +47,18 @@ public class PlayerAttackMixin {
             ci.cancel();
             return;
         }
+        if (!livingTarget.isAttackable() || livingTarget.handleAttack(player)) {
+            ci.cancel();
+            return;
+        }
 
         if (!player.getWorld().isClient) {
             component.lowerShield(false);
             player.clearActiveItem();
             player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, RiotShieldItem.SHOVE_COOLDOWN_TICKS);
 
+            livingTarget.setAttacker(player);
+            player.onAttacking(livingTarget);
             livingTarget.takeKnockback(0.45, player.getX() - livingTarget.getX(), player.getZ() - livingTarget.getZ());
             livingTarget.velocityModified = true;
             player.getWorld().playSound(null, player.getBlockPos(), SoundEvents.ITEM_SHIELD_BLOCK, player.getSoundCategory(), 0.8F, 1.15F);

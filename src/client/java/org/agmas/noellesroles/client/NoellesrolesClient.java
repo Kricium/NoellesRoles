@@ -458,6 +458,11 @@ public class NoellesrolesClient implements ClientModInitializer {
                 client.options.sneakKey.setPressed(false);
             }
 
+            if (hunterComponent.getFractureLayers() > 0) {
+                client.options.sprintKey.setPressed(false);
+                player.setSprinting(false);
+            }
+
             if (player.getMainHandStack().isOf(ModItems.RIOT_SHIELD)
                     && player.getItemCooldownManager().isCoolingDown(ModItems.RIOT_SHIELD)) {
                 client.options.attackKey.setPressed(false);

@@ -46,9 +46,14 @@ public abstract class ScoreboardRoleSelectorComponentMixin {
             targetVeteran = 0;
             targetPatrol = 0;
         } else if (count == 3) {
-            targetVigilante = 1;
-            targetVeteran = 1;
-            targetPatrol = 1;
+            targetVigilante = 2;
+            if (world.getRandom().nextBoolean()) {
+                targetVeteran = 1;
+                targetPatrol = 0;
+            } else {
+                targetVeteran = 0;
+                targetPatrol = 1;
+            }
         } else {
             targetVigilante = (count + 1) / 2;
             int remaining = count - targetVigilante;

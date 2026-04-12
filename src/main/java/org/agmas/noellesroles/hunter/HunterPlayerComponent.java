@@ -54,6 +54,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         this.trappedTicks = 0;
         this.trapPoisonOwnerUuid = null;
         this.trapPoisonPoisonerUuid = null;
+        clearFractureState();
         this.sync();
     }
 
@@ -138,8 +139,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
     private void refreshFractureEffect() {
         int layers = this.getFractureLayers();
         if (layers <= 0) {
-            this.player.removeStatusEffect(ModEffects.FRACTURE);
-            removeFractureSpeedModifier();
+            clearFractureState();
             return;
         }
 
@@ -171,6 +171,12 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         if (attribute != null) {
             attribute.removeModifier(FRACTURE_SPEED_MODIFIER_ID);
         }
+    }
+
+    private void clearFractureState() {
+        this.player.removeStatusEffect(ModEffects.FRACTURE);
+        removeFractureSpeedModifier();
+        restoreSprintForFracture();
     }
 
     private void lockSprintForFracture() {
@@ -238,9 +244,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
                 this.sync();
             }
         } else if (this.player.hasStatusEffect(ModEffects.FRACTURE)) {
-            this.player.removeStatusEffect(ModEffects.FRACTURE);
-            removeFractureSpeedModifier();
-            restoreSprintForFracture();
+            clearFractureState();
         }
     }
 
