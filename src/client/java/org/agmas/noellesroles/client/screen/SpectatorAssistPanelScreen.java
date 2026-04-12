@@ -17,12 +17,13 @@ import net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 
 import java.util.*;
 
 public class SpectatorAssistPanelScreen extends Screen {
-    private static final long REFRESH_INTERVAL_TICKS = 20L;
     private static final int PADDING = 30;
     private static final int COLUMNS = 3;
     private static final int COLUMN_GAP = 6;
@@ -35,12 +36,14 @@ public class SpectatorAssistPanelScreen extends Screen {
 
     private final List<EntryData> entries = new ArrayList<>();
     private final Map<UUID, ServerSyncData> serverSyncByUuid = new HashMap<>();
+    private final Map<UUID, ReplayDetailState> replayDetailsByUuid = new HashMap<>();
+    private final Map<UUID, Long> pendingReplayDetailRequestIds = new HashMap<>();
+    private final Map<UUID, Long> lastAppliedReplayDetailRequestIds = new HashMap<>();
     private int page = 0;
     private int pageCount = 1;
     private int entriesPerPage = COLUMNS;
     private long pendingRequestId = -1L;
     private long lastAppliedRequestId = -1L;
-    private long nextRefreshTick = Long.MAX_VALUE;
 
     public SpectatorAssistPanelScreen() {
         super(Text.translatable("screen.spectator_assist_panel.title"));
@@ -65,9 +68,11 @@ public class SpectatorAssistPanelScreen extends Screen {
 
         pendingRequestId = NEXT_REQUEST_ID++;
         serverSyncByUuid.clear();
+        replayDetailsByUuid.clear();
+        pendingReplayDetailRequestIds.clear();
+        lastAppliedReplayDetailRequestIds.clear();
         rebuildEntries(client, gwc);
         ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId, -1L));
-        nextRefreshTick = client.world.getTime() + REFRESH_INTERVAL_TICKS;
 
         int buttonY = this.height - 30;
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.spectator_assist_panel.prev"), button -> {
@@ -102,11 +107,11 @@ public class SpectatorAssistPanelScreen extends Screen {
             Text roleText = resolveRoleText(syncData);
             int roleColor = resolveRoleColor(syncData);
             Text deathReasonText = resolveDeathReasonText(gwc, uuid, dead, syncData);
-            List<Text> replayLines = resolveReplayLines(syncData);
+            String replaySummary = resolveReplaySummary(syncData);
             Identifier skinTexture = playerEntry != null
                     ? playerEntry.getSkinTextures().texture()
                     : DefaultSkinHelper.getSkinTextures(new GameProfile(uuid, nameText.getString())).texture();
-            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, replayLines, skinTexture));
+            entries.add(new EntryData(uuid, nameText, roleText, roleColor, online, dead, self, deathReasonText, replaySummary, skinTexture));
         }
 
         Layout layout = getLayout();
@@ -205,14 +210,7 @@ public class SpectatorAssistPanelScreen extends Screen {
 
             int nameWidth = Math.min(textWidth, font.getWidth(font.trimToWidth(entry.nameText.getString(), textWidth)));
             if (hoverTooltip == null && isInRect(mouseX, mouseY, textX, y + 6, nameWidth)) {
-                List<Text> replayTooltip = new ArrayList<>();
-                replayTooltip.add(Text.translatable("screen.spectator_assist_panel.replay_title"));
-                if (entry.replayLines.isEmpty()) {
-                    replayTooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
-                } else {
-                    replayTooltip.addAll(entry.replayLines);
-                }
-                hoverTooltip = replayTooltip;
+                hoverTooltip = buildReplayTooltip(entry);
             }
 
             if (hoverTooltip == null && isInAvatar(mouseX, mouseY, avatarX, avatarY) && entry.online) {
@@ -287,13 +285,6 @@ public class SpectatorAssistPanelScreen extends Screen {
         if (!canOpenSpectatorPanel(client.player, gwc)) {
             close();
             return;
-        }
-
-        long nowTick = client.world.getTime();
-        if (nowTick >= nextRefreshTick) {
-            pendingRequestId = NEXT_REQUEST_ID++;
-            ClientPlayNetworking.send(new SpectatorInfoRequestC2SPacket(pendingRequestId, -1L));
-            nextRefreshTick = nowTick + REFRESH_INTERVAL_TICKS;
         }
     }
 
@@ -424,12 +415,12 @@ public class SpectatorAssistPanelScreen extends Screen {
         return null;
     }
 
-    private static List<Text> resolveReplayLines(ServerSyncData syncData) {
-        if (syncData == null || syncData.replayLines().isEmpty()) {
+    private static List<Text> resolveReplayLines(List<String> replayLines) {
+        if (replayLines == null || replayLines.isEmpty()) {
             return List.of();
         }
         List<Text> lines = new ArrayList<>();
-        for (String replayLine : syncData.replayLines()) {
+        for (String replayLine : replayLines) {
             if (replayLine != null && !replayLine.isBlank()) {
                 lines.add(Text.literal(replayLine));
             }
@@ -440,6 +431,12 @@ public class SpectatorAssistPanelScreen extends Screen {
     public static void applyServerSync(SpectatorInfoSyncS2CPacket payload) {
         if (ACTIVE_INSTANCE != null) {
             ACTIVE_INSTANCE.applyServerSyncInternal(payload);
+        }
+    }
+
+    public static void applyReplayDetailSync(SpectatorReplayDetailSyncS2CPacket payload) {
+        if (ACTIVE_INSTANCE != null) {
+            ACTIVE_INSTANCE.applyReplayDetailSyncInternal(payload);
         }
     }
 
@@ -457,9 +454,10 @@ public class SpectatorAssistPanelScreen extends Screen {
                     entry.roleColor(),
                     entry.deathReasonRaw(),
                     entry.deathAgeSeconds(),
-                    List.copyOf(entry.replayLines())
+                    entry.replaySummary()
             ));
         }
+        pruneReplayDetailCache();
 
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null || client.world == null) {
@@ -474,6 +472,91 @@ public class SpectatorAssistPanelScreen extends Screen {
         rebuildEntries(client, gwc);
     }
 
+    private void applyReplayDetailSyncInternal(SpectatorReplayDetailSyncS2CPacket payload) {
+        UUID targetUuid = payload.targetUuid();
+        long requestId = payload.requestId();
+        long pendingRequestIdForTarget = pendingReplayDetailRequestIds.getOrDefault(targetUuid, -1L);
+        long lastAppliedRequestIdForTarget = lastAppliedReplayDetailRequestIds.getOrDefault(targetUuid, -1L);
+        if (requestId < lastAppliedRequestIdForTarget || (pendingRequestIdForTarget >= 0 && requestId < pendingRequestIdForTarget)) {
+            return;
+        }
+
+        lastAppliedReplayDetailRequestIds.put(targetUuid, requestId);
+        pendingReplayDetailRequestIds.remove(targetUuid);
+
+        ServerSyncData syncData = serverSyncByUuid.get(targetUuid);
+        String summarySnapshot = syncData != null ? syncData.replaySummary() : "";
+        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(summarySnapshot, List.copyOf(payload.replayLines()), false));
+    }
+
+    private List<Text> buildReplayTooltip(EntryData entry) {
+        List<Text> tooltip = new ArrayList<>();
+        tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_title"));
+
+        ReplayDetailState detailState = replayDetailsByUuid.get(entry.uuid);
+        String summary = entry.replaySummary;
+        boolean hasSummary = summary != null && !summary.isBlank();
+
+        if (detailState != null && !detailState.pending() && Objects.equals(detailState.summarySnapshot(), summary)) {
+            List<Text> detailedLines = resolveReplayLines(detailState.replayLines());
+            if (detailedLines.isEmpty()) {
+                tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
+            } else {
+                tooltip.addAll(detailedLines);
+            }
+            return tooltip;
+        }
+
+        if (hasSummary) {
+            tooltip.add(Text.literal(summary));
+            requestReplayDetails(entry.uuid, summary);
+            tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_loading"));
+        } else {
+            tooltip.add(Text.translatable("screen.spectator_assist_panel.replay_summary_none"));
+        }
+        return tooltip;
+    }
+
+    private void requestReplayDetails(UUID targetUuid, String summarySnapshot) {
+        if (summarySnapshot == null || summarySnapshot.isBlank()) {
+            return;
+        }
+
+        ReplayDetailState currentState = replayDetailsByUuid.get(targetUuid);
+        if (currentState != null && currentState.pending() && Objects.equals(currentState.summarySnapshot(), summarySnapshot)) {
+            return;
+        }
+        if (currentState != null && !currentState.pending() && Objects.equals(currentState.summarySnapshot(), summarySnapshot)) {
+            return;
+        }
+
+        long requestId = NEXT_REQUEST_ID++;
+        pendingReplayDetailRequestIds.put(targetUuid, requestId);
+        replayDetailsByUuid.put(targetUuid, new ReplayDetailState(summarySnapshot, List.of(), true));
+        ClientPlayNetworking.send(new SpectatorReplayDetailRequestC2SPacket(requestId, targetUuid));
+    }
+
+    private void pruneReplayDetailCache() {
+        Iterator<Map.Entry<UUID, ReplayDetailState>> iterator = replayDetailsByUuid.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, ReplayDetailState> entry = iterator.next();
+            ServerSyncData syncData = serverSyncByUuid.get(entry.getKey());
+            String currentSummary = syncData != null ? syncData.replaySummary() : "";
+            if (!Objects.equals(entry.getValue().summarySnapshot(), currentSummary)) {
+                iterator.remove();
+                pendingReplayDetailRequestIds.remove(entry.getKey());
+                lastAppliedReplayDetailRequestIds.remove(entry.getKey());
+            }
+        }
+    }
+
+    private static String resolveReplaySummary(ServerSyncData syncData) {
+        if (syncData == null) {
+            return "";
+        }
+        return syncData.replaySummary();
+    }
+
     private Layout getLayout() {
         int contentWidth = Math.min(this.width - PADDING * 2, 540);
         int listTop = 34;
@@ -486,14 +569,17 @@ public class SpectatorAssistPanelScreen extends Screen {
 
     private record EntryData(UUID uuid, Text nameText, Text roleText, int roleColor, boolean online, boolean dead, boolean self,
                              Text deathReasonText,
-                             List<Text> replayLines,
+                             String replaySummary,
                              Identifier skinTexture) {
     }
 
     private record Layout(int startX, int listTop, int rowsPerPage, int columnWidth) {
     }
 
-    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, List<String> replayLines) {
+    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, String replaySummary) {
+    }
+
+    private record ReplayDetailState(String summarySnapshot, List<String> replayLines, boolean pending) {
     }
 }
 

@@ -120,9 +120,13 @@ public final class SpectatorReplayToastOverlay {
     }
 
     private static Text buildToastText(SpectatorInfoSyncS2CPacket.ReplayToast replayToast) {
-        Text actorRole = Text.translatable(replayToast.actorRoleKey());
         Text targetRole = Text.translatable(replayToast.targetRoleKey());
         Text reason = resolveDeathReasonText(replayToast.deathReasonRaw());
+        if (replayToast.actorRoleKey() == null || replayToast.actorRoleKey().isBlank()) {
+            return Text.translatable("screen.spectator_assist_panel.toast.death", targetRole, reason);
+        }
+
+        Text actorRole = Text.translatable(replayToast.actorRoleKey());
         return Text.translatable("screen.spectator_assist_panel.toast.kill", actorRole, reason, targetRole);
     }
 

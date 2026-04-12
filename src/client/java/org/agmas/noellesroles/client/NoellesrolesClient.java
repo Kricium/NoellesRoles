@@ -62,6 +62,7 @@ import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
+import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
@@ -163,6 +164,10 @@ public class NoellesrolesClient implements ClientModInitializer {
                     SpectatorAssistPanelScreen.applyServerSync(payload);
                     SpectatorReplayToastOverlay.onSpectatorSync(payload);
                 }));
+        ClientPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() ->
+                        SpectatorAssistPanelScreen.applyReplayDetailSync(payload)
+                ));
 
         // 注册实体渲染器
         EntityRendererRegistry.register(NoellesRolesEntities.POISON_GAS_BOMB_ENTITY, FlyingItemEntityRenderer::new);

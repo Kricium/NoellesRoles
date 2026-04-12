@@ -459,6 +459,8 @@
   "screen.spectator_assist_panel.death_with_age": "Died from %s, %s seconds ago",
   "screen.spectator_assist_panel.replay_title": "Replay Records",
   "screen.spectator_assist_panel.replay_summary_none": "No replay records related to this player",
+  "screen.spectator_assist_panel.replay_loading": "Loading full replay...",
+  "screen.spectator_assist_panel.toast.death": "%s died from %s",
   "screen.spectator_assist_panel.toast.kill": "%s used %s to kill %s",
 
   "roleinfo.skill.assassin.guess_identity.effect": "",

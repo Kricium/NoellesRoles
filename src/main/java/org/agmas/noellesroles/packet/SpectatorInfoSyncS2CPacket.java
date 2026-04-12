@@ -38,10 +38,7 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             buf.writeInt(entry.roleColor());
             buf.writeString(entry.deathReasonRaw(), 256);
             buf.writeVarInt(entry.deathAgeSeconds());
-            buf.writeVarInt(entry.replayLines().size());
-            for (String line : entry.replayLines()) {
-                buf.writeString(line, 512);
-            }
+            buf.writeString(entry.replaySummary(), 512);
         }
         buf.writeVarInt(replayToasts.size());
         for (ReplayToast replayToast : replayToasts) {
@@ -64,12 +61,8 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
             int roleColor = buf.readInt();
             String deathReasonRaw = buf.readString(256);
             int deathAgeSeconds = buf.readVarInt();
-            int lineCount = buf.readVarInt();
-            List<String> replayLines = new ArrayList<>(lineCount);
-            for (int j = 0; j < lineCount; j++) {
-                replayLines.add(buf.readString(512));
-            }
-            entries.add(new Entry(uuid, roleTranslationKey, roleColor, deathReasonRaw, deathAgeSeconds, replayLines));
+            String replaySummary = buf.readString(512);
+            entries.add(new Entry(uuid, roleTranslationKey, roleColor, deathReasonRaw, deathAgeSeconds, replaySummary));
         }
         int toastCount = buf.readVarInt();
         List<ReplayToast> replayToasts = new ArrayList<>(toastCount);
@@ -83,7 +76,7 @@ public record SpectatorInfoSyncS2CPacket(long requestId,
         return new SpectatorInfoSyncS2CPacket(requestId, matchStartTick, latestReplayTick, entries, replayToasts);
     }
 
-    public record Entry(UUID uuid, String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, List<String> replayLines) {
+    public record Entry(UUID uuid, String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, String replaySummary) {
     }
 
     public record ReplayToast(long worldTick, String actorRoleKey, String targetRoleKey, String deathReasonRaw) {
