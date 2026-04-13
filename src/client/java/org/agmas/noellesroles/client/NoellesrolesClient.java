@@ -38,6 +38,7 @@ import net.minecraft.world.World;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
@@ -95,6 +96,7 @@ import java.util.List;
 
 public class NoellesrolesClient implements ClientModInitializer {
     public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
+    private static final int COMMANDER_MARK_HIGHLIGHT_COLOR = 0x8F6BD1;
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
     public static KeyBinding assistInterfaceBind;
@@ -214,6 +216,12 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             PlayerEntity localPlayer = MinecraftClient.getInstance().player;
 
+            GetInstinctHighlight.HighlightResult commanderMarkedHighlight =
+                    getCommanderMarkedHighlight(gameWorldComponent, localPlayer, player);
+            if (commanderMarkedHighlight != null) {
+                return commanderMarkedHighlight;
+            }
+
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.CORRUPT_COP)) {
                 var comp = CorruptCopPlayerComponent.KEY.get(localPlayer);
                 if (comp.canSeePlayersThroughWalls()){
@@ -310,6 +318,9 @@ public class NoellesrolesClient implements ClientModInitializer {
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.SERIAL_KILLER)) {
                 SerialKillerPlayerComponent serialKillerComp = SerialKillerPlayerComponent.KEY.get(localPlayer);
                 if (serialKillerComp.isCurrentTarget(player.getUuid())) {
+                    if (!WatheClient.isInstinctEnabled() && isCommanderMarkedTarget(gameWorldComponent, localPlayer, player)) {
+                        return null;
+                    }
                     // 当前目标 - 使用连环杀手颜色透视
                     return GetInstinctHighlight.HighlightResult.always(Noellesroles.SERIAL_KILLER.color());
                 }
@@ -318,15 +329,6 @@ public class NoellesrolesClient implements ClientModInitializer {
             if (gameWorldComponent.canUseKillerFeatures(localPlayer)) {
                 if (gameWorldComponent.isRole(player, Noellesroles.COMMANDER) && player != localPlayer) {
                     return GetInstinctHighlight.HighlightResult.withKeybind(0x2E006B, GetInstinctHighlight.HighlightResult.PRIORITY_HIGH);
-                }
-
-                for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
-                    PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
-                    if (commander == null) continue;
-                    CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
-                    if (commanderComp.isThreatTarget(player.getUuid())) {
-                        return GetInstinctHighlight.HighlightResult.always(0xCAA1FF);
-                    }
                 }
             }
             return null;
@@ -377,7 +379,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         });
 
         // 注册 GetInstinctHighlight 监听器：卧底角色高亮逻辑
-        // 让杀手误认为卧底是同伙（按Alt时显示红色）
+        // 让杀手误认为卧底是同伙（按本能时显示红色）
         GetInstinctHighlight.EVENT.register(entity -> {
             if (!(entity instanceof PlayerEntity player) || player.isSpectator()) return null;
             if (MinecraftClient.getInstance().player == null) return null;
@@ -393,7 +395,6 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             // 如果目标是卧底，让杀手误以为是同伙（显示红色）
             if (gameWorldComponent.isRole(player, Noellesroles.UNDERCOVER)) {
-                // 使用与杀手同伙相同的红色（需要按Alt键）
                 return GetInstinctHighlight.HighlightResult.withKeybind(MathHelper.hsvToRgb(0F, 1.0F, 0.6F), GetInstinctHighlight.HighlightResult.PRIORITY_HIGH);
             }
 
@@ -766,6 +767,41 @@ public class NoellesrolesClient implements ClientModInitializer {
                 wasHoldingInvisible = holdingInvisible;
             }
         });
+    }
+
+    private static GetInstinctHighlight.HighlightResult getCommanderMarkedHighlight(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, PlayerEntity targetPlayer) {
+        if (!canSeeCommanderMarkedTargets(gameWorldComponent, localPlayer)) {
+            return null;
+        }
+        if (WatheClient.isInstinctEnabled() && !gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER)) {
+            return null;
+        }
+        if (!isCommanderMarkedTarget(gameWorldComponent, localPlayer, targetPlayer)) {
+            return null;
+        }
+
+        return GetInstinctHighlight.HighlightResult.always(
+                COMMANDER_MARK_HIGHLIGHT_COLOR,
+                GetInstinctHighlight.HighlightResult.PRIORITY_HIGH
+        );
+    }
+
+    private static boolean isCommanderMarkedTarget(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, PlayerEntity targetPlayer) {
+        for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
+            PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
+            if (commander == null) continue;
+
+            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
+            if (commanderComp.isThreatTarget(targetPlayer.getUuid())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean canSeeCommanderMarkedTargets(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer) {
+        return gameWorldComponent.canUseKillerFeatures(localPlayer)
+                || gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER);
     }
 
     /**
