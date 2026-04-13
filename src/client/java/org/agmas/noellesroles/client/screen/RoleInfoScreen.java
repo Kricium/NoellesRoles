@@ -199,12 +199,13 @@ public class RoleInfoScreen extends Screen {
     }
 
     @Override
-    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (NoellesrolesClient.assistInterfaceBind != null
                 && NoellesrolesClient.assistInterfaceBind.matchesKey(keyCode, scanCode)) {
             this.close();
             return true;
         }
-        return super.keyReleased(keyCode, scanCode, modifiers);
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
+
 }

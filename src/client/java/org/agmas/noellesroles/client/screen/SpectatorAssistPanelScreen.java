@@ -16,6 +16,7 @@ import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
@@ -296,6 +297,16 @@ public class SpectatorAssistPanelScreen extends Screen {
         if (ACTIVE_INSTANCE == this) {
             ACTIVE_INSTANCE = null;
         }
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (NoellesrolesClient.assistInterfaceBind != null
+                && NoellesrolesClient.assistInterfaceBind.matchesKey(keyCode, scanCode)) {
+            this.close();
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     private static boolean isInAvatar(int mouseX, int mouseY, int avatarX, int avatarY) {

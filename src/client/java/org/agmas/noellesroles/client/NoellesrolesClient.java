@@ -125,7 +125,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
-        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
+        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
 
@@ -750,7 +750,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     } else if (isDeadSpectator) {
                         MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
                     }
-                };
+                }
             }
 
             ClientPlayerEntity player = MinecraftClient.getInstance().player;

@@ -430,8 +430,8 @@
   "replay.item_use.noellesroles.repair_tool.unlock": "%s §bunlocked§r a door",
 
   "key.noellesroles.assist_interface": "Open Assist Interface",
-  "assist_interface.hint": "Hold [%s] to open assist interface",
-  "assist_interface.spectator_hint": "Hold [%s] to open spectator assist panel",
+  "assist_interface.hint": "Press [%s] to toggle role info",
+  "assist_interface.spectator_hint": "Press [%s] to toggle spectator assist panel",
   "roleinfo.screen.title": "Role Info",
   "roleinfo.no_info": "No role info available",
   "roleinfo.faction_label": "Faction: %s",
