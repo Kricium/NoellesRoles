@@ -29,17 +29,90 @@ public class RoleInfoData {
      */
     public RoleInfoData addSkill(String skillId, String triggerKeybind) {
         String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, base + "name", base + "trigger", base + "effect");
+    }
+
+    public RoleInfoData addSkillWithSharedTrigger(String skillId, String triggerKeybind, String sharedTriggerKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, base + "name", "tr:" + sharedTriggerKey, base + "effect");
+    }
+
+    public RoleInfoData addSkillWithSharedNameAndTrigger(String skillId, String triggerKeybind, String sharedNameKey, String sharedTriggerKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, "tr:" + sharedNameKey, "tr:" + sharedTriggerKey, base + "effect");
+    }
+
+    public RoleInfoData addActiveUseSkill(String skillId, String triggerKeybind) {
+        return addSkillWithSharedTrigger(skillId, triggerKeybind, "shared.trigger.active_use");
+    }
+
+    public RoleInfoData addHoldUseSkill(String skillId, String triggerKeybind) {
+        return addSkillWithSharedTrigger(skillId, triggerKeybind, "shared.trigger.hold_use");
+    }
+
+    public RoleInfoData addInventoryOpenSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, "inventory", "shared.trigger.inventory_open");
+    }
+
+    public RoleInfoData addPassiveSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, null, "shared.trigger.passive");
+    }
+
+    public RoleInfoData addInitialItemSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, null, "shared.trigger.initial_item");
+    }
+
+    public RoleInfoData addSharedNamedHoldUseSkill(String skillId, String triggerKeybind, String sharedNameKey) {
+        return addSkillWithSharedNameAndTrigger(skillId, triggerKeybind, sharedNameKey, "shared.trigger.hold_use");
+    }
+
+    public RoleInfoData addSharedNamedPassiveSkill(String skillId, String sharedNameKey) {
+        return addSkillWithSharedNameAndTrigger(skillId, null, sharedNameKey, "shared.trigger.passive");
+    }
+
+    private RoleInfoData addSkillWithKeys(String skillId, String triggerKeybind, String nameKey, String triggerKey, String effectKey) {
         SkillInfoData s = new SkillInfoData();
-        s.nameKey = base + "name";
-        s.triggerKey = base + "trigger";
+        s.nameKey = nameKey;
+        s.triggerKey = triggerKey;
         s.triggerKeybind = triggerKeybind;
-        s.effectKey = base + "effect";
+        s.effectKey = effectKey;
         skills.put(skillId, s);
         return this;
     }
 
     public RoleInfoData addSkill(String skillId) {
         return addSkill(skillId, null);
+    }
+
+    /**
+     * Fluent shortcut to add a shared skill using the shared translation key pattern.
+     */
+    public RoleInfoData addSharedSkill(String skillId, String triggerKeybind) {
+        String base = "tr:roleinfo.skill.shared." + skillId + ".";
+        return addSharedSkillWithKeys(skillId, triggerKeybind, base + "name", base + "trigger", base + "effect");
+    }
+
+    public RoleInfoData addSharedSkillWithSharedTrigger(String skillId, String triggerKeybind, String sharedTriggerKey) {
+        String base = "tr:roleinfo.skill.shared." + skillId + ".";
+        return addSharedSkillWithKeys(skillId, triggerKeybind, base + "name", "tr:" + sharedTriggerKey, base + "effect");
+    }
+
+    public RoleInfoData addSharedPassiveSkill(String skillId) {
+        return addSharedSkillWithSharedTrigger(skillId, null, "shared.trigger.passive");
+    }
+
+    private RoleInfoData addSharedSkillWithKeys(String skillId, String triggerKeybind, String nameKey, String triggerKey, String effectKey) {
+        SkillInfoData s = new SkillInfoData();
+        s.nameKey = nameKey;
+        s.triggerKey = triggerKey;
+        s.triggerKeybind = triggerKeybind;
+        s.effectKey = effectKey;
+        skills.put(skillId, s);
+        return this;
+    }
+
+    public RoleInfoData addSharedSkill(String skillId) {
+        return addSharedSkill(skillId, null);
     }
 
     public static class SkillInfoData {
