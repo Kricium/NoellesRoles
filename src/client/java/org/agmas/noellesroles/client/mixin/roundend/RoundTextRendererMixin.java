@@ -48,6 +48,7 @@ public abstract class RoundTextRendererMixin {
     private static final int ROLE_TEXT_LINE_HEIGHT = 9;
     private static final int MULTILINE_ROLE_TEXT_OFFSET_Y = -8;
     private static final int ROLE_TEXT_MAX_CHARS_PER_LINE = 4;
+    private static final int ROLE_TEXT_MIN_FIRST_LINE_CHARS = 2;
 
     @Shadow
     private static int endTime;
@@ -225,32 +226,28 @@ public abstract class RoundTextRendererMixin {
 
     private static List<OrderedText> noellesroles$wrapRoleName(TextRenderer textRenderer, Text text) {
         String raw = text.getString();
-        if (raw.codePointCount(0, raw.length()) <= ROLE_TEXT_MAX_CHARS_PER_LINE) {
+        int totalChars = raw.codePointCount(0, raw.length());
+        if (totalChars <= ROLE_TEXT_MAX_CHARS_PER_LINE) {
             return textRenderer.wrapLines(text, ROLE_TEXT_MAX_WIDTH);
         }
 
         List<OrderedText> lines = new ArrayList<>();
-        StringBuilder currentLine = new StringBuilder();
-        int currentCount = 0;
+        int firstLineChars = Math.max(ROLE_TEXT_MIN_FIRST_LINE_CHARS, totalChars - ROLE_TEXT_MAX_CHARS_PER_LINE);
+        firstLineChars = Math.min(firstLineChars, totalChars - 1);
 
-        for (int offset = 0; offset < raw.length(); ) {
-            int codePoint = raw.codePointAt(offset);
-            currentLine.appendCodePoint(codePoint);
-            currentCount++;
-            offset += Character.charCount(codePoint);
-
-            if (currentCount >= ROLE_TEXT_MAX_CHARS_PER_LINE) {
-                lines.add(Text.literal(currentLine.toString()).asOrderedText());
-                currentLine.setLength(0);
-                currentCount = 0;
-            }
-        }
-
-        if (!currentLine.isEmpty()) {
-            lines.add(Text.literal(currentLine.toString()).asOrderedText());
-        }
+        String firstLine = noellesroles$substringByCodePoints(raw, 0, firstLineChars);
+        String secondLine = noellesroles$substringByCodePoints(raw, firstLineChars, totalChars);
+        lines.add(Text.literal(firstLine).setStyle(text.getStyle()).asOrderedText());
+        lines.add(Text.literal(secondLine).setStyle(text.getStyle()).asOrderedText());
 
         return lines;
+    }
+
+    @Unique
+    private static String noellesroles$substringByCodePoints(String text, int beginIndex, int endIndex) {
+        int beginOffset = text.offsetByCodePoints(0, beginIndex);
+        int endOffset = text.offsetByCodePoints(0, endIndex);
+        return text.substring(beginOffset, endOffset);
     }
 
     @Unique
