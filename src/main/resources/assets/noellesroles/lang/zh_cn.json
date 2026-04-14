@@ -133,7 +133,7 @@
   "roleinfo.screen.title": "职业介绍",
 
   "roleinfo.win_condition.corrupt_cop": "杀死除你以外的所有玩家即可获胜。",
-  "roleinfo.win_condition.criminal_reasoner": "正确推理出至少⌊开局人数/3⌋名死者的凶手即可获胜。",
+  "roleinfo.win_condition.criminal_reasoner": "正确推理出至少⌊开局人数/4⌋名死者的凶手即可获胜。",
   "roleinfo.win_condition.default.innocent": "找出并干掉所有杀手，或在时间结束时获胜。",
   "roleinfo.win_condition.default.killer": "和你的队友一起杀掉所有人。",
   "roleinfo.win_condition.default.neutral": "完成你的专属胜利条件。",
@@ -192,7 +192,7 @@
   "roleinfo.skill.corrupt_cop.revolver.effect": "你开局携带一把左轮手枪。使用左轮手枪击杀玩家时，不会受到乘客误杀惩罚。",
   "roleinfo.skill.criminal_reasoner.neutral.effect": "你属于中立阵营，没有理智值，但会接到伪装任务，疾跑体力有限，且无法捡起左轮手枪。",
   "roleinfo.skill.criminal_reasoner.reason.name": "推理",
-  "roleinfo.skill.criminal_reasoner.reason.effect": "按下技能键后，可打开推理菜单，从尚未被你成功推理的死者中选择一人，再从所有玩家中选择你怀疑的凶手进行配对。只有死者可以作为被推理目标，且不能选择自己为死者。推理成功时，该死者会被记为已完成推理，并计入你的胜利进度；同一名死者只会计数一次。成功后进入基础冷却：f(开局人数)=max(5,min(30,40-开局人数)) 秒；失败后冷却80秒。",
+  "roleinfo.skill.criminal_reasoner.reason.effect": "按下技能键后，可打开推理菜单，从尚未被你成功推理的死者中选择一人，再从所有玩家中选择你怀疑的凶手进行配对。只有死者可以作为被推理目标，且不能选择自己为死者。推理成功时，该死者会被记为已完成推理，并计入你的胜利进度。推理成功后冷却5秒；失败后冷却60秒。",
   "roleinfo.skill.engineer.door_sense.name": "门路感知",
   "roleinfo.skill.engineer.door_sense.effect": "当有门被撬开或被堵住时，你会收到提示，并持续看到那扇门的位置一段时间。",
   "roleinfo.skill.engineer.repair_tool.name": "维修工具",

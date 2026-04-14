@@ -1,8 +1,12 @@
 package org.agmas.noellesroles.riotpatrol;
 
+import dev.doctor4t.wathe.index.WatheItems;
+import dev.doctor4t.wathe.game.GameConstants;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
@@ -84,6 +88,24 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         this.sync();
     }
 
+    private void lowerShieldFromItemSwap() {
+        if (!this.shieldActive) {
+            return;
+        }
+
+        this.shieldActive = false;
+        this.player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, RiotShieldItem.SHIELD_COOLDOWN_TICKS);
+
+        for (ItemStack stack : this.player.getInventory().main) {
+            Item item = stack.getItem();
+            if (item == WatheItems.REVOLVER) {
+                this.player.getItemCooldownManager().set(item, GameConstants.ITEM_COOLDOWNS.get(WatheItems.REVOLVER));
+            }
+        }
+
+        this.sync();
+    }
+
     public boolean isShieldActive() {
         return this.shieldActive;
     }
@@ -140,7 +162,9 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
     @Override
     public void serverTick() {
         if (this.shieldActive) {
-            if (!this.player.isUsingItem() || !this.player.getActiveItem().isOf(ModItems.RIOT_SHIELD)) {
+            if (!this.player.getMainHandStack().isOf(ModItems.RIOT_SHIELD)) {
+                this.lowerShieldFromItemSwap();
+            } else if (!this.player.isUsingItem() || !this.player.getActiveItem().isOf(ModItems.RIOT_SHIELD)) {
                 this.lowerShield(false);
             } else {
                 this.player.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, 5, 3, false, false, false));

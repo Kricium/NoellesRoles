@@ -1037,14 +1037,14 @@ public class Noellesroles implements ModInitializer {
             }
 
             // 犯罪推理学家胜利判定优先于普通杀手胜利：
-            // 1. 正确推理次数达到当局玩家人数的三分之一（向下取整）
+            // 1. 正确推理次数达到当局玩家人数的四分之一（向下取整）
             // 2. 除自身以外所有人都已死亡
             for (UUID uuid : gameComponent.getAllWithRole(CRIMINAL_REASONER)) {
                 ServerPlayerEntity criminalReasoner = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
                 if (!GameFunctions.isPlayerPlayingAndAlive(criminalReasoner)) continue;
 
                 CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
-                int requiredReasoningCount = Math.floorDiv(gameComponent.getAllPlayers().size(), 3);
+                int requiredReasoningCount = Math.floorDiv(gameComponent.getAllPlayers().size(), 4);
                 if (requiredReasoningCount > 0 && criminalReasonerComponent.getSuccessfulReasoningCount() >= requiredReasoningCount) {
                     return CheckWinCondition.WinResult.neutralWin(criminalReasoner);
                 }
@@ -2226,14 +2226,10 @@ public class Noellesroles implements ModInitializer {
                 );
             }
 
-            // 参考饕餮的动态冷却思路：以 30 秒为基准，玩家越多成功冷却越短，但最低不低于 5 秒。
-            int totalPlayers = gameWorldComponent.getAllPlayers().size();
-            int successCooldownSeconds = Math.max(5, Math.min(30, 40 - totalPlayers));
-
-            // 推理成功使用动态冷却，推理失败固定 80 秒冷却。
+            // 推理成功固定 5 秒冷却，推理失败固定 60 秒冷却。
             abilityPlayerComponent.setCooldown(reasonSuccess
-                    ? GameConstants.getInTicks(0, successCooldownSeconds)
-                    : GameConstants.getInTicks(1, 20));
+                    ? GameConstants.getInTicks(0, 5)
+                    : GameConstants.getInTicks(1, 0));
 
             NbtCompound extra = new NbtCompound();
             extra.putString("action", "reason");
