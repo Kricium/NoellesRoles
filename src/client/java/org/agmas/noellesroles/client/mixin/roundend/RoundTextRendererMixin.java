@@ -255,6 +255,12 @@ public abstract class RoundTextRendererMixin {
 
     @Unique
     private static Text noellesroles$getEndText(GameRoundEndComponent roundEnd) {
+        if (roundEnd.getWinStatus() == GameFunctions.WinStatus.KILLERS) {
+            return Text.translatable("shared.win.killers");
+        }
+        if (roundEnd.getWinStatus() == GameFunctions.WinStatus.PASSENGERS) {
+            return Text.translatable("shared.win.passengers");
+        }
         if (roundEnd.getWinStatus() == GameFunctions.WinStatus.NEUTRAL) {
             for (GameRoundEndComponent.RoundEndData data : roundEnd.getPlayers()) {
                 if (data.isWinner()) {

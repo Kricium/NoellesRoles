@@ -42,6 +42,26 @@ public class RoleInfoData {
         return addSkillWithKeys(skillId, triggerKeybind, "tr:" + sharedNameKey, "tr:" + sharedTriggerKey, base + "effect");
     }
 
+    public RoleInfoData addSkillWithSharedName(String skillId, String triggerKeybind, String sharedNameKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, "tr:" + sharedNameKey, base + "trigger", base + "effect");
+    }
+
+    public RoleInfoData addSkillWithSharedEffect(String skillId, String triggerKeybind, String sharedEffectKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, base + "name", base + "trigger", "tr:" + sharedEffectKey);
+    }
+
+    public RoleInfoData addSkillWithSharedNameAndEffect(String skillId, String triggerKeybind, String sharedNameKey, String sharedEffectKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, "tr:" + sharedNameKey, base + "trigger", "tr:" + sharedEffectKey);
+    }
+
+    public RoleInfoData addSkillWithSharedNameEffectAndTrigger(String skillId, String triggerKeybind, String sharedNameKey, String sharedEffectKey, String sharedTriggerKey) {
+        String base = "tr:roleinfo.skill." + roleId + "." + skillId + ".";
+        return addSkillWithKeys(skillId, triggerKeybind, "tr:" + sharedNameKey, "tr:" + sharedTriggerKey, "tr:" + sharedEffectKey);
+    }
+
     public RoleInfoData addActiveUseSkill(String skillId, String triggerKeybind) {
         return addSkillWithSharedTrigger(skillId, triggerKeybind, "shared.trigger.active_use");
     }
@@ -62,12 +82,32 @@ public class RoleInfoData {
         return addSkillWithSharedTrigger(skillId, null, "shared.trigger.initial_item");
     }
 
+    public RoleInfoData addItemEffectSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, null, "shared.trigger.item_effect");
+    }
+
+    public RoleInfoData addItemEffectSkill(String skillId, String triggerKeybind) {
+        return addSkillWithSharedTrigger(skillId, triggerKeybind, "shared.trigger.item_effect");
+    }
+
+    public RoleInfoData addRoundStartSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, null, "shared.trigger.round_start");
+    }
+
+    public RoleInfoData addShopSkill(String skillId) {
+        return addSkillWithSharedTrigger(skillId, null, "shared.trigger.shop");
+    }
+
     public RoleInfoData addSharedNamedHoldUseSkill(String skillId, String triggerKeybind, String sharedNameKey) {
         return addSkillWithSharedNameAndTrigger(skillId, triggerKeybind, sharedNameKey, "shared.trigger.hold_use");
     }
 
     public RoleInfoData addSharedNamedPassiveSkill(String skillId, String sharedNameKey) {
         return addSkillWithSharedNameAndTrigger(skillId, null, sharedNameKey, "shared.trigger.passive");
+    }
+
+    public RoleInfoData addSharedNamedPassiveSkillWithSharedEffect(String skillId, String sharedNameKey, String sharedEffectKey) {
+        return addSkillWithSharedNameEffectAndTrigger(skillId, null, sharedNameKey, sharedEffectKey, "shared.trigger.passive");
     }
 
     private RoleInfoData addSkillWithKeys(String skillId, String triggerKeybind, String nameKey, String triggerKey, String effectKey) {
