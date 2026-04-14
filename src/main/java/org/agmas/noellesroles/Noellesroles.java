@@ -61,6 +61,7 @@ import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.AssassinGuessRoleC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
+import org.agmas.noellesroles.packet.FerrymanBodyAgeSyncS2CPacket;
 import org.agmas.noellesroles.packet.MorphC2SPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.SwapperC2SPacket;
@@ -427,6 +428,7 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(SpectatorInfoRequestC2SPacket.ID, SpectatorInfoRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorReplayDetailRequestC2SPacket.ID, SpectatorReplayDetailRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(FerrymanBodyAgeSyncS2CPacket.ID, FerrymanBodyAgeSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SilencedStateS2CPacket.ID, SilencedStateS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SpectatorInfoSyncS2CPacket.ID, SpectatorInfoSyncS2CPacket.CODEC);
@@ -1858,6 +1860,13 @@ public class Noellesroles implements ModInitializer {
                         extra.putUuid("attacker", attacker.getUuid());
                     }
 
+                    if (attacker != null && result.deathReason() == GameConstants.DeathReasons.KNIFE) {
+                        AbilityPlayerComponent.KEY.get(attacker).markKnifeCooldownOverride(GameConstants.getInTicks(0, 10));
+                    }
+                    if (attacker != null && result.reactionType() == FerrymanPlayerComponent.ReactionType.TAOTIE_SWALLOW) {
+                        TaotiePlayerComponent.KEY.get(attacker).setSwallowCooldown(GameConstants.getInTicks(0, 10));
+                    }
+
                     if (result.consumeBlessing()) {
                         if (attacker != null) {
                             attacker.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, FerrymanPlayerComponent.COUNTER_STUN_TICKS, FerrymanHelper.COUNTER_STUN_AMPLIFIER, false, true, true));
@@ -1867,14 +1876,24 @@ public class Noellesroles implements ModInitializer {
                     }
 
                     GameRecordManager.recordSkillUse(context.player(), FERRYMAN_ID, attacker, extra);
-                    var blockedEvent = GameRecordManager.event("death_blocked")
-                            .actor(context.player())
-                            .put("block_reason", "ferryman_reaction")
-                            .put("death_reason", result.deathReason().toString());
-                    if (attacker != null) {
-                        blockedEvent.target(attacker);
+                    if (result.reactionType() == FerrymanPlayerComponent.ReactionType.TAOTIE_SWALLOW) {
+                        var blockedSwallowEvent = GameRecordManager.event("iron_man_activated")
+                                .actor(context.player())
+                                .put("action", "block_swallow");
+                        if (attacker != null) {
+                            blockedSwallowEvent.target(attacker);
+                        }
+                        blockedSwallowEvent.record();
+                    } else {
+                        var blockedEvent = GameRecordManager.event("death_blocked")
+                                .actor(context.player())
+                                .put("block_reason", "ferryman_reaction")
+                                .put("death_reason", result.deathReason().toString());
+                        if (attacker != null) {
+                            blockedEvent.target(attacker);
+                        }
+                        blockedEvent.record();
                     }
-                    blockedEvent.record();
                     return;
                 }
 
@@ -1889,8 +1908,8 @@ public class Noellesroles implements ModInitializer {
                     return;
                 }
 
-                body.age = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME + 1;
                 if (context.player().getWorld() instanceof ServerWorld serverWorld) {
+                    FerrymanHelper.markBodyFerried(serverWorld, body);
                     Vec3d pos = body.getPos();
                     serverWorld.spawnParticles(ParticleTypes.SOUL_FIRE_FLAME, pos.x, pos.y + 0.45, pos.z, 12, 0.2, 0.2, 0.2, 0.01);
                     serverWorld.spawnParticles(ParticleTypes.SOUL, pos.x, pos.y + 0.6, pos.z, 18, 0.25, 0.25, 0.25, 0.02);
@@ -2251,6 +2270,10 @@ public class Noellesroles implements ModInitializer {
 
             // 验证视线
             if (!taotie.canSee(target)) return;
+
+            if (FerrymanHelper.beginSwallowReaction(target, taotie, gameWorldComponent)) {
+                return;
+            }
 
             // 执行吞噬
             if (taotieComp.swallowPlayer(target)) {

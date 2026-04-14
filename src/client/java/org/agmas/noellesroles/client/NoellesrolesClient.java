@@ -57,6 +57,7 @@ import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
+import org.agmas.noellesroles.packet.FerrymanBodyAgeSyncS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
@@ -153,6 +154,14 @@ public class NoellesrolesClient implements ClientModInitializer {
                 (payload, context) -> context.client().execute(() ->
                         EngineerDoorHighlightRenderer.onPacketReceived(payload.doorPos())
                 ));
+
+        ClientPlayNetworking.registerGlobalReceiver(FerrymanBodyAgeSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() -> {
+                    if (context.client().world == null) return;
+                    if (context.client().world.getEntityById(payload.entityId()) instanceof PlayerBodyEntity body) {
+                        body.age = payload.age();
+                    }
+                }));
 
         // 注册职业广播 S2C 包接收：复用对讲机渲染器在屏幕上方显示
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.RoleBroadcastS2CPacket.ID,
@@ -511,7 +520,16 @@ public class NoellesrolesClient implements ClientModInitializer {
                 HitResult line = ProjectileUtil.getCollision(MinecraftClient.getInstance().player, (entity) -> entity instanceof PlayerBodyEntity, range);
                 NoellesrolesClient.targetBody = null;
                 if (line instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerBodyEntity playerBodyEntity) {
-                    NoellesrolesClient.targetBody = playerBodyEntity;
+                    GameWorldComponent gameWorld = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    if (gameWorld.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
+                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                        int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
+                        if (!ferrymanComponent.hasFerriedBody(playerBodyEntity.getUuid()) && playerBodyEntity.age < decomposedAge) {
+                            NoellesrolesClient.targetBody = playerBodyEntity;
+                        }
+                    } else {
+                        NoellesrolesClient.targetBody = playerBodyEntity;
+                    }
                 }
                 GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
                 if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.PATHOGEN)) {

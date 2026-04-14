@@ -729,7 +729,7 @@
   "tip.orthopedist.buff": "Press %s to use Bone Setting on %s",
   "tip.orthopedist.target_active": "%s is already under Bone Setting",
   "tip.orthopedist.no_target": "Aim at a player within 3 blocks",
-  "tip.ferryman.reaction_ready": "Press %s to nullify the fatal hit",
+  "tip.ferryman.reaction_ready": "Press %s to nullify this threat",
   "tip.ferryman.ferry": "Press %s to escort this corpse",
   "tip.ferryman.progress": "Escorted: %s/%s  Blessings: %s",
   "tip.ferryman.attacker_warn": "Do not disturb the rest of the dead.",

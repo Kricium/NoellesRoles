@@ -42,6 +42,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
     private int reactionTicks = 0;
     private UUID pendingAttackerUuid;
     private Identifier pendingDeathReason;
+    private ReactionType pendingReactionType = ReactionType.DEATH;
     private boolean won = false;
     private final List<UUID> ferriedBodies = new ArrayList<>();
 
@@ -56,6 +57,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.reactionTicks = 0;
         this.pendingAttackerUuid = null;
         this.pendingDeathReason = null;
+        this.pendingReactionType = ReactionType.DEATH;
         this.won = false;
         this.ferriedBodies.clear();
         this.sync();
@@ -77,6 +79,10 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         buf.writeInt(this.blessingStacks);
         buf.writeInt(this.reactionTicks);
         buf.writeBoolean(this.pendingAttackerUuid != null);
+        buf.writeInt(this.ferriedBodies.size());
+        for (UUID uuid : this.ferriedBodies) {
+            buf.writeUuid(uuid);
+        }
     }
 
     @Override
@@ -88,6 +94,11 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         if (!buf.readBoolean()) {
             this.pendingAttackerUuid = null;
             this.pendingDeathReason = null;
+        }
+        this.ferriedBodies.clear();
+        int ferriedSize = buf.readInt();
+        for (int i = 0; i < ferriedSize; i++) {
+            this.ferriedBodies.add(buf.readUuid());
         }
     }
 
@@ -137,6 +148,19 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.reactionTicks = REACTION_WINDOW_TICKS;
         this.pendingAttackerUuid = attackerUuid;
         this.pendingDeathReason = deathReason;
+        this.pendingReactionType = ReactionType.DEATH;
+        this.sync();
+        return true;
+    }
+
+    public boolean beginSwallowReaction(UUID attackerUuid) {
+        if (this.reactionTicks > 0) {
+            return false;
+        }
+        this.reactionTicks = REACTION_WINDOW_TICKS;
+        this.pendingAttackerUuid = attackerUuid;
+        this.pendingDeathReason = null;
+        this.pendingReactionType = ReactionType.TAOTIE_SWALLOW;
         this.sync();
         return true;
     }
@@ -153,13 +177,18 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         return pendingAttackerUuid;
     }
 
+    public ReactionType getPendingReactionType() {
+        return pendingReactionType;
+    }
+
     public ReactionResult triggerReaction() {
-        if (this.reactionTicks <= 0 || this.pendingDeathReason == null) {
+        if (this.reactionTicks <= 0 || (this.pendingReactionType == ReactionType.DEATH && this.pendingDeathReason == null)) {
             return ReactionResult.failure();
         }
 
         UUID attackerUuid = this.pendingAttackerUuid;
         Identifier deathReason = this.pendingDeathReason;
+        ReactionType reactionType = this.pendingReactionType;
         boolean empowered = this.blessingStacks > 0;
         if (empowered) {
             this.blessingStacks--;
@@ -168,8 +197,9 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.reactionTicks = 0;
         this.pendingAttackerUuid = null;
         this.pendingDeathReason = null;
+        this.pendingReactionType = ReactionType.DEATH;
         this.sync();
-        return new ReactionResult(true, empowered, attackerUuid, deathReason);
+        return new ReactionResult(true, empowered, attackerUuid, deathReason, reactionType);
     }
 
     public void clearReaction() {
@@ -179,6 +209,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.reactionTicks = 0;
         this.pendingAttackerUuid = null;
         this.pendingDeathReason = null;
+        this.pendingReactionType = ReactionType.DEATH;
         this.sync();
     }
 
@@ -220,6 +251,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         tag.putInt("blessingStacks", this.blessingStacks);
         tag.putInt("reactionTicks", this.reactionTicks);
         tag.putBoolean("won", this.won);
+        tag.putString("pendingReactionType", this.pendingReactionType.name());
         if (this.pendingAttackerUuid != null) {
             tag.putUuid("pendingAttackerUuid", this.pendingAttackerUuid);
         }
@@ -241,6 +273,9 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.blessingStacks = tag.contains("blessingStacks") ? tag.getInt("blessingStacks") : 0;
         this.reactionTicks = tag.contains("reactionTicks") ? tag.getInt("reactionTicks") : 0;
         this.won = tag.getBoolean("won");
+        this.pendingReactionType = tag.contains("pendingReactionType")
+            ? ReactionType.valueOf(tag.getString("pendingReactionType"))
+            : ReactionType.DEATH;
         this.pendingAttackerUuid = tag.containsUuid("pendingAttackerUuid") ? tag.getUuid("pendingAttackerUuid") : null;
         this.pendingDeathReason = tag.contains("pendingDeathReason")
             ? Identifier.tryParse(tag.getString("pendingDeathReason"))
@@ -255,9 +290,14 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         }
     }
 
-    public record ReactionResult(boolean success, boolean consumeBlessing, UUID attackerUuid, Identifier deathReason) {
+    public enum ReactionType {
+        DEATH,
+        TAOTIE_SWALLOW
+    }
+
+    public record ReactionResult(boolean success, boolean consumeBlessing, UUID attackerUuid, Identifier deathReason, ReactionType reactionType) {
         public static ReactionResult failure() {
-            return new ReactionResult(false, false, null, null);
+            return new ReactionResult(false, false, null, null, ReactionType.DEATH);
         }
     }
 }
