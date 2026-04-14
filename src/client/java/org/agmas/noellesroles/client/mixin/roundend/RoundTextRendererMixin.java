@@ -46,7 +46,6 @@ public abstract class RoundTextRendererMixin {
     private static final int SUBTITLE_TOP_Y = -4;
     private static final int ROLE_TEXT_MAX_WIDTH = 36;
     private static final int ROLE_TEXT_LINE_HEIGHT = 9;
-    private static final int MULTILINE_ROLE_TEXT_OFFSET_Y = -8;
     private static final int ROLE_TEXT_MAX_CHARS_PER_LINE = 4;
     private static final int ROLE_TEXT_MIN_FIRST_LINE_CHARS = 2;
 
@@ -109,8 +108,8 @@ public abstract class RoundTextRendererMixin {
         }
 
         boolean useOriginalLayout = noellesroles$canUseOriginalLayout(
-                winners.size(),
-                losers.size(),
+                winners,
+                losers,
                 context.getScaledWindowWidth(),
                 context.getScaledWindowHeight()
         );
@@ -123,14 +122,14 @@ public abstract class RoundTextRendererMixin {
         if (useOriginalLayout) {
             winnerLayout = noellesroles$createOriginalLayout(winners.size());
             loserLayout = noellesroles$createOriginalLayout(losers.size());
-            loserTitleY = noellesroles$getOriginalLoserTitleY(winnerLayout.rows());
+            loserTitleY = noellesroles$getLoserTitleY(winners, winnerLayout, 1.0f);
             shiftUp = 0;
             cardScale = 1.0f;
         } else {
             int maxColumns = noellesroles$getMaxColumns(context.getScaledWindowWidth());
             float[] layoutPlan = noellesroles$findLayoutPlan(
-                    winners.size(),
-                    losers.size(),
+                    winners,
+                    losers,
                     maxColumns,
                     context.getScaledWindowHeight()
             );
@@ -213,8 +212,7 @@ public abstract class RoundTextRendererMixin {
         }
 
         int centerX = x + textRenderer.getWidth(text) / 2;
-        int startY = y + MULTILINE_ROLE_TEXT_OFFSET_Y;
-        int currentY = startY;
+        int currentY = y;
         int drawn = 0;
         for (OrderedText line : wrappedLines) {
             int centeredX = centerX - textRenderer.getWidth(line) / 2;
@@ -327,7 +325,8 @@ public abstract class RoundTextRendererMixin {
                     startX + column * PLAYER_CARD_SPACING_X + PLAYER_CARD_SPACING_X / 2 - 8,
                     cardScale
             );
-            int y = cardsStartY + noellesroles$scaleCoordinate(row * PLAYER_CARD_SPACING_Y, cardScale);
+            int rowOffset = row * PLAYER_CARD_SPACING_Y + noellesroles$getAccumulatedExtraHeightBeforeRow(players, layout, row);
+            int y = cardsStartY + noellesroles$scaleCoordinate(rowOffset, cardScale);
 
             context.getMatrices().push();
             context.getMatrices().translate(x, y, 0f);
@@ -348,34 +347,48 @@ public abstract class RoundTextRendererMixin {
     }
 
     @Unique
-    private static int noellesroles$getSectionBottom(int cardsStartY, int rows) {
-        return cardsStartY + Math.max(1, rows) * PLAYER_CARD_SPACING_Y - PLAYER_CARD_SPACING_Y + PLAYER_CARD_TEXT_BOTTOM;
+    private static int noellesroles$getSectionBottom(
+            int cardsStartY,
+            List<GameRoundEndComponent.RoundEndData> players,
+            SectionLayout layout,
+            float cardScale
+    ) {
+        if (players.isEmpty() || layout.rows() <= 0) {
+            return cardsStartY + noellesroles$scaleCoordinate(PLAYER_CARD_TEXT_BOTTOM, cardScale);
+        }
+
+        int lastRow = layout.rows() - 1;
+        int rowOffset = lastRow * PLAYER_CARD_SPACING_Y + noellesroles$getAccumulatedExtraHeightBeforeRow(players, layout, lastRow);
+        int rowBottom = rowOffset + PLAYER_CARD_TEXT_BOTTOM + noellesroles$getRowExtraHeight(players, layout, lastRow);
+        return cardsStartY + noellesroles$scaleCoordinate(rowBottom, cardScale);
     }
 
     @Unique
     private static boolean noellesroles$canUseOriginalLayout(
-            int winnerCount,
-            int loserCount,
+            List<GameRoundEndComponent.RoundEndData> winners,
+            List<GameRoundEndComponent.RoundEndData> losers,
             int screenWidth,
             int screenHeight
     ) {
-        SectionLayout winnerLayout = noellesroles$createOriginalLayout(winnerCount);
-        SectionLayout loserLayout = noellesroles$createOriginalLayout(loserCount);
+        SectionLayout winnerLayout = noellesroles$createOriginalLayout(winners.size());
+        SectionLayout loserLayout = noellesroles$createOriginalLayout(losers.size());
 
-        if (!noellesroles$sectionFitsOriginalWidth(winnerCount, winnerLayout, screenWidth)) {
+        if (!noellesroles$sectionFitsOriginalWidth(winners.size(), winnerLayout, screenWidth)) {
             return false;
         }
 
-        if (!noellesroles$sectionFitsOriginalWidth(loserCount, loserLayout, screenWidth)) {
+        if (!noellesroles$sectionFitsOriginalWidth(losers.size(), loserLayout, screenWidth)) {
             return false;
         }
 
         int localVisibleBottom = screenHeight - (screenHeight / 2 + CONTENT_CENTER_OFFSET_Y);
-        int contentBottom = loserCount <= 0
-                ? noellesroles$getOriginalSectionBottom(PLAYER_SECTION_START_Y, winnerLayout.rows())
-                : noellesroles$getOriginalSectionBottom(
-                noellesroles$getOriginalLoserTitleY(winnerLayout.rows()) + LOSER_SECTION_GAP_Y,
-                loserLayout.rows()
+        int contentBottom = losers.isEmpty()
+                ? noellesroles$getSectionBottom(PLAYER_SECTION_START_Y, winners, winnerLayout, 1.0f)
+                : noellesroles$getSectionBottom(
+                noellesroles$getLoserTitleY(winners, winnerLayout, 1.0f) + LOSER_SECTION_GAP_Y,
+                losers,
+                loserLayout,
+                1.0f
         );
         return contentBottom <= localVisibleBottom;
     }
@@ -398,16 +411,6 @@ public abstract class RoundTextRendererMixin {
     }
 
     @Unique
-    private static int noellesroles$getOriginalSectionBottom(int cardsStartY, int rows) {
-        return cardsStartY + Math.max(0, rows - 1) * PLAYER_CARD_SPACING_Y + ORIGINAL_PLAYER_CARD_BOTTOM;
-    }
-
-    @Unique
-    private static int noellesroles$getOriginalLoserTitleY(int winnerRows) {
-        return PLAYER_SECTION_START_Y + Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y + SECTION_TITLE_GAP;
-    }
-
-    @Unique
     private static SectionLayout noellesroles$createOriginalLayout(int playerCount) {
         if (playerCount <= 0) {
             return new SectionLayout(1, 0);
@@ -419,7 +422,12 @@ public abstract class RoundTextRendererMixin {
     }
 
     @Unique
-    private static float[] noellesroles$findLayoutPlan(int winnerCount, int loserCount, int maxColumns, int screenHeight) {
+    private static float[] noellesroles$findLayoutPlan(
+            List<GameRoundEndComponent.RoundEndData> winners,
+            List<GameRoundEndComponent.RoundEndData> losers,
+            int maxColumns,
+            int screenHeight
+    ) {
         int localVisibleTop = SCREEN_TOP_MARGIN - (screenHeight / 2 + CONTENT_CENTER_OFFSET_Y);
         int localVisibleBottom = screenHeight - SCREEN_BOTTOM_MARGIN - (screenHeight / 2 + CONTENT_CENTER_OFFSET_Y);
         int minContentTop = Math.min(END_TEXT_TOP_Y, SUBTITLE_TOP_Y);
@@ -427,14 +435,12 @@ public abstract class RoundTextRendererMixin {
 
         float[] fallbackPlan = null;
         for (int extraColumns = 0; extraColumns < maxColumns; extraColumns++) {
-            SectionLayout winnerLayout = noellesroles$createLayout(winnerCount, maxColumns, extraColumns);
-            SectionLayout loserLayout = noellesroles$createLayout(loserCount, maxColumns, extraColumns);
-            int loserTitleY = PLAYER_SECTION_START_Y
-                    + Math.max(1, winnerLayout.rows()) * PLAYER_CARD_SPACING_Y
-                    + SECTION_TITLE_GAP;
-            int contentBottom = loserCount <= 0
-                    ? noellesroles$getSectionBottom(PLAYER_SECTION_START_Y, winnerLayout.rows())
-                    : noellesroles$getSectionBottom(loserTitleY + LOSER_SECTION_GAP_Y, loserLayout.rows());
+            SectionLayout winnerLayout = noellesroles$createLayout(winners.size(), maxColumns, extraColumns);
+            SectionLayout loserLayout = noellesroles$createLayout(losers.size(), maxColumns, extraColumns);
+            int loserTitleY = noellesroles$getLoserTitleY(winners, winnerLayout, 1.0f);
+            int contentBottom = losers.isEmpty()
+                    ? noellesroles$getSectionBottom(PLAYER_SECTION_START_Y, winners, winnerLayout, 1.0f)
+                    : noellesroles$getSectionBottom(loserTitleY + LOSER_SECTION_GAP_Y, losers, loserLayout, 1.0f);
             int requiredShiftUp = Math.max(0, contentBottom - localVisibleBottom);
             int appliedShiftUp = Math.min(requiredShiftUp, maxShiftUp);
             float[] candidatePlan = new float[]{extraColumns, loserTitleY, appliedShiftUp, 1.0f};
@@ -449,15 +455,16 @@ public abstract class RoundTextRendererMixin {
         }
 
         int fallbackExtraColumns = Math.round(fallbackPlan[0]);
-        SectionLayout winnerLayout = noellesroles$createLayout(winnerCount, maxColumns, fallbackExtraColumns);
-        SectionLayout loserLayout = noellesroles$createLayout(loserCount, maxColumns, fallbackExtraColumns);
+        SectionLayout winnerLayout = noellesroles$createLayout(winners.size(), maxColumns, fallbackExtraColumns);
+        SectionLayout loserLayout = noellesroles$createLayout(losers.size(), maxColumns, fallbackExtraColumns);
         float maxScale = noellesroles$computeCardScaleToFit(
-                winnerLayout.rows(),
-                loserLayout.rows(),
-                loserCount > 0,
+                winners,
+                winnerLayout,
+                losers,
+                loserLayout,
                 localVisibleBottom + Math.round(fallbackPlan[2])
         );
-        int scaledLoserTitleY = noellesroles$getLoserTitleY(winnerLayout.rows(), maxScale);
+        int scaledLoserTitleY = noellesroles$getLoserTitleY(winners, winnerLayout, maxScale);
         return new float[]{fallbackPlan[0], scaledLoserTitleY, fallbackPlan[2], maxScale};
     }
 
@@ -481,19 +488,20 @@ public abstract class RoundTextRendererMixin {
 
     @Unique
     private static float noellesroles$computeCardScaleToFit(
-            int winnerRows,
-            int loserRows,
-            boolean hasLosers,
+            List<GameRoundEndComponent.RoundEndData> winners,
+            SectionLayout winnerLayout,
+            List<GameRoundEndComponent.RoundEndData> losers,
+            SectionLayout loserLayout,
             int availableBottom
     ) {
+        boolean hasLosers = !losers.isEmpty();
         float fixedHeight = hasLosers
                 ? PLAYER_SECTION_START_Y + SECTION_TITLE_GAP + LOSER_SECTION_GAP_Y
                 : PLAYER_SECTION_START_Y;
         float scalableHeight = hasLosers
-                ? Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y
-                + Math.max(0, loserRows - 1) * PLAYER_CARD_SPACING_Y
-                + PLAYER_CARD_TEXT_BOTTOM
-                : Math.max(0, winnerRows - 1) * PLAYER_CARD_SPACING_Y + PLAYER_CARD_TEXT_BOTTOM;
+                ? noellesroles$getNextRowStartOffset(winners, winnerLayout)
+                + noellesroles$getSectionBottomOffset(losers, loserLayout)
+                : noellesroles$getSectionBottomOffset(winners, winnerLayout);
 
         if (scalableHeight <= 0f) {
             return 1.0f;
@@ -504,10 +512,76 @@ public abstract class RoundTextRendererMixin {
     }
 
     @Unique
-    private static int noellesroles$getLoserTitleY(int winnerRows, float cardScale) {
+    private static int noellesroles$getLoserTitleY(
+            List<GameRoundEndComponent.RoundEndData> winners,
+            SectionLayout winnerLayout,
+            float cardScale
+    ) {
         return PLAYER_SECTION_START_Y
-                + noellesroles$scaleCoordinate(Math.max(1, winnerRows) * PLAYER_CARD_SPACING_Y, cardScale)
+                + noellesroles$scaleCoordinate(noellesroles$getNextRowStartOffset(winners, winnerLayout), cardScale)
                 + SECTION_TITLE_GAP;
+    }
+
+    @Unique
+    private static int noellesroles$getSectionBottomOffset(
+            List<GameRoundEndComponent.RoundEndData> players,
+            SectionLayout layout
+    ) {
+        if (players.isEmpty() || layout.rows() <= 0) {
+            return PLAYER_CARD_TEXT_BOTTOM;
+        }
+
+        int lastRow = layout.rows() - 1;
+        int rowOffset = lastRow * PLAYER_CARD_SPACING_Y + noellesroles$getAccumulatedExtraHeightBeforeRow(players, layout, lastRow);
+        return rowOffset + PLAYER_CARD_TEXT_BOTTOM + noellesroles$getRowExtraHeight(players, layout, lastRow);
+    }
+
+    @Unique
+    private static int noellesroles$getNextRowStartOffset(
+            List<GameRoundEndComponent.RoundEndData> players,
+            SectionLayout layout
+    ) {
+        return Math.max(1, layout.rows()) * PLAYER_CARD_SPACING_Y
+                + noellesroles$getAccumulatedExtraHeightBeforeRow(players, layout, layout.rows());
+    }
+
+    @Unique
+    private static int noellesroles$getAccumulatedExtraHeightBeforeRow(
+            List<GameRoundEndComponent.RoundEndData> players,
+            SectionLayout layout,
+            int row
+    ) {
+        int extraHeight = 0;
+        for (int previousRow = 0; previousRow < row; previousRow++) {
+            extraHeight += noellesroles$getRowExtraHeight(players, layout, previousRow);
+        }
+        return extraHeight;
+    }
+
+    @Unique
+    private static int noellesroles$getRowExtraHeight(
+            List<GameRoundEndComponent.RoundEndData> players,
+            SectionLayout layout,
+            int row
+    ) {
+        if (row < 0 || row >= layout.rows()) {
+            return 0;
+        }
+
+        int startIndex = row * layout.columns();
+        int endIndex = Math.min(players.size(), startIndex + layout.columns());
+        int maxExtraHeight = 0;
+        for (int index = startIndex; index < endIndex; index++) {
+            int lineCount = noellesroles$getRoleLineCount(players.get(index));
+            maxExtraHeight = Math.max(maxExtraHeight, Math.max(0, lineCount - 1) * ROLE_TEXT_LINE_HEIGHT);
+        }
+        return maxExtraHeight;
+    }
+
+    @Unique
+    private static int noellesroles$getRoleLineCount(GameRoundEndComponent.RoundEndData data) {
+        String roleName = RoleAnnouncementTexts.getForRole(data.role()).roleText.getString();
+        return roleName.codePointCount(0, roleName.length()) > ROLE_TEXT_MAX_CHARS_PER_LINE ? 2 : 1;
     }
 
     @Unique
