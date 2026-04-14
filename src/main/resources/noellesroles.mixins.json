@@ -32,6 +32,7 @@
     "taotie.SwallowedPlayerSkyVisibilityMixin",
     "silencer.SilencedEatingMixin",
     "silencer.SilencedDrinkingMixin",
+    "silencer.SilencerBatSoundMixin",
     "wathe.GameRoundEndComponentMixin",
     "wathe.ScoreboardRoleSelectorComponentAccessor",
     "wathe.ScoreboardRoleSelectorComponentMixin",

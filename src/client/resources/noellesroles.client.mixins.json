@@ -46,6 +46,8 @@
     "vulture.VultureHudMixin",
     "silencer.SilencerHudMixin",
     "silencer.SilencedBroadcastFilterMixin",
+    "silencer.SilencerBatClientInteractionMixin",
+    "silencer.SilencerBatClientWorldSoundMixin",
     "bartender.StimulationVignetteHudMixin",
     "bartender.StimulationMoodMixin",
     "hud.StatusEffectHudOffsetMixin",
