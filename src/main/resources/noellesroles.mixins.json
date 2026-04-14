@@ -17,6 +17,7 @@
     "scavenger.ScavengerKnifeStabSoundMixin",
     "corruptcop.CorruptCopGunCooldownMixin",
     "bomber.BomberGrenadeCooldownMixin",
+    "effect.StatusEffectDisplayMixin",
     "equipment.EntityTrackerEntryMixin",
     "equipment.EntityTrackerMixin",
     "hunter.HunterPlayerMoveMixin",

@@ -78,6 +78,7 @@ import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
+import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
@@ -96,6 +97,7 @@ import java.util.List;
 
 public class NoellesrolesClient implements ClientModInitializer {
     public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
+    public static final Identifier HUNTER_TRAP_PLACED_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/hunter_trap_placed");
     private static final int COMMANDER_MARK_HIGHLIGHT_COLOR = 0x8F6BD1;
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
@@ -118,11 +120,15 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long spectatorReplayPollRequestId = 10_000L;
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
+    private static boolean wasAssistInterfacePressed = false;
 
 
     @Override
     public void onInitializeClient() {
-        ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
+        ModelLoadingPlugin.register(pluginContext -> {
+            pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID);
+            pluginContext.addModels(HUNTER_TRAP_PLACED_MODEL_ID);
+        });
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
@@ -278,6 +284,14 @@ public class NoellesrolesClient implements ClientModInitializer {
                     if (comp.poisonTicks > 0) return  GetInstinctHighlight.HighlightResult.always(Noellesroles.TOXICOLOGIST.color());
                 }
             }
+
+            // ORTHOPEDIST: 看到处于正骨状态的玩家（需要视线）
+            if (gameWorldComponent.isRole(localPlayer, Noellesroles.ORTHOPEDIST)) {
+                OrthopedistPlayerComponent comp = OrthopedistPlayerComponent.KEY.get(player);
+                if (localPlayer.canSee(player) && comp.hasBoneSettingActive()) {
+                    return GetInstinctHighlight.HighlightResult.always(Noellesroles.ORTHOPEDIST.color());
+                }
+            }
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.POISONER)) {
                 PlayerPoisonComponent comp = PlayerPoisonComponent.KEY.get(player);
                 if (comp.poisonTicks > 0) return  GetInstinctHighlight.HighlightResult.always(Noellesroles.POISONER.color());
@@ -422,10 +436,15 @@ public class NoellesrolesClient implements ClientModInitializer {
         GetInstinctHighlight.EVENT.register(entity -> {
             if (!(entity instanceof HunterTrapEntity trap)) return null;
             if (MinecraftClient.getInstance().player == null) return null;
-            if (!WatheClient.isPlayerPlayingAndAlive()) return null;
 
             PlayerEntity localPlayer = MinecraftClient.getInstance().player;
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(localPlayer.getWorld());
+            boolean isInGameSpectator = isTrapSpectatorViewer(localPlayer, gameWorld);
+            if (!WatheClient.isPlayerPlayingAndAlive() && !isInGameSpectator) return null;
             if (!trap.canBeSeenBy(localPlayer)) return null;
+            if (!gameWorld.canUseKillerFeatures(localPlayer) && !isInGameSpectator) {
+                return null;
+            }
 
             return GetInstinctHighlight.HighlightResult.withKeybind(Noellesroles.HUNTER.color());
         });
@@ -731,15 +750,22 @@ public class NoellesrolesClient implements ClientModInitializer {
                     ClientPlayNetworking.send(new AbilityC2SPacket());
                 });
             }
-            if (assistInterfaceBind.wasPressed()) {
+            boolean isAssistPressed = assistInterfaceBind != null && assistInterfaceBind.isPressed();
+            if (isAssistPressed && !wasAssistInterfacePressed) {
                 if (MinecraftClient.getInstance().player == null) {
+                    wasAssistInterfacePressed = true;
                     return;
                 }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
                 if (!gwc.isRunning()) {
+                    wasAssistInterfacePressed = true;
                     return;
                 }
-                if (MinecraftClient.getInstance().currentScreen == null) {
+
+                if (MinecraftClient.getInstance().currentScreen instanceof RoleInfoScreen
+                        || MinecraftClient.getInstance().currentScreen instanceof SpectatorAssistPanelScreen) {
+                    MinecraftClient.getInstance().setScreen(null);
+                } else if (MinecraftClient.getInstance().currentScreen == null) {
                     boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
                     boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
                     boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
@@ -752,6 +778,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
                 }
             }
+            wasAssistInterfacePressed = isAssistPressed;
 
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
@@ -802,6 +829,17 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static boolean canSeeCommanderMarkedTargets(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer) {
         return gameWorldComponent.canUseKillerFeatures(localPlayer)
                 || gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER);
+    }
+
+    private static boolean isTrapSpectatorViewer(PlayerEntity player, GameWorldComponent gameWorld) {
+        return player.isSpectator()
+                && gameWorld.isRunning()
+                && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+                && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
+    }
+
+    public static void markAssistInterfaceKeyHandled() {
+        wasAssistInterfacePressed = true;
     }
 
     /**

@@ -4,6 +4,7 @@ import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.record.GameRecordManager;
+import dev.doctor4t.wathe.item.RevolverItem;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
 import net.minecraft.entity.player.PlayerEntity;
@@ -89,9 +90,12 @@ public class DoubleBarrelShotgunItem extends Item {
             }
             world.playSound(null, user.getBlockPos(), SoundEvents.ENTITY_GENERIC_EXPLODE.value(), SoundCategory.PLAYERS, 0.6F, 1.7F);
             user.getItemCooldownManager().set(this, remainingShells <= 0 ? EMPTY_COOLDOWN_TICKS : FIRE_COOLDOWN_TICKS);
+        } else {
+            user.setPitch(user.getPitch() - 4.0F);
+            RevolverItem.spawnHandParticle();
         }
 
-        return TypedActionResult.success(stack, world.isClient);
+        return TypedActionResult.consume(stack);
     }
 
     @Override

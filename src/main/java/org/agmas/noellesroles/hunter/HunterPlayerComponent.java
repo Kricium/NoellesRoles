@@ -13,6 +13,7 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 import org.agmas.noellesroles.ModEffects;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
@@ -154,7 +155,7 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         }
 
         attribute.removeModifier(FRACTURE_SPEED_MODIFIER_ID);
-        int slowingLayers = Math.max(0, layers - 1);
+        int slowingLayers = Math.max(0, layers);
         if (slowingLayers <= 0) {
             return;
         }
@@ -224,6 +225,12 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         }
 
         if (!this.fractureTimers.isEmpty()) {
+            if (consumeBoneSettingForFracture()) {
+                this.refreshFractureEffect();
+                this.sync();
+                return;
+            }
+
             boolean changed = false;
             for (int i = this.fractureTimers.size() - 1; i >= 0; i--) {
                 int remaining = this.fractureTimers.get(i) - 1;
@@ -246,6 +253,21 @@ public class HunterPlayerComponent implements AutoSyncedComponent, ServerTicking
         } else if (this.player.hasStatusEffect(ModEffects.FRACTURE)) {
             clearFractureState();
         }
+    }
+
+    private boolean consumeBoneSettingForFracture() {
+        if (!this.player.hasStatusEffect(ModEffects.BONE_SETTING)) {
+            return false;
+        }
+        if (!healOneFractureLayer()) {
+            return false;
+        }
+
+        this.player.removeStatusEffect(ModEffects.BONE_SETTING);
+        if (this.player instanceof ServerPlayerEntity serverPlayer) {
+            OrthopedistPlayerComponent.refreshBoneSetting(serverPlayer);
+        }
+        return true;
     }
 
     private void exhaustStamina() {

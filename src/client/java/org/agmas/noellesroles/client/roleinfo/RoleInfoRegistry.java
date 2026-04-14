@@ -372,7 +372,7 @@ public class RoleInfoRegistry {
                 .addSharedNamedPassiveSkillWithSharedEffect("trap_control", "shared.name.trap_control", "shared.effect.trap_control"));
 
         m.put("noellesroles:hunter", r("hunter")
-                .addSharedNamedHoldUseSkill("instinct", "instinct", "shared.name.killer_instinct")
+                .addSkillWithSharedNameEffectAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.effect.killer_instinct", "shared.trigger.hold_use")
                 .addInventoryOpenSkill("shop")
                 .addItemEffectSkill("trap")
                 .addItemEffectSkill("shotgun")
@@ -380,6 +380,7 @@ public class RoleInfoRegistry {
 
         m.put("noellesroles:orthopedist", r("orthopedist")
                 .addSharedNamedPassiveSkillWithSharedEffect("passenger", "shared.name.passenger", "shared.effect.passenger")
+                .addPassiveSkill("see_bone_setting")
                 .addPassiveSkill("swift_stride")
                 .addActiveUseSkill("ancient_healing", "ability"));
 
@@ -408,6 +409,7 @@ public class RoleInfoRegistry {
                 .addSkillWithSharedNameAndTrigger("revolver", null, "shared.name.revolver", "shared.trigger.initial_item") // 初始左轮
                 .addSkillWithSharedNameAndTrigger("neutral_master_key", null, "shared.name.neutral_master_key", "shared.trigger.initial_item") // 中立万能钥匙
                 .addSharedPassiveSkill("block_victory") // 阻止其他阵营获胜
+                .addSharedNamedPassiveSkillWithSharedEffect("trap_control", "shared.name.trap_control", "shared.effect.trap_control")
                 .addSkill("moment")); // 触发黑警时刻
 
         // 病原体

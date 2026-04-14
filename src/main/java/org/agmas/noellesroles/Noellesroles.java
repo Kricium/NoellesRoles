@@ -37,6 +37,7 @@ import net.minecraft.entity.EntityStatuses;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.CustomPayload;
@@ -48,6 +49,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.Box;
@@ -109,6 +111,8 @@ import org.agmas.noellesroles.ferryman.FerrymanHelper;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
 import org.agmas.noellesroles.commander.CommanderHelper;
 import org.agmas.noellesroles.saint.SaintHelper;
+import org.agmas.noellesroles.mixin.accessor.ItemCooldownEntryAccessor;
+import org.agmas.noellesroles.mixin.accessor.ItemCooldownManagerAccessor;
 import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.vulture.VultureHelper;
 import org.agmas.noellesroles.item.RepairToolItem;
@@ -274,9 +278,79 @@ public class Noellesroles implements ModInitializer {
     public static final ArrayList<Identifier> VANNILA_ROLE_IDS = new ArrayList<>();
     // 中立万能钥匙可用角色集合
     private static final Set<Role> NEUTRAL_MASTER_KEY_ROLES = Set.of(VULTURE, PATHOGEN, TAOTIE, FERRYMAN);
+    private static final int TRAP_DISMANTLE_SHARED_COOLDOWN_TICKS = 15 * 20;
     private static final int MOMENT_TRIGGER_MIN_THRESHOLD = 2;
     // Static helpers have been moved to:
     // - FerrymanHelper, VultureHelper, SaintHelper, CommanderHelper, RoleUtils
+
+    private static boolean isTrapDismantleCooldownItem(Item item) {
+        return GameConstants.ITEM_COOLDOWNS.containsKey(item)
+            || item == ModItems.ANTIDOTE
+            || item == ModItems.IRON_MAN_VIAL
+            || item == ModItems.POISON_NEEDLE
+            || item == ModItems.DOUBLE_BARREL_SHOTGUN
+            || item == ModItems.REPAIR_TOOL
+            || item == ModItems.RIOT_SHIELD
+            || item == ModItems.RIOT_FORK
+            || item == ModItems.TIMED_BOMB
+            || item == ModItems.NEUTRAL_MASTER_KEY;
+    }
+
+    public static boolean isVigilanteSlotRole(Role role) {
+        return role == WatheRoles.VIGILANTE
+            || role == WatheRoles.VETERAN
+            || role == RIOT_PATROL;
+    }
+
+    public static boolean isPoliceRole(PlayerEntity player) {
+        if (player == null) {
+            return false;
+        }
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        Role role = gameWorld.getRole(player);
+        return role != null && isVigilanteSlotRole(role);
+    }
+
+    public static boolean isTrapDismantlerRole(PlayerEntity player) {
+        if (player == null) {
+            return false;
+        }
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        Role role = gameWorld.getRole(player);
+        return role == ENGINEER
+            || role == CORRUPT_COP
+            || (role != null && isVigilanteSlotRole(role) && role != WatheRoles.VIGILANTE);
+    }
+
+    private static int getRemainingCooldownTicks(PlayerEntity player, Item item) {
+        if (!player.getItemCooldownManager().isCoolingDown(item)) {
+            return 0;
+        }
+
+        ItemCooldownManagerAccessor accessor = (ItemCooldownManagerAccessor) player.getItemCooldownManager();
+        Object entry = accessor.getEntries().get(item);
+        if (entry == null) {
+            return 0;
+        }
+
+        return Math.max(0, ((ItemCooldownEntryAccessor) entry).getEndTick() - accessor.getTick());
+    }
+
+    private static void applyTrapDismantleCooldowns(PlayerEntity player) {
+        Set<Item> cooldownItems = new HashSet<>();
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            ItemStack stack = player.getInventory().getStack(i);
+            if (stack.isEmpty() || !isTrapDismantleCooldownItem(stack.getItem())) {
+                continue;
+            }
+            cooldownItems.add(stack.getItem());
+        }
+
+        for (Item item : cooldownItems) {
+            int cooldownTicks = Math.max(TRAP_DISMANTLE_SHARED_COOLDOWN_TICKS, getRemainingCooldownTicks(player, item));
+            player.getItemCooldownManager().set(item, cooldownTicks);
+        }
+    }
 
     public static void checkAndTriggerMomentsForWorld(ServerWorld serverWorld) {
         if (serverWorld == null) return;
@@ -625,10 +699,14 @@ public class Noellesroles implements ModInitializer {
             return gameWorldComponent.isRole((PlayerEntity) player, Noellesroles.TOXICOLOGIST);
         });
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
+            if (hand != Hand.MAIN_HAND) {
+                return net.minecraft.util.ActionResult.PASS;
+            }
+
             Box box = new Box(hitResult.getBlockPos()).expand(1.5);
             org.agmas.noellesroles.entity.HunterTrapEntity trap = world.getEntitiesByClass(org.agmas.noellesroles.entity.HunterTrapEntity.class, box, entity -> entity.squaredDistanceTo(hitResult.getPos()) < 2.25)
                 .stream()
-                .findFirst()
+                .min(java.util.Comparator.comparingDouble(entity -> entity.squaredDistanceTo(hitResult.getPos())))
                 .orElse(null);
 
             if (player.isSneaking() && trap != null && player.getUuid().equals(trap.getOwnerUuid())) {
@@ -641,6 +719,23 @@ public class Noellesroles implements ModInitializer {
                         extra.putString("action", "pickup");
                         GameRecordManager.recordItemUse(serverPlayer, Registries.ITEM.getId(ModItems.HUNTER_TRAP), null, extra);
                     }
+                    trap.unregisterFromOwner();
+                    trap.discard();
+                }
+                return net.minecraft.util.ActionResult.SUCCESS;
+            }
+
+            if (player.isSneaking() && trap != null && trap.canBeRemovedBy(player)) {
+                if (!world.isClient) {
+                    applyTrapDismantleCooldowns(player);
+                    world.playSound(null, trap.getBlockPos(), SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.PLAYERS, 0.8F, 1.2F);
+                    if (player instanceof ServerPlayerEntity serverPlayer) {
+                        NbtCompound extra = new NbtCompound();
+                        GameRecordManager.putBlockPos(extra, "pos", trap.getBlockPos());
+                        extra.putString("action", "dismantle");
+                        GameRecordManager.recordItemUse(serverPlayer, Registries.ITEM.getId(ModItems.HUNTER_TRAP), null, extra);
+                    }
+                    trap.unregisterFromOwner();
                     trap.discard();
                 }
                 return net.minecraft.util.ActionResult.SUCCESS;
@@ -1828,23 +1923,12 @@ public class Noellesroles implements ModInitializer {
             if (gameWorldComponent.isRole(context.player(), ORTHOPEDIST) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
                 PlayerEntity target = org.agmas.noellesroles.util.CrosshairTargetHelper.findCrosshairTarget(context.player(), 3.0D, 0.85D);
 
-                if (target != null) {
-                    HunterPlayerComponent hunterTarget = HunterPlayerComponent.KEY.get(target);
-                    boolean healed = hunterTarget.healOneFractureLayer();
-                    if (healed) {
-                        abilityPlayerComponent.setCooldown(GameConstants.getInTicks(1, 0));
-                        ServerPlayerEntity recordTarget = target instanceof ServerPlayerEntity serverTarget ? serverTarget : null;
-                        NbtCompound extra = new NbtCompound();
-                        extra.putString("action", "heal_fracture");
-                        GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, recordTarget, extra);
-                    } else if (target instanceof ServerPlayerEntity serverTarget && !serverTarget.hasStatusEffect(ModEffects.BONE_SETTING)) {
-                        OrthopedistPlayerComponent.applyBoneSetting(serverTarget);
-                        abilityPlayerComponent.setCooldown(GameConstants.getInTicks(1, 0));
-                        ServerPlayerEntity recordTarget = serverTarget;
-                        NbtCompound extra = new NbtCompound();
-                        extra.putString("action", "bone_setting");
-                        GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, recordTarget, extra);
-                    }
+                if (target instanceof ServerPlayerEntity serverTarget) {
+                    OrthopedistPlayerComponent.applyBoneSetting(serverTarget);
+                    abilityPlayerComponent.setCooldown(GameConstants.getInTicks(1, 0));
+                    NbtCompound extra = new NbtCompound();
+                    extra.putString("action", "bone_setting");
+                    GameRecordManager.recordSkillUse(context.player(), ORTHOPEDIST_ID, serverTarget, extra);
                 }
             }
             if (gameWorldComponent.isRole(context.player(), RECALLER) && abilityPlayerComponent.cooldown <= 0 && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
@@ -2741,6 +2825,9 @@ public class Noellesroles implements ModInitializer {
 
             Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
             String action = data.getString("action");
+            if ("dismantle".equals(action)) {
+                return Text.translatable("replay.item_use.noellesroles.hunter_trap.dismantle", actorText);
+            }
             if ("pickup".equals(action)) {
                 return Text.translatable("replay.item_use.noellesroles.hunter_trap.pickup", actorText);
             }
@@ -2791,7 +2878,7 @@ public class Noellesroles implements ModInitializer {
             Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
             if (poisoned && data.containsUuid("poisoner")) {
                 Text poisonerText = ReplayGenerator.formatPlayerName(data.getUuid("poisoner"), playerInfoCache);
-                return Text.translatable("replay.global.noellesroles.hunter_trap_triggered.poisoned", actorText, targetText, poisonerText);
+                return Text.translatable("replay.global.noellesroles.hunter_trap_triggered.poisoned", actorText, poisonerText, targetText);
             }
             return Text.translatable(
                 poisoned ? "replay.global.noellesroles.hunter_trap_triggered.owner_poisoned" : "replay.global.noellesroles.hunter_trap_triggered",

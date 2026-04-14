@@ -19,7 +19,7 @@ public class HunterClientTrapCullMixin {
         if (!(net.minecraft.client.MinecraftClient.getInstance().player instanceof ClientPlayerEntity player)) {
             return;
         }
-        if (!trap.canBeSeenBy(player)) {
+        if (!trap.canRenderFor(player)) {
             cir.setReturnValue(false);
         }
     }

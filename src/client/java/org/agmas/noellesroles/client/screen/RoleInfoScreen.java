@@ -202,6 +202,7 @@ public class RoleInfoScreen extends Screen {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (NoellesrolesClient.assistInterfaceBind != null
                 && NoellesrolesClient.assistInterfaceBind.matchesKey(keyCode, scanCode)) {
+            NoellesrolesClient.markAssistInterfaceKeyHandled();
             this.close();
             return true;
         }

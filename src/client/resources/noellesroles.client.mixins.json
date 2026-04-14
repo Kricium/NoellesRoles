@@ -32,6 +32,7 @@
     "saint.SaintHudMixin",
     "hunter.HunterClientTrapCullMixin",
     "riotpatrol.BuiltinModelItemRendererMixin",
+    "riotpatrol.ItemRendererInvoker",
     "riotpatrol.ItemRendererMixin",
     "riotpatrol.RiotShieldMouseLockMixin",
     "scavenger.ScavengerBodyHideMixin",
@@ -47,6 +48,7 @@
     "silencer.SilencedBroadcastFilterMixin",
     "bartender.StimulationVignetteHudMixin",
     "bartender.StimulationMoodMixin",
+    "hud.StatusEffectHudOffsetMixin",
     "neutral.NeutralMoodMixin"
   ],
   "injectors": {
