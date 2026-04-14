@@ -247,7 +247,7 @@ public class Noellesroles implements ModInitializer {
     public static Role SURVIVAL_MASTER = WatheRoles.registerRole(new Role(SURVIVAL_MASTER_ID, new Color(50, 180, 160).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
     // 工程师角色 - 无辜者阵营，感知被撬/被锁的门，维修工具修复/上锁/解锁
     public static Role ENGINEER = WatheRoles.registerRole(new Role(ENGINEER_ID, new Color(200, 160, 60).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
-    public static Role RIOT_PATROL = WatheRoles.registerRole(new Role(RIOT_PATROL_ID, new Color(45, 95, 145).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
+    public static Role RIOT_PATROL = WatheRoles.registerRole(new Role(RIOT_PATROL_ID, new Color(45, 95, 145).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false, ctx -> false));
     public static Role ORTHOPEDIST = WatheRoles.registerRole(new Role(ORTHOPEDIST_ID, new Color(144, 179, 88).getRGB(), true, false, Role.MoodType.REAL, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
     public static Role SAINT = WatheRoles.registerRole(new Role(SAINT_ID, new Color(238, 188, 120).getRGB(), true, false, Role.MoodType.NONE, WatheRoles.CIVILIAN.getMaxSprintTime(), false));
 
