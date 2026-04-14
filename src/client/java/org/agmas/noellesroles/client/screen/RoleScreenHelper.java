@@ -7,6 +7,8 @@ import net.minecraft.text.Text;
 public final class RoleScreenHelper {
     public static final int MENU_CONTENT_SHIFT_Y = 10;
     public static final int MENU_BUTTON_Y_OFFSET = 42;
+    public static final int MENU_BACKGROUND_OVERLAY_COLOR = 0xB0000000;
+    public static final int MENU_BAR_HEIGHT = 20;
 
     private static final int MENU_TITLE_SHIFT_Y = 5;
     private static final int MENU_TITLE_OFFSET_Y = 115;
@@ -27,6 +29,12 @@ public final class RoleScreenHelper {
 
     public static void drawCenteredSubTitle(DrawContext context, TextRenderer font, Text text, int x, int y) {
         context.drawCenteredTextWithShadow(font, text, x, y, 0xAAAAAA);
+    }
+
+    public static void renderRoleMenuBackground(DrawContext context, int width, int height, int accentColor) {
+        context.fill(0, 0, width, height, MENU_BACKGROUND_OVERLAY_COLOR);
+        context.fill(0, 0, width, MENU_BAR_HEIGHT, accentColor);
+        context.fill(0, height - MENU_BAR_HEIGHT, width, height, accentColor);
     }
 
     public static int getGridStartX(int itemCount, int columns, int spacingX, int centerX) {

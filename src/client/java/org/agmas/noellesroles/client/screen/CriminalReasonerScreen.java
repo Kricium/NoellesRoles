@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CriminalReasonerScreen extends Screen {
-    private static final int TOP_BAR_HEIGHT = 20;
-    private static final int BOTTOM_BAR_HEIGHT = 20;
-    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
+    private static final int ACCENT_BAR_COLOR = 0xFF000000 | (Noellesroles.CRIMINAL_REASONER.color() & 0x00FFFFFF);
     private static final int SUSPECT_COLUMNS = 6;
     private static final int SUSPECT_SPACING_X = 36;
     private static final int SUSPECT_SPACING_Y = 45;
@@ -233,7 +231,6 @@ public class CriminalReasonerScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
-        int accentColor = 0xFF000000 | (Noellesroles.CRIMINAL_REASONER.color() & 0x00FFFFFF);
 
         if (selectedVictim != null) {
             CriminalReasonerPlayerWidget.setClipBounds(0, RoleScreenHelper.getMenuViewTop(this.height), this.width, RoleScreenHelper.getMenuViewBottom(this.height));
@@ -254,8 +251,6 @@ public class CriminalReasonerScreen extends Screen {
             if (children().size() <= 1) {
                 RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.empty_victims"), centerX, centerY);
             }
-            context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
-            context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
             return;
         }
 
@@ -267,8 +262,6 @@ public class CriminalReasonerScreen extends Screen {
             Text suspectName = getPlayerName(selectedSuspect);
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.current_pair", victimName, suspectName), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
-        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
-        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
     }
 
     @Override
@@ -310,7 +303,7 @@ public class CriminalReasonerScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
+        RoleScreenHelper.renderRoleMenuBackground(context, this.width, this.height, ACCENT_BAR_COLOR);
     }
 
     private int getRowCount(int itemCount, int columns) {

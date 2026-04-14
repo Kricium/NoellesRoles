@@ -810,7 +810,7 @@ public class Noellesroles implements ModInitializer {
                 assassinComp.reset();
                 int totalPlayers = gameWorldComponent.getAllPlayers().size();
                 assassinComp.setMaxGuesses(totalPlayers);  // (totalPlayers + 3) / 4
-                // 刺客开局冷却30秒
+                // 刺客开局冷却60秒
                 assassinComp.setCooldown(GameConstants.getInTicks(0, 60));
                 // 刺客没有开局道具，只依靠猜测技能
             } else if (role.equals(REPORTER)) {

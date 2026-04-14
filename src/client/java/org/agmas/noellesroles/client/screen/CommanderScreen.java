@@ -23,9 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CommanderScreen extends Screen {
-    private static final int TOP_BAR_HEIGHT = 20;
-    private static final int BOTTOM_BAR_HEIGHT = 20;
-    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
+    private static final int ACCENT_BAR_COLOR = 0xFF2E006B;
     private static final int COLUMNS = 6;
     private static final int SPACING_X = 36;
     private static final int SPACING_Y = 45;
@@ -96,7 +94,6 @@ public class CommanderScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        int accentColor = 0xFF2E006B;
         renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
@@ -120,8 +117,6 @@ public class CommanderScreen extends Screen {
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.commander.current_targets", joined), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
 
-        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, accentColor);
-        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, accentColor);
     }
 
     @Override
@@ -146,7 +141,7 @@ public class CommanderScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
+        RoleScreenHelper.renderRoleMenuBackground(context, this.width, this.height, ACCENT_BAR_COLOR);
     }
 
     @Override

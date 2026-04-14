@@ -24,10 +24,8 @@ import java.util.List;
 import java.util.UUID;
 
 public class AssassinScreen extends Screen {
-    private static final int TOP_BAR_HEIGHT = 20;
-    private static final int BOTTOM_BAR_HEIGHT = 20;
-    private static final int BACKGROUND_OVERLAY_COLOR = 0xB0000000;
     private static final int ACCENT_BAR_COLOR = 0xFF500000;
+    private static final int CONFIRM_PHASE_EXTRA_DIM_COLOR = 0x90000000;
     private static final int ROLE_COLUMNS = 3;
     private static final int ROLE_BUTTON_WIDTH = 90;
     private static final int ROLE_BUTTON_HEIGHT = 20;
@@ -166,6 +164,17 @@ public class AssassinScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         // 绘制上下红色的电影感边框
         renderBackground(context, mouseX, mouseY, delta);
+        if (selectedTarget != null) {
+            // 第二页会露出更多场景内容，额外补一层暗化，避免翻页后整体突然变亮。
+            // 只压中间内容区，保留上下红条的原始颜色。
+            context.fill(
+                    0,
+                    RoleScreenHelper.MENU_BAR_HEIGHT,
+                    this.width,
+                    this.height - RoleScreenHelper.MENU_BAR_HEIGHT,
+                    CONFIRM_PHASE_EXTRA_DIM_COLOR
+            );
+        }
 
         if (selectedTarget == null) {
             super.render(context, mouseX, mouseY, delta);
@@ -206,8 +215,6 @@ public class AssassinScreen extends Screen {
             RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
-        context.fill(0, 0, this.width, TOP_BAR_HEIGHT, ACCENT_BAR_COLOR);
-        context.fill(0, this.height - BOTTOM_BAR_HEIGHT, this.width, this.height, ACCENT_BAR_COLOR);
     }
 
     @Override
@@ -230,7 +237,7 @@ public class AssassinScreen extends Screen {
     @Override
     public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
         super.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, BACKGROUND_OVERLAY_COLOR);
+        RoleScreenHelper.renderRoleMenuBackground(context, this.width, this.height, ACCENT_BAR_COLOR);
     }
 
     @Override
