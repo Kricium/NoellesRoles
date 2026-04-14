@@ -24,6 +24,7 @@
   "shared.trigger.passive": "被動技能",
   "shared.trigger.round_start": "開局觸發",
   "shared.trigger.shop": "商店",
+  "itemGroup.noellesroles.items": "NoellesRoles道具",
   "roleinfo.skill.shared.block_victory.name": "封鎖勝利",
   "roleinfo.skill.shared.block_victory.effect": "只要你仍然存活，殺手和乘客都無法達成各自的勝利條件。",
 

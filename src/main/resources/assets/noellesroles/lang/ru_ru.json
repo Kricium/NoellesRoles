@@ -24,6 +24,7 @@
   "shared.trigger.passive": "Пассивный навык",
   "shared.trigger.round_start": "В начале раунда",
   "shared.trigger.shop": "Магазин",
+  "itemGroup.noellesroles.items": "Предметы NoellesRoles",
   "roleinfo.skill.shared.block_victory.name": "Блокировка победы",
   "roleinfo.skill.shared.block_victory.effect": "Пока вы живы, ни убийцы, ни пассажиры не могут выполнить свои условия победы.",
 

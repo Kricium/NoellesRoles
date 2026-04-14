@@ -1,6 +1,12 @@
 package org.agmas.noellesroles;
 
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.text.Text;
 import org.agmas.noellesroles.item.AntidoteItem;
 import org.agmas.noellesroles.item.FineDrinkItem;
 import org.agmas.noellesroles.item.TimedBombItem;
@@ -22,8 +28,27 @@ import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ModItems {
+    private static final List<Item> MOD_ITEM_GROUP_ENTRIES = new ArrayList<>();
+    public static final RegistryKey<ItemGroup> NOELLESROLES_ITEMS_GROUP_KEY = RegistryKey.of(
+            RegistryKeys.ITEM_GROUP,
+            Identifier.of(Noellesroles.MOD_ID, "items")
+    );
+
     public static void init() {
+        Registry.register(
+                Registries.ITEM_GROUP,
+                NOELLESROLES_ITEMS_GROUP_KEY,
+                FabricItemGroup.builder()
+                        .icon(() -> new ItemStack(FINE_DRINK))
+                        .displayName(Text.translatable("itemGroup.noellesroles.items"))
+                        .entries((displayContext, entries) -> MOD_ITEM_GROUP_ENTRIES.forEach(entries::add))
+                        .build()
+        );
+
         // 注册调剂到 IngredientItem 静态注册表
         IngredientItem.register((IngredientItem) RUM);
         IngredientItem.register((IngredientItem) GIN);
@@ -154,6 +179,8 @@ public class ModItems {
 
         // Register the item.
         Item registeredItem = Registry.register(Registries.ITEM, itemID, item);
+        // 在这个工作区里，只要创建新物品时继续走这里注册，就会自动加入 NoellesRoles 道具物品栏。
+        MOD_ITEM_GROUP_ENTRIES.add(registeredItem);
 
         // Return the registered item!
         return registeredItem;
