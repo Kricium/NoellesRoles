@@ -2376,7 +2376,7 @@ public class Noellesroles implements ModInitializer {
                                                                          ServerWorld world,
                                                                          Map<UUID, ReplayGenerator.PlayerInfo> playerInfoCache) {
         if (match == null) {
-            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1, -1L, "");
+            return new SpectatorInfoSyncS2CPacket.Entry(targetUuid, "", 0xFFAAAAAA, "", -1L, -1, -1L, "");
         }
 
         long nowTick = world.getTime();
@@ -2416,6 +2416,7 @@ public class Noellesroles implements ModInitializer {
                 roleTranslationKey,
                 roleColor,
                 deathReasonRaw == null ? "" : deathReasonRaw,
+                deathTick,
                 deathAgeSeconds,
                 latestRelevantReplayTick,
                 replaySummary
