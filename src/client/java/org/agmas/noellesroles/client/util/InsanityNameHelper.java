@@ -26,7 +26,7 @@ public final class InsanityNameHelper {
 
     public static Text getVisiblePlayerName(@Nullable PlayerEntity player) {
         if (player == null) {
-            return Text.literal("Unknown");
+            return Text.translatable("screen.role_target.unknown_player");
         }
         if (shouldObfuscateNames()) {
             return Text.literal(OBFUSCATED_NAME).formatted(Formatting.OBFUSCATED);

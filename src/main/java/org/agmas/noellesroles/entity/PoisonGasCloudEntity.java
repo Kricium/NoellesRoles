@@ -37,6 +37,7 @@ public class PoisonGasCloudEntity extends Entity {
     private static final DustParticleEffect GAS_PARTICLE = new DustParticleEffect(new Vector3f(0.3f, 0.8f, 0.2f), 1.5f);
 
     private final Set<BlockPos> gasBlocks = new HashSet<>();
+    private final List<BlockPos> gasBlockList = new ArrayList<>();
     private Set<BlockPos> frontier = new HashSet<>();
     private final Map<UUID, Integer> exposureTicks = new HashMap<>();
     private final Set<UUID> playersInGas = new HashSet<>();
@@ -73,7 +74,9 @@ public class PoisonGasCloudEntity extends Entity {
         // 初始化起始位置
         if (age == 1) {
             BlockPos startPos = this.getBlockPos();
-            gasBlocks.add(startPos);
+            if (gasBlocks.add(startPos)) {
+                gasBlockList.add(startPos);
+            }
             frontier.add(startPos);
         }
 
@@ -98,7 +101,9 @@ public class PoisonGasCloudEntity extends Entity {
                         stillEdge = true; // 有被阻挡的邻居，保留在frontier中等待重新检测
                         continue;
                     }
-                    gasBlocks.add(neighbor);
+                    if (gasBlocks.add(neighbor)) {
+                        gasBlockList.add(neighbor);
+                    }
                     newFrontier.add(neighbor);
                 }
                 if (stillEdge) {
@@ -162,11 +167,10 @@ public class PoisonGasCloudEntity extends Entity {
         }
 
         // 粒子效果
-        if (!gasBlocks.isEmpty()) {
-            List<BlockPos> blockList = new ArrayList<>(gasBlocks);
+        if (!gasBlockList.isEmpty()) {
             int particleCount = 4 + serverWorld.random.nextInt(3); // 4-6个粒子
-            for (int i = 0; i < particleCount && !blockList.isEmpty(); i++) {
-                BlockPos pos = blockList.get(serverWorld.random.nextInt(blockList.size()));
+            for (int i = 0; i < particleCount; i++) {
+                BlockPos pos = gasBlockList.get(serverWorld.random.nextInt(gasBlockList.size()));
                 serverWorld.spawnParticles(
                         GAS_PARTICLE,
                         pos.getX() + 0.5 + serverWorld.random.nextGaussian() * 0.3,

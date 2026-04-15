@@ -109,16 +109,16 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         if (tag.contains("insaneSeesMorphs"))   this.insaneSeesMorphs = tag.getBoolean("insaneSeesMorphs");
         if (tag.contains("naturalVoodoosAllowed"))   this.naturalVoodoosAllowed = tag.getBoolean("naturalVoodoosAllowed");
         if (tag.contains("lockSoundPhysicsRemasteredConfig")) this.lockSoundPhysicsRemasteredConfig = tag.getBoolean("lockSoundPhysicsRemasteredConfig");
-        this.soundPhysicsRemasteredLockedValues.clear();
         if (tag.contains("soundPhysicsRemasteredLockedValues", NbtElement.COMPOUND_TYPE)) {
+            this.soundPhysicsRemasteredLockedValues.clear();
             NbtCompound soundPhysicsTag = tag.getCompound("soundPhysicsRemasteredLockedValues");
             for (String key : soundPhysicsTag.getKeys()) {
                 this.soundPhysicsRemasteredLockedValues.put(key, soundPhysicsTag.getString(key));
             }
         }
         if (tag.contains("lockTalkBubblesConfig")) this.lockTalkBubblesConfig = tag.getBoolean("lockTalkBubblesConfig");
-        this.talkBubblesLockedValues.clear();
         if (tag.contains("talkBubblesLockedValues", NbtElement.COMPOUND_TYPE)) {
+            this.talkBubblesLockedValues.clear();
             NbtCompound talkBubblesTag = tag.getCompound("talkBubblesLockedValues");
             for (String key : talkBubblesTag.getKeys()) {
                 this.talkBubblesLockedValues.put(key, talkBubblesTag.getString(key));

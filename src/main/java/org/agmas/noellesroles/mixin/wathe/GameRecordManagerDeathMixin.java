@@ -16,7 +16,8 @@ public class GameRecordManagerDeathMixin {
     @Inject(
             method = "recordDeath",
             at = @At(value = "INVOKE", target = "Ldev/doctor4t/wathe/record/GameRecordManager;addEvent(Lnet/minecraft/server/world/ServerWorld;Ljava/lang/String;Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/server/network/ServerPlayerEntity;Lnet/minecraft/nbt/NbtCompound;)V"),
-            locals = LocalCapture.CAPTURE_FAILHARD
+            locals = LocalCapture.CAPTURE_FAILHARD,
+            require = 1
     )
     private static void noellesroles$attachDeathPosition(
             ServerPlayerEntity victim,
