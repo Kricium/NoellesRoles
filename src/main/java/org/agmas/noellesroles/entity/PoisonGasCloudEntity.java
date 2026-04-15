@@ -196,14 +196,18 @@ public class PoisonGasCloudEntity extends Entity {
         playersInGas.clear();
     }
 
-    private double getCrossSection(VoxelShape shape, Direction.Axis moveAxis) {
+    private double getCrossSection(Box box, Direction.Axis moveAxis) {
         Direction.Axis perp1, perp2;
         switch (moveAxis) {
             case X -> { perp1 = Direction.Axis.Y; perp2 = Direction.Axis.Z; }
             case Y -> { perp1 = Direction.Axis.X; perp2 = Direction.Axis.Z; }
             default -> { perp1 = Direction.Axis.X; perp2 = Direction.Axis.Y; }
         }
-        return (shape.getMax(perp1) - shape.getMin(perp1)) * (shape.getMax(perp2) - shape.getMin(perp2));
+        return getAxisSpan(box, perp1) * getAxisSpan(box, perp2);
+    }
+
+    private double getAxisSpan(Box box, Direction.Axis axis) {
+        return box.getMax(axis) - box.getMin(axis);
     }
 
     /**
@@ -216,29 +220,45 @@ public class PoisonGasCloudEntity extends Entity {
         if (shape.isEmpty()) return false;
 
         Direction.Axis moveAxis = direction.getAxis();
-        if (getCrossSection(shape, moveAxis) <= 0.5) return false;
+        for (Box box : shape.getBoundingBoxes()) {
+            if (getCrossSection(box, moveAxis) <= 0.5) {
+                continue;
+            }
 
-        // (a) 碰撞箱覆盖出口面
-        boolean reachesFace = direction.getDirection() == Direction.AxisDirection.POSITIVE
-                ? shape.getMax(moveAxis) > 0.99
-                : shape.getMin(moveAxis) < 0.01;
-        if (reachesFace) return true;
+            // (a) 碰撞箱覆盖出口面
+            boolean reachesFace = direction.getDirection() == Direction.AxisDirection.POSITIVE
+                    ? box.getMax(moveAxis) > 0.99
+                    : box.getMin(moveAxis) < 0.01;
+            if (reachesFace) {
+                return true;
+            }
 
-        // (b) 中间墙壁（深度>0.1，如门 4/16=0.25）
-        double depth = shape.getMax(moveAxis) - shape.getMin(moveAxis);
-        return depth > 0.1;
+            // (b) 中间墙壁（深度>0.1，如门 4/16=0.25）
+            double depth = getAxisSpan(box, moveAxis);
+            if (depth > 0.1 && box.getMin(moveAxis) > 0.01 && box.getMax(moveAxis) < 0.99) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
-     * 入口体积检测：完整实心方块不允许气体进入
-     * 包围盒体积 >= 0.5 视为实心（石头、玻璃、半砖等）
+     * 入口体积检测：仅完整实心方块不允许气体进入
+     * 不再把楼梯、半砖等由多个碰撞盒组成的不完整方块误判为整块阻挡
      */
     private boolean isBlockTooSolid(VoxelShape shape) {
         if (shape.isEmpty()) return false;
-        double x = shape.getMax(Direction.Axis.X) - shape.getMin(Direction.Axis.X);
-        double y = shape.getMax(Direction.Axis.Y) - shape.getMin(Direction.Axis.Y);
-        double z = shape.getMax(Direction.Axis.Z) - shape.getMin(Direction.Axis.Z);
-        return x * y * z >= 0.5;
+        List<Box> boxes = shape.getBoundingBoxes();
+        if (boxes.size() != 1) {
+            return false;
+        }
+
+        Box box = boxes.get(0);
+        return getAxisSpan(box, Direction.Axis.X) > 0.99
+                && getAxisSpan(box, Direction.Axis.Y) > 0.99
+                && getAxisSpan(box, Direction.Axis.Z) > 0.99
+                && box.minX < 0.01 && box.minY < 0.01 && box.minZ < 0.01
+                && box.maxX > 0.99 && box.maxY > 0.99 && box.maxZ > 0.99;
     }
 
     /**
@@ -253,13 +273,20 @@ public class PoisonGasCloudEntity extends Entity {
         if (shape.isEmpty()) return false;
 
         Direction.Axis moveAxis = moveDirection.getAxis();
-        if (getCrossSection(shape, moveAxis) <= 0.5) return false;
+        for (Box box : shape.getBoundingBoxes()) {
+            if (getCrossSection(box, moveAxis) <= 0.5) {
+                continue;
+            }
 
-        if (moveDirection.getDirection() == Direction.AxisDirection.POSITIVE) {
-            return shape.getMin(moveAxis) < 0.01;
-        } else {
-            return shape.getMax(moveAxis) > 0.99;
+            if (moveDirection.getDirection() == Direction.AxisDirection.POSITIVE) {
+                if (box.getMin(moveAxis) < 0.01) {
+                    return true;
+                }
+            } else if (box.getMax(moveAxis) > 0.99) {
+                return true;
+            }
         }
+        return false;
     }
 
     @Override
