@@ -8,7 +8,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.Noellesroles;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NoellesRolesConfig {
     public static ConfigClassHandler<NoellesRolesConfig> HANDLER = ConfigClassHandler.createBuilder(NoellesRolesConfig.class)
@@ -27,4 +29,48 @@ public class NoellesRolesConfig {
 
     @SerialEntry(comment = "Allow Natural deaths to trigger voodoo (deaths without an assigned killer)")
     public boolean voodooNonKillerDeaths = false;
+
+    @SerialEntry(comment = "Lock Sound Physics Remastered config to the server-defined values while connected")
+    public boolean lockSoundPhysicsRemasteredConfig = true;
+
+    @SerialEntry(comment = "Server-enforced Sound Physics Remastered values. Keys must match Sound Physics config entry field names.")
+    public Map<String, String> soundPhysicsRemasteredLockedValues = new LinkedHashMap<>(Map.ofEntries(
+            Map.entry("enabled", "true"),
+            Map.entry("attenuationFactor", "1.0"),
+            Map.entry("reverbAttenuationDistance", "0.2"),
+            Map.entry("reverbGain", "1.0"),
+            Map.entry("reverbBrightness", "1.0"),
+            Map.entry("reverbDistance", "1.0"),
+            Map.entry("blockAbsorption", "4.0"),
+            Map.entry("occlusionVariation", "0.15"),
+            Map.entry("defaultBlockReflectivity", "0.5"),
+            Map.entry("defaultBlockOcclusionFactor", "1.0"),
+            Map.entry("soundDistanceAllowance", "4.0"),
+            Map.entry("airAbsorption", "1.0"),
+            Map.entry("underwaterFilter", "0.8"),
+            Map.entry("evaluateAmbientSounds", "true"),
+            Map.entry("environmentEvaluationRayCount", "224"),
+            Map.entry("environmentEvaluationRayBounces", "8"),
+            Map.entry("nonFullBlockOcclusionFactor", "0.25"),
+            Map.entry("maxOcclusionRays", "16"),
+            Map.entry("maxOcclusion", "10.0"),
+            Map.entry("strictOcclusion", "false"),
+            Map.entry("soundDirectionEvaluation", "true"),
+            Map.entry("redirectNonOccludedSounds", "true"),
+            Map.entry("updateMovingSounds", "true"),
+            Map.entry("soundUpdateInterval", "5"),
+            Map.entry("maxSoundProcessingDistance", "256.0"),
+            Map.entry("unsafeLevelAccess", "false"),
+            Map.entry("levelCloneRange", "4"),
+            Map.entry("levelCloneMaxRetainTicks", "20"),
+            Map.entry("levelCloneMaxRetainBlockDistance", "16"),
+            Map.entry("debugLogging", "false"),
+            Map.entry("occlusionLogging", "false"),
+            Map.entry("environmentLogging", "false"),
+            Map.entry("performanceLogging", "false"),
+            Map.entry("renderSoundBounces", "false"),
+            Map.entry("renderOcclusion", "false"),
+            Map.entry("simpleVoiceChatIntegration", "true"),
+            Map.entry("hearSelf", "false")
+    ));
 }

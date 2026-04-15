@@ -478,6 +478,7 @@ public class Noellesroles implements ModInitializer {
             GameWorldComponent.KEY.get(world).setRoleEnabled(THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES, false);
             GameWorldComponent.KEY.get(world).setRoleEnabled(AWESOME_BINGLUS, false);
             GameWorldComponent.KEY.get(world).setRoleEnabled(JESTER, false);
+            ConfigWorldComponent.KEY.get(world).reset();
         });
 
         // 修复：断线重连后清理语音群组 + 同步静语状态
@@ -493,6 +494,7 @@ public class Noellesroles implements ModInitializer {
                 if (silencedComp.isSilenced()) {
                     ServerPlayNetworking.send(player, new SilencedStateS2CPacket(true));
                 }
+                ConfigWorldComponent.KEY.get(player.getServerWorld()).sync();
             });
         });
 

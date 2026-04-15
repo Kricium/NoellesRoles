@@ -13,6 +13,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
@@ -36,6 +37,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.AbilityPlayerComponent;
+import org.agmas.noellesroles.ConfigWorldComponent;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.util.RoleUtils;
@@ -43,6 +45,7 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
@@ -150,6 +153,10 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册世界BGM管理器
         WorldMusicManager.register();
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                client.execute(SoundPhysicsConfigLockManager::deactivate)
+        );
 
         // 注册工程师门高亮渲染器
         EngineerDoorHighlightRenderer.register();
@@ -500,6 +507,13 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 更新世界BGM管理器
             WorldMusicManager.tick();
+
+            if (client.world != null) {
+                SoundPhysicsConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));
+            } else {
+                SoundPhysicsConfigLockManager.deactivate();
+            }
+            SoundPhysicsConfigLockManager.tick(client);
 
             insanityTime++;
             if (insanityTime >= 20*6) {
