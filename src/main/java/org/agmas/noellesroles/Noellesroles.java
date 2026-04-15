@@ -26,7 +26,6 @@ import dev.doctor4t.wathe.record.replay.DefaultReplayFormatters;
 import dev.doctor4t.wathe.record.replay.ReplayEventFormatter;
 import dev.doctor4t.wathe.record.replay.ReplayRegistry;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -401,10 +400,6 @@ public class Noellesroles implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        if (!FabricLoader.getInstance().isModLoaded("sound_physics_remastered")) {
-            throw new IllegalStateException("NoellesRoles requires Sound Physics Remastered (mod id: sound_physics_remastered).");
-        }
-
         VANNILA_ROLES.add(WatheRoles.KILLER);
         VANNILA_ROLES.add(WatheRoles.VIGILANTE);
         VANNILA_ROLES.add(WatheRoles.CIVILIAN);
