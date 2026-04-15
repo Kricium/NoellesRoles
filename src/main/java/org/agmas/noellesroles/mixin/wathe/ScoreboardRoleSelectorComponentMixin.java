@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,5 +92,46 @@ public abstract class ScoreboardRoleSelectorComponentMixin {
         }
 
         ci.cancel();
+    }
+
+    @Inject(method = "assignCivilians", at = @At("TAIL"))
+    private void noellesroles$guaranteeConductor(
+            ServerWorld world,
+            GameWorldComponent gameWorld,
+            List<ServerPlayerEntity> players,
+            CallbackInfoReturnable<Integer> cir) {
+
+        if (!gameWorld.isRoleEnabled(Noellesroles.CONDUCTOR)) {
+            return;
+        }
+
+        ArrayList<ServerPlayerEntity> vanillaCivilianCandidates = new ArrayList<>();
+        ArrayList<ServerPlayerEntity> civilianCandidates = new ArrayList<>();
+        for (ServerPlayerEntity player : players) {
+            Role role = gameWorld.getRole(player);
+            if (role == null) {
+                continue;
+            }
+            if (role.equals(Noellesroles.CONDUCTOR)) {
+                return;
+            }
+            if (role.equals(WatheRoles.CIVILIAN)) {
+                vanillaCivilianCandidates.add(player);
+                continue;
+            }
+            if (role.getFaction().equals(WatheRoles.CIVILIAN.getFaction())) {
+                civilianCandidates.add(player);
+            }
+        }
+
+        List<ServerPlayerEntity> candidates = vanillaCivilianCandidates.isEmpty()
+                ? civilianCandidates
+                : vanillaCivilianCandidates;
+        if (candidates.isEmpty()) {
+            return;
+        }
+
+        ServerPlayerEntity selected = candidates.get(world.getRandom().nextInt(candidates.size()));
+        gameWorld.addRole(selected, Noellesroles.CONDUCTOR);
     }
 }
