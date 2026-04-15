@@ -76,6 +76,7 @@
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
     "minecraft": "${minecraft_version}",
-    "wathe": "${wathe_version}"
+    "wathe": "${wathe_version}",
+    "sound_physics_remastered": "*"
   }
 }
