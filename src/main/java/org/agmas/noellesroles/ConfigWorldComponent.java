@@ -23,6 +23,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
     public boolean naturalVoodoosAllowed = false;
     public boolean lockSoundPhysicsRemasteredConfig = false;
     public final Map<String, String> soundPhysicsRemasteredLockedValues = new LinkedHashMap<>();
+    public boolean lockTalkBubblesConfig = false;
+    public final Map<String, String> talkBubblesLockedValues = new LinkedHashMap<>();
     private final World world;
 
     public void reset() {
@@ -46,6 +48,9 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         lockSoundPhysicsRemasteredConfig = NoellesRolesConfig.HANDLER.instance().lockSoundPhysicsRemasteredConfig;
         soundPhysicsRemasteredLockedValues.clear();
         soundPhysicsRemasteredLockedValues.putAll(NoellesRolesConfig.HANDLER.instance().soundPhysicsRemasteredLockedValues);
+        lockTalkBubblesConfig = NoellesRolesConfig.HANDLER.instance().lockTalkBubblesConfig;
+        talkBubblesLockedValues.clear();
+        talkBubblesLockedValues.putAll(NoellesRolesConfig.HANDLER.instance().talkBubblesLockedValues);
     }
 
     @Override
@@ -56,6 +61,12 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         buf.writeBoolean(this.lockSoundPhysicsRemasteredConfig);
         buf.writeVarInt(this.soundPhysicsRemasteredLockedValues.size());
         this.soundPhysicsRemasteredLockedValues.forEach((key, value) -> {
+            buf.writeString(key);
+            buf.writeString(value);
+        });
+        buf.writeBoolean(this.lockTalkBubblesConfig);
+        buf.writeVarInt(this.talkBubblesLockedValues.size());
+        this.talkBubblesLockedValues.forEach((key, value) -> {
             buf.writeString(key);
             buf.writeString(value);
         });
@@ -72,6 +83,12 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         for (int i = 0; i < size; i++) {
             this.soundPhysicsRemasteredLockedValues.put(buf.readString(), buf.readString());
         }
+        this.lockTalkBubblesConfig = buf.readBoolean();
+        this.talkBubblesLockedValues.clear();
+        int talkBubblesSize = buf.readVarInt();
+        for (int i = 0; i < talkBubblesSize; i++) {
+            this.talkBubblesLockedValues.put(buf.readString(), buf.readString());
+        }
     }
 
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
@@ -82,6 +99,10 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         NbtCompound soundPhysicsTag = new NbtCompound();
         this.soundPhysicsRemasteredLockedValues.forEach(soundPhysicsTag::putString);
         tag.put("soundPhysicsRemasteredLockedValues", soundPhysicsTag);
+        tag.putBoolean("lockTalkBubblesConfig", this.lockTalkBubblesConfig);
+        NbtCompound talkBubblesTag = new NbtCompound();
+        this.talkBubblesLockedValues.forEach(talkBubblesTag::putString);
+        tag.put("talkBubblesLockedValues", talkBubblesTag);
     }
 
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
@@ -93,6 +114,14 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
             NbtCompound soundPhysicsTag = tag.getCompound("soundPhysicsRemasteredLockedValues");
             for (String key : soundPhysicsTag.getKeys()) {
                 this.soundPhysicsRemasteredLockedValues.put(key, soundPhysicsTag.getString(key));
+            }
+        }
+        if (tag.contains("lockTalkBubblesConfig")) this.lockTalkBubblesConfig = tag.getBoolean("lockTalkBubblesConfig");
+        this.talkBubblesLockedValues.clear();
+        if (tag.contains("talkBubblesLockedValues", NbtElement.COMPOUND_TYPE)) {
+            NbtCompound talkBubblesTag = tag.getCompound("talkBubblesLockedValues");
+            for (String key : talkBubblesTag.getKeys()) {
+                this.talkBubblesLockedValues.put(key, talkBubblesTag.getString(key));
             }
         }
     }

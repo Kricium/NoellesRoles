@@ -46,6 +46,7 @@ import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
+import org.agmas.noellesroles.client.sound.TalkBubblesConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
@@ -155,7 +156,10 @@ public class NoellesrolesClient implements ClientModInitializer {
         WorldMusicManager.register();
 
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
-                client.execute(SoundPhysicsConfigLockManager::deactivate)
+                client.execute(() -> {
+                    SoundPhysicsConfigLockManager.deactivate();
+                    TalkBubblesConfigLockManager.deactivate();
+                })
         );
 
         // 注册工程师门高亮渲染器
@@ -510,10 +514,13 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             if (client.world != null) {
                 SoundPhysicsConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));
+                TalkBubblesConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));
             } else {
                 SoundPhysicsConfigLockManager.deactivate();
+                TalkBubblesConfigLockManager.deactivate();
             }
             SoundPhysicsConfigLockManager.tick(client);
+            TalkBubblesConfigLockManager.tick(client);
 
             insanityTime++;
             if (insanityTime >= 20*6) {

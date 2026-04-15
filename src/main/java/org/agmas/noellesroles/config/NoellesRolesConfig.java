@@ -73,4 +73,23 @@ public class NoellesRolesConfig {
             Map.entry("simpleVoiceChatIntegration", "true"),
             Map.entry("hearSelf", "false")
     ));
+
+    @SerialEntry(comment = "Lock TalkBubbles config to the server-defined values while connected")
+    public boolean lockTalkBubblesConfig = true;
+
+    @SerialEntry(comment = "Server-enforced TalkBubbles values. Keys must match TalkBubbles config field names.")
+    public Map<String, String> talkBubblesLockedValues = new LinkedHashMap<>(Map.ofEntries(
+            Map.entry("chatRange", "30.0"),
+            Map.entry("chatTime", "200"),
+            Map.entry("maxChatWidth", "180"),
+            Map.entry("chatColor", "1315860"),
+            Map.entry("chatHeight", "-0.5"),
+            Map.entry("chatScale", "1.0"),
+            Map.entry("backgroundOpacity", "0.699999988079071"),
+            Map.entry("backgroundRed", "1.0"),
+            Map.entry("backgroundGreen", "1.0"),
+            Map.entry("backgroundBlue", "1.0"),
+            Map.entry("maxUUIDWordCheck", "0"),
+            Map.entry("showOwnBubble", "true")
+    ));
 }
