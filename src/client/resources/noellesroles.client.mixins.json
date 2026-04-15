@@ -48,6 +48,7 @@
     "silencer.SilencedBroadcastFilterMixin",
     "silencer.SilencerBatClientInteractionMixin",
     "silencer.SilencerBatClientWorldSoundMixin",
+    "wathe.BodyBagClientInteractionMixin",
     "bartender.StimulationVignetteHudMixin",
     "bartender.StimulationMoodMixin",
     "hud.StatusEffectHudOffsetMixin",

@@ -84,6 +84,8 @@ import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 import org.agmas.noellesroles.NoellesRolesEntities;
+import org.agmas.noellesroles.util.BodyTargetHelper;
+import org.agmas.noellesroles.util.RoleUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.entity.EmptyEntityRenderer;
@@ -205,13 +207,8 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册 CanSeeBodyRole 监听器：验尸官可以看到尸体的角色（需要理智值检查）
         CanSeeBodyRole.EVENT.register(player -> {
-            if (player instanceof PlayerEntity playerEntity && playerEntity.getWorld() != null) {
-                GameWorldComponent component = GameWorldComponent.KEY.get(playerEntity.getWorld());
-                if (component.isRole(playerEntity, Noellesroles.CORONER)) {
-                    // 验尸官需要 50% 以上的理智值才能查看尸体信息
-                    PlayerMoodComponent moodComponent = PlayerMoodComponent.KEY.get(playerEntity);
-                    return !moodComponent.isLowerThanMid() || !WatheClient.isPlayerAliveAndInSurvival() || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
-                }
+            if (player instanceof PlayerBodyEntity body && MinecraftClient.getInstance().player != null) {
+                return BodyTargetHelper.canPlayerSeeBody(MinecraftClient.getInstance().player, body);
             }
             return false;
         });
@@ -516,22 +513,17 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             // 更新病原体最近目标
             if (MinecraftClient.getInstance().player != null) {
-                float range = GameFunctions.isPlayerSpectatingOrCreative(MinecraftClient.getInstance().player) ? 8.0F : 2.0F;
-                HitResult line = ProjectileUtil.getCollision(MinecraftClient.getInstance().player, (entity) -> entity instanceof PlayerBodyEntity, range);
-                NoellesrolesClient.targetBody = null;
-                if (line instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerBodyEntity playerBodyEntity) {
-                    GameWorldComponent gameWorld = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
-                    if (gameWorld.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
-                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                ClientPlayerEntity bodyPlayer = MinecraftClient.getInstance().player;
+                GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(bodyPlayer.getWorld());
+                double bodyRange = BodyTargetHelper.getTargetRange(bodyPlayer);
+                NoellesrolesClient.targetBody = BodyTargetHelper.findTargetBody(bodyPlayer, bodyRange, body -> {
+                    if (gameWorldComponent.isRole(bodyPlayer, Noellesroles.FERRYMAN)) {
+                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(bodyPlayer);
                         int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
-                        if (!ferrymanComponent.hasFerriedBody(playerBodyEntity.getUuid()) && playerBodyEntity.age < decomposedAge) {
-                            NoellesrolesClient.targetBody = playerBodyEntity;
-                        }
-                    } else {
-                        NoellesrolesClient.targetBody = playerBodyEntity;
+                        return !ferrymanComponent.hasFerriedBody(body.getUuid()) && body.age < decomposedAge;
                     }
-                }
-                GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    return true;
+                });
                 if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.PATHOGEN)) {
                     pathogenNearestTarget = null;
                     pathogenNearestTargetDistance = Double.MAX_VALUE;

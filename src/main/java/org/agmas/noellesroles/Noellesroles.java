@@ -116,6 +116,7 @@ import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownEntryAccessor;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownManagerAccessor;
 import org.agmas.noellesroles.util.RoleUtils;
+import org.agmas.noellesroles.util.BodyTargetHelper;
 import org.agmas.noellesroles.vulture.VultureHelper;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.music.WorldMusicComponent;
@@ -1718,7 +1719,8 @@ public class Noellesroles implements ModInitializer {
             if (gameWorldComponent.isRole(context.player(), VULTURE) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
                 if (abilityPlayerComponent.getCooldown() > 0) return;
                 List<PlayerBodyEntity> playerBodyEntities = context.player().getWorld().getEntitiesByType(TypeFilter.equals(PlayerBodyEntity.class), context.player().getBoundingBox().expand(5), (playerBodyEntity -> {
-                    return playerBodyEntity.getUuid().equals(payload.playerBody());
+                    return playerBodyEntity.getUuid().equals(payload.playerBody())
+                            && BodyTargetHelper.canPlayerSeeBody(context.player(), playerBodyEntity);
                 }));
                 if (!playerBodyEntities.isEmpty()) {
                     PlayerBodyEntity body = playerBodyEntities.getFirst();
