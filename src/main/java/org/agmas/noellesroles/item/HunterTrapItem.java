@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.item;
 
-import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.record.GameRecordManager;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.NbtComponent;
@@ -29,7 +28,6 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.NoellesRolesEntities;
-import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 
@@ -49,9 +47,6 @@ public class HunterTrapItem extends Item {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
-        if (!GameWorldComponent.KEY.get(world).isRole(user, Noellesroles.HUNTER)) {
-            return TypedActionResult.pass(stack);
-        }
 
         BlockHitResult hitResult = Item.raycast(world, user, RaycastContext.FluidHandling.NONE);
         if (hitResult.getType() != net.minecraft.util.hit.HitResult.Type.BLOCK) {

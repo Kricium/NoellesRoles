@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.item;
 
-import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.record.GameRecordManager;
@@ -28,7 +27,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
-import org.agmas.noellesroles.Noellesroles;
 
 import java.util.List;
 
@@ -48,9 +46,6 @@ public class DoubleBarrelShotgunItem extends Item {
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         ItemStack stack = user.getStackInHand(hand);
-        if (!GameWorldComponent.KEY.get(world).isRole(user, Noellesroles.HUNTER)) {
-            return TypedActionResult.pass(stack);
-        }
         if (user.getItemCooldownManager().isCoolingDown(this)) {
             return TypedActionResult.pass(stack);
         }
@@ -104,9 +99,6 @@ public class DoubleBarrelShotgunItem extends Item {
             return false;
         }
         if (!otherStack.isOf(org.agmas.noellesroles.ModItems.DOUBLE_BARREL_SHELL)) {
-            return false;
-        }
-        if (!GameWorldComponent.KEY.get(player.getWorld()).isRole(player, Noellesroles.HUNTER)) {
             return false;
         }
         if (player.getItemCooldownManager().isCoolingDown(this) || !canReload(player, stack)) {

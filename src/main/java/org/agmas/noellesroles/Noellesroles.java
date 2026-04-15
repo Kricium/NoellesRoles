@@ -1401,10 +1401,6 @@ public class Noellesroles implements ModInitializer {
             }
 
             PlayerEntity player = context.getPlayer();
-            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(context.getWorld());
-            if (!gameWorld.isRole(player, ENGINEER)) {
-                return DoorInteraction.DoorInteractionResult.PASS;
-            }
             if (player.getItemCooldownManager().isCoolingDown(ModItems.REPAIR_TOOL)) {
                 return DoorInteraction.DoorInteractionResult.DENY;
             }

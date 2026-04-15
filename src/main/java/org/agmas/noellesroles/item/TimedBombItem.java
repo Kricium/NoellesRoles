@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.item;
 
-import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -11,7 +10,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
-import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 
 import java.util.List;
@@ -52,7 +50,6 @@ public class TimedBombItem extends Item {
                 return ActionResult.PASS;
             }
 
-            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(world);
             BomberPlayerComponent userComponent = BomberPlayerComponent.KEY.get(user);
             BomberPlayerComponent targetComponent = BomberPlayerComponent.KEY.get(target);
 
@@ -65,18 +62,13 @@ public class TimedBombItem extends Item {
                 return ActionResult.PASS;
             }
 
-            // 如果使用者是炸弹客且没有携带炸弹，放置炸弹
-            if (gameWorld.isRole(user, Noellesroles.BOMBER)) {
-                // 目标已经有炸弹，不能再放置
-                if (targetComponent.hasBomb()) {
-                    return ActionResult.PASS;
-                }
-                // 放置炸弹
-                targetComponent.placeBomb(user);
-                // 消耗物品
-                stack.decrementUnlessCreative(1, user);
-                return ActionResult.CONSUME; // 成功但不挥手
+            // 任何持有定时炸弹的玩家都可以安装；滴滴阶段仍按原逻辑传递
+            if (targetComponent.hasBomb()) {
+                return ActionResult.PASS;
             }
+            targetComponent.placeBomb(user);
+            stack.decrementUnlessCreative(1, user);
+            return ActionResult.CONSUME; // 成功但不挥手
         }
 
         return ActionResult.PASS;
