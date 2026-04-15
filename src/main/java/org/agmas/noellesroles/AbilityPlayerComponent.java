@@ -17,9 +17,11 @@ public class AbilityPlayerComponent implements AutoSyncedComponent, ServerTickin
     public static final ComponentKey<AbilityPlayerComponent> KEY = ComponentRegistry.getOrCreate(Identifier.of(Noellesroles.MOD_ID, "ability"), AbilityPlayerComponent.class);
     private final PlayerEntity player;
     public int cooldown = 0;
+    private int pendingKnifeCooldownOverride = 0;
 
     public void reset() {
         this.cooldown = 0;
+        this.pendingKnifeCooldownOverride = 0;
         this.sync();
     }
 
@@ -59,6 +61,11 @@ public class AbilityPlayerComponent implements AutoSyncedComponent, ServerTickin
                 this.sync();
             }
         }
+
+        if (this.pendingKnifeCooldownOverride > 0) {
+            this.player.getItemCooldownManager().set(dev.doctor4t.wathe.index.WatheItems.KNIFE, this.pendingKnifeCooldownOverride);
+            this.pendingKnifeCooldownOverride = 0;
+        }
     }
 
     public int getCooldown() {
@@ -70,11 +77,17 @@ public class AbilityPlayerComponent implements AutoSyncedComponent, ServerTickin
         this.sync();
     }
 
+    public void markKnifeCooldownOverride(int ticks) {
+        this.pendingKnifeCooldownOverride = ticks;
+    }
+
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putInt("cooldown", this.cooldown);
+        tag.putInt("pendingKnifeCooldownOverride", this.pendingKnifeCooldownOverride);
     }
 
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.cooldown = tag.contains("cooldown") ? tag.getInt("cooldown") : 0;
+        this.pendingKnifeCooldownOverride = tag.contains("pendingKnifeCooldownOverride") ? tag.getInt("pendingKnifeCooldownOverride") : 0;
     }
 }

@@ -38,6 +38,7 @@ import net.minecraft.world.World;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
@@ -56,6 +57,7 @@ import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
+import org.agmas.noellesroles.packet.FerrymanBodyAgeSyncS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
@@ -77,6 +79,7 @@ import org.agmas.noellesroles.bodyguard.BodyguardPlayerComponent;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
+import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
@@ -95,6 +98,8 @@ import java.util.List;
 
 public class NoellesrolesClient implements ClientModInitializer {
     public static final Identifier RIOT_FORK_IN_HAND_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/riot_fork_inhand");
+    public static final Identifier HUNTER_TRAP_PLACED_MODEL_ID = Identifier.of(Noellesroles.MOD_ID, "item/hunter_trap_placed");
+    private static final int COMMANDER_MARK_HIGHLIGHT_COLOR = 0x8F6BD1;
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
     public static KeyBinding assistInterfaceBind;
@@ -116,14 +121,18 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long spectatorReplayPollRequestId = 10_000L;
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
+    private static boolean wasAssistInterfacePressed = false;
 
 
     @Override
     public void onInitializeClient() {
-        ModelLoadingPlugin.register(pluginContext -> pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID));
+        ModelLoadingPlugin.register(pluginContext -> {
+            pluginContext.addModels(RIOT_FORK_IN_HAND_MODEL_ID);
+            pluginContext.addModels(HUNTER_TRAP_PLACED_MODEL_ID);
+        });
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
-        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_TAB, "category.wathe.keybinds"));
+        assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
 
@@ -145,6 +154,14 @@ public class NoellesrolesClient implements ClientModInitializer {
                 (payload, context) -> context.client().execute(() ->
                         EngineerDoorHighlightRenderer.onPacketReceived(payload.doorPos())
                 ));
+
+        ClientPlayNetworking.registerGlobalReceiver(FerrymanBodyAgeSyncS2CPacket.ID,
+                (payload, context) -> context.client().execute(() -> {
+                    if (context.client().world == null) return;
+                    if (context.client().world.getEntityById(payload.entityId()) instanceof PlayerBodyEntity body) {
+                        body.age = payload.age();
+                    }
+                }));
 
         // 注册职业广播 S2C 包接收：复用对讲机渲染器在屏幕上方显示
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.RoleBroadcastS2CPacket.ID,
@@ -214,6 +231,12 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             PlayerEntity localPlayer = MinecraftClient.getInstance().player;
 
+            GetInstinctHighlight.HighlightResult commanderMarkedHighlight =
+                    getCommanderMarkedHighlight(gameWorldComponent, localPlayer, player);
+            if (commanderMarkedHighlight != null) {
+                return commanderMarkedHighlight;
+            }
+
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.CORRUPT_COP)) {
                 var comp = CorruptCopPlayerComponent.KEY.get(localPlayer);
                 if (comp.canSeePlayersThroughWalls()){
@@ -270,6 +293,14 @@ public class NoellesrolesClient implements ClientModInitializer {
                     if (comp.poisonTicks > 0) return  GetInstinctHighlight.HighlightResult.always(Noellesroles.TOXICOLOGIST.color());
                 }
             }
+
+            // ORTHOPEDIST: 看到处于正骨状态的玩家（需要视线）
+            if (gameWorldComponent.isRole(localPlayer, Noellesroles.ORTHOPEDIST)) {
+                OrthopedistPlayerComponent comp = OrthopedistPlayerComponent.KEY.get(player);
+                if (localPlayer.canSee(player) && comp.hasBoneSettingActive()) {
+                    return GetInstinctHighlight.HighlightResult.always(Noellesroles.ORTHOPEDIST.color());
+                }
+            }
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.POISONER)) {
                 PlayerPoisonComponent comp = PlayerPoisonComponent.KEY.get(player);
                 if (comp.poisonTicks > 0) return  GetInstinctHighlight.HighlightResult.always(Noellesroles.POISONER.color());
@@ -310,6 +341,9 @@ public class NoellesrolesClient implements ClientModInitializer {
             if (gameWorldComponent.isRole(localPlayer, Noellesroles.SERIAL_KILLER)) {
                 SerialKillerPlayerComponent serialKillerComp = SerialKillerPlayerComponent.KEY.get(localPlayer);
                 if (serialKillerComp.isCurrentTarget(player.getUuid())) {
+                    if (!WatheClient.isInstinctEnabled() && isCommanderMarkedTarget(gameWorldComponent, localPlayer, player)) {
+                        return null;
+                    }
                     // 当前目标 - 使用连环杀手颜色透视
                     return GetInstinctHighlight.HighlightResult.always(Noellesroles.SERIAL_KILLER.color());
                 }
@@ -318,15 +352,6 @@ public class NoellesrolesClient implements ClientModInitializer {
             if (gameWorldComponent.canUseKillerFeatures(localPlayer)) {
                 if (gameWorldComponent.isRole(player, Noellesroles.COMMANDER) && player != localPlayer) {
                     return GetInstinctHighlight.HighlightResult.withKeybind(0x2E006B, GetInstinctHighlight.HighlightResult.PRIORITY_HIGH);
-                }
-
-                for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
-                    PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
-                    if (commander == null) continue;
-                    CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
-                    if (commanderComp.isThreatTarget(player.getUuid())) {
-                        return GetInstinctHighlight.HighlightResult.always(0xCAA1FF);
-                    }
                 }
             }
             return null;
@@ -377,7 +402,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         });
 
         // 注册 GetInstinctHighlight 监听器：卧底角色高亮逻辑
-        // 让杀手误认为卧底是同伙（按Alt时显示红色）
+        // 让杀手误认为卧底是同伙（按本能时显示红色）
         GetInstinctHighlight.EVENT.register(entity -> {
             if (!(entity instanceof PlayerEntity player) || player.isSpectator()) return null;
             if (MinecraftClient.getInstance().player == null) return null;
@@ -393,7 +418,6 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             // 如果目标是卧底，让杀手误以为是同伙（显示红色）
             if (gameWorldComponent.isRole(player, Noellesroles.UNDERCOVER)) {
-                // 使用与杀手同伙相同的红色（需要按Alt键）
                 return GetInstinctHighlight.HighlightResult.withKeybind(MathHelper.hsvToRgb(0F, 1.0F, 0.6F), GetInstinctHighlight.HighlightResult.PRIORITY_HIGH);
             }
 
@@ -421,10 +445,15 @@ public class NoellesrolesClient implements ClientModInitializer {
         GetInstinctHighlight.EVENT.register(entity -> {
             if (!(entity instanceof HunterTrapEntity trap)) return null;
             if (MinecraftClient.getInstance().player == null) return null;
-            if (!WatheClient.isPlayerPlayingAndAlive()) return null;
 
             PlayerEntity localPlayer = MinecraftClient.getInstance().player;
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(localPlayer.getWorld());
+            boolean isInGameSpectator = isTrapSpectatorViewer(localPlayer, gameWorld);
+            if (!WatheClient.isPlayerPlayingAndAlive() && !isInGameSpectator) return null;
             if (!trap.canBeSeenBy(localPlayer)) return null;
+            if (!gameWorld.canUseKillerFeatures(localPlayer) && !isInGameSpectator) {
+                return null;
+            }
 
             return GetInstinctHighlight.HighlightResult.withKeybind(Noellesroles.HUNTER.color());
         });
@@ -491,7 +520,16 @@ public class NoellesrolesClient implements ClientModInitializer {
                 HitResult line = ProjectileUtil.getCollision(MinecraftClient.getInstance().player, (entity) -> entity instanceof PlayerBodyEntity, range);
                 NoellesrolesClient.targetBody = null;
                 if (line instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerBodyEntity playerBodyEntity) {
-                    NoellesrolesClient.targetBody = playerBodyEntity;
+                    GameWorldComponent gameWorld = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    if (gameWorld.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
+                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                        int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
+                        if (!ferrymanComponent.hasFerriedBody(playerBodyEntity.getUuid()) && playerBodyEntity.age < decomposedAge) {
+                            NoellesrolesClient.targetBody = playerBodyEntity;
+                        }
+                    } else {
+                        NoellesrolesClient.targetBody = playerBodyEntity;
+                    }
                 }
                 GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
                 if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.PATHOGEN)) {
@@ -730,15 +768,22 @@ public class NoellesrolesClient implements ClientModInitializer {
                     ClientPlayNetworking.send(new AbilityC2SPacket());
                 });
             }
-            if (assistInterfaceBind.wasPressed()) {
+            boolean isAssistPressed = assistInterfaceBind != null && assistInterfaceBind.isPressed();
+            if (isAssistPressed && !wasAssistInterfacePressed) {
                 if (MinecraftClient.getInstance().player == null) {
+                    wasAssistInterfacePressed = true;
                     return;
                 }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
                 if (!gwc.isRunning()) {
+                    wasAssistInterfacePressed = true;
                     return;
                 }
-                if (MinecraftClient.getInstance().currentScreen == null) {
+
+                if (MinecraftClient.getInstance().currentScreen instanceof RoleInfoScreen
+                        || MinecraftClient.getInstance().currentScreen instanceof SpectatorAssistPanelScreen) {
+                    MinecraftClient.getInstance().setScreen(null);
+                } else if (MinecraftClient.getInstance().currentScreen == null) {
                     boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
                     boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
                     boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
@@ -749,8 +794,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                     } else if (isDeadSpectator) {
                         MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
                     }
-                };
+                }
             }
+            wasAssistInterfacePressed = isAssistPressed;
 
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
@@ -766,6 +812,57 @@ public class NoellesrolesClient implements ClientModInitializer {
                 wasHoldingInvisible = holdingInvisible;
             }
         });
+    }
+
+    private static GetInstinctHighlight.HighlightResult getCommanderMarkedHighlight(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, PlayerEntity targetPlayer) {
+        if (!canSeeCommanderMarkedTargets(gameWorldComponent, localPlayer)) {
+            return null;
+        }
+        if (WatheClient.isInstinctEnabled() && !gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER)) {
+            return null;
+        }
+        if (getMarkingCommander(gameWorldComponent, localPlayer, targetPlayer.getUuid()) == null) {
+            return null;
+        }
+
+        return GetInstinctHighlight.HighlightResult.always(
+                COMMANDER_MARK_HIGHLIGHT_COLOR,
+                GetInstinctHighlight.HighlightResult.PRIORITY_HIGH
+        );
+    }
+
+    private static boolean isCommanderMarkedTarget(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, PlayerEntity targetPlayer) {
+        return getMarkingCommander(gameWorldComponent, localPlayer, targetPlayer.getUuid()) != null;
+    }
+
+    // 返回将 targetUuid 标记为威胁的任一指挥官，没有则返回 null
+    private static PlayerEntity getMarkingCommander(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, UUID targetUuid) {
+        for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
+            PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
+            if (commander == null) continue;
+
+            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
+            if (commanderComp.isThreatTarget(targetUuid)) {
+                return commander;
+            }
+        }
+        return null;
+    }
+
+    private static boolean canSeeCommanderMarkedTargets(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer) {
+        return gameWorldComponent.canUseKillerFeatures(localPlayer)
+                || gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER);
+    }
+
+    private static boolean isTrapSpectatorViewer(PlayerEntity player, GameWorldComponent gameWorld) {
+        return player.isSpectator()
+                && gameWorld.isRunning()
+                && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+                && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
+    }
+
+    public static void markAssistInterfaceKeyHandled() {
+        wasAssistInterfacePressed = true;
     }
 
     /**

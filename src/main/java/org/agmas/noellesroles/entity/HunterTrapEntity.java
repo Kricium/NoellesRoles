@@ -19,10 +19,12 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
 import net.minecraft.entity.damage.DamageSource;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 
 import java.util.UUID;
@@ -36,6 +38,11 @@ public class HunterTrapEntity extends Entity {
     private UUID poisonerUuid;
     private boolean poisoned;
     private int armTicks = 10;
+    private BlockPos supportPos;
+    // 缓存支撑方块的碰撞形状，避免每 tick 重新查询
+    private BlockPos cachedSupportPos;
+    private net.minecraft.block.BlockState cachedSupportState;
+    private VoxelShape cachedSupportShape;
 
     public HunterTrapEntity(EntityType<? extends HunterTrapEntity> type, World world) {
         super(type, world);
@@ -48,6 +55,38 @@ public class HunterTrapEntity extends Entity {
 
     public UUID getOwnerUuid() {
         return this.ownerUuid;
+    }
+
+    public void setSupportPos(BlockPos supportPos) {
+        this.supportPos = supportPos == null ? null : supportPos.toImmutable();
+    }
+
+    public BlockPos getSupportPos() {
+        return this.supportPos;
+    }
+
+    public double getSupportTopY() {
+        if (this.supportPos == null) {
+            return this.getY();
+        }
+        VoxelShape collisionShape = this.getCachedSupportShape();
+        if (collisionShape.isEmpty()) {
+            return this.supportPos.getY();
+        }
+        return this.supportPos.getY() + collisionShape.getMax(net.minecraft.util.math.Direction.Axis.Y);
+    }
+
+    private VoxelShape getCachedSupportShape() {
+        net.minecraft.block.BlockState state = this.getWorld().getBlockState(this.supportPos);
+        // 只有支撑位置或方块状态变化时才重新计算碰撞形状
+        if (this.cachedSupportShape == null
+                || !this.supportPos.equals(this.cachedSupportPos)
+                || state != this.cachedSupportState) {
+            this.cachedSupportPos = this.supportPos;
+            this.cachedSupportState = state;
+            this.cachedSupportShape = state.getCollisionShape(this.getWorld(), this.supportPos);
+        }
+        return this.cachedSupportShape;
     }
 
     public boolean isPoisoned() {
@@ -85,12 +124,19 @@ public class HunterTrapEntity extends Entity {
         this.setVelocity(Vec3d.ZERO);
         this.velocityModified = true;
 
-        BlockPos supportPos = this.getBlockPos().down();
-        if (!this.getWorld().getBlockState(supportPos).isSolidBlock(this.getWorld(), supportPos)) {
+        if (this.supportPos == null) {
+            this.supportPos = this.getBlockPos().down().toImmutable();
+        }
+
+        VoxelShape supportShape = this.getCachedSupportShape();
+        if (supportShape.isEmpty()) {
             this.unregisterFromOwner();
             this.discard();
             return;
         }
+
+        double supportTopY = this.supportPos.getY() + supportShape.getMax(net.minecraft.util.math.Direction.Axis.Y);
+        this.setPosition(this.getX(), supportTopY, this.getZ());
 
         if (this.age > MAX_LIFESPAN_TICKS) {
             this.unregisterFromOwner();
@@ -122,7 +168,8 @@ public class HunterTrapEntity extends Entity {
         if (this.poisoned) {
             PlayerEntity owner = this.ownerUuid == null ? null : this.getWorld().getPlayerByUuid(this.ownerUuid);
             PlayerPoisonComponent poisonComponent = PlayerPoisonComponent.KEY.get(player);
-            poisonComponent.setPoisonTicks(20 * 40, owner == null ? null : owner.getUuid(), Noellesroles.POISON_SOURCE_TRAP);
+            UUID actualPoisonerUuid = this.poisonerUuid != null ? this.poisonerUuid : (owner == null ? null : owner.getUuid());
+            poisonComponent.setPoisonTicks(20 * 40, actualPoisonerUuid, Noellesroles.POISON_SOURCE_TRAP);
             // 将猎人和下毒者信息存储在受害者身上，死亡时才发放奖励
             HunterPlayerComponent.KEY.get(player).setTrapPoisonInfo(this.ownerUuid, this.poisonerUuid);
         }
@@ -139,6 +186,7 @@ public class HunterTrapEntity extends Entity {
         }
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
         return gameWorld.canUseKillerFeatures(player)
+            || this.isInGameSpectator(player, gameWorld)
             || gameWorld.isRole(player, WatheRoles.VIGILANTE)
             || gameWorld.isRole(player, WatheRoles.VETERAN)
             || gameWorld.isRole(player, Noellesroles.RIOT_PATROL)
@@ -146,19 +194,39 @@ public class HunterTrapEntity extends Entity {
             || gameWorld.isRole(player, Noellesroles.ENGINEER);
     }
 
+    public boolean canRenderFor(PlayerEntity player) {
+        if (!this.canBeSeenBy(player)) {
+            return false;
+        }
+
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorld.canUseKillerFeatures(player) || this.isInGameSpectator(player, gameWorld)) {
+            return true;
+        }
+
+        return player.canSee(this);
+    }
+
+    @Override
+    public boolean isInvisibleTo(PlayerEntity player) {
+        if (player == null) {
+            return true;
+        }
+        return !this.canRenderFor(player);
+    }
+
+    private boolean isInGameSpectator(PlayerEntity player, GameWorldComponent gameWorld) {
+        return player.isSpectator()
+            && gameWorld.isRunning()
+            && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+            && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
+    }
+
     public boolean canBeRemovedBy(PlayerEntity player) {
         if (player == null || player.getWorld().isClient) {
             return false;
         }
-        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
-        return gameWorld.isRole(player, WatheRoles.VETERAN)
-            || gameWorld.isRole(player, Noellesroles.RIOT_PATROL)
-            || gameWorld.isRole(player, Noellesroles.CORRUPT_COP)
-            || gameWorld.isRole(player, Noellesroles.ENGINEER);
-    }
-
-    public ItemStack asPickupStack() {
-        return org.agmas.noellesroles.ModItems.HUNTER_TRAP.getDefaultStack();
+        return Noellesroles.isTrapDismantlerRole(player);
     }
 
     @Override
@@ -167,14 +235,7 @@ public class HunterTrapEntity extends Entity {
         if (!(attacker instanceof PlayerEntity player) || !this.canBeRemovedBy(player)) {
             return false;
         }
-
-        if (!this.getWorld().isClient) {
-            this.dropStack(this.asPickupStack());
-            this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.BLOCK_CHAIN_FALL, SoundCategory.PLAYERS, 0.8F, 1.2F);
-            this.unregisterFromOwner();
-            this.discard();
-        }
-        return true;
+        return false;
     }
 
     private void recordTrigger(PlayerEntity player) {
@@ -226,6 +287,9 @@ public class HunterTrapEntity extends Entity {
         this.poisonerUuid = nbt.containsUuid("poisoner") ? nbt.getUuid("poisoner") : null;
         this.poisoned = nbt.getBoolean("poisoned");
         this.armTicks = nbt.getInt("armTicks");
+        if (nbt.contains("supportPos")) {
+            this.supportPos = BlockPos.fromLong(nbt.getLong("supportPos"));
+        }
     }
 
     @Override
@@ -238,5 +302,8 @@ public class HunterTrapEntity extends Entity {
         }
         nbt.putBoolean("poisoned", this.poisoned);
         nbt.putInt("armTicks", this.armTicks);
+        if (this.supportPos != null) {
+            nbt.putLong("supportPos", this.supportPos.asLong());
+        }
     }
 }

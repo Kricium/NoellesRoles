@@ -1,46 +1,75 @@
 {
+  "shared.effect.killer_instinct": "你可以透視其他玩家，看見遊戲剩餘時間，沒有理智值，並且能無限疾跑，且無法撿起左輪手槍。",
+  "shared.effect.killer_shop": "你可以在此處購買殺手專屬道具。擊殺玩家時，你可以獲得100塊錢。",
+  "shared.effect.neutral_master_key": "你攜帶中立萬能鑰匙，可以打開列車門，以及被房間鑰匙上鎖的小型木門。",
+  "shared.effect.passenger": "你屬於乘客陣營，有理智值並會接到理智任務，疾跑體力有限。你可以撿起左輪手槍。",
+  "shared.effect.trap_control": "你可以看見獵人放置的捕獸夾，並可以將其拆除。",
+  "shared.faction.killer": "殺手",
+  "shared.faction.neutral": "中立",
+  "shared.faction.passenger": "乘客",
+  "shared.name.killer_instinct": "殺手本能",
+  "shared.name.killer_shop": "殺手商店",
+  "shared.name.neutral": "中立",
+  "shared.name.neutral_master_key": "中立萬能鑰匙",
+  "shared.name.passenger": "乘客",
+  "shared.name.revolver": "配槍",
+  "shared.name.trap_control": "陷阱處理",
+  "shared.win.killers": "殺手勝利",
+  "shared.win.passengers": "乘客勝利",
+  "shared.trigger.active_use": "按%s使用",
+  "shared.trigger.hold_use": "按住%s使用",
+  "shared.trigger.initial_item": "初始物品",
+  "shared.trigger.inventory_open": "按%s打開背包查看",
+  "shared.trigger.item_effect": "道具效果",
+  "shared.trigger.passive": "被動技能",
+  "shared.trigger.round_start": "開局觸發",
+  "shared.trigger.shop": "商店",
+  "itemGroup.noellesroles.items": "NoellesRoles道具",
+  "roleinfo.skill.shared.block_victory.name": "封鎖勝利",
+  "roleinfo.skill.shared.block_victory.effect": "只要你仍然存活，殺手和乘客都無法達成各自的勝利條件。",
+
   "announcement.goals.morphling": "你可以變成任何一名活着的乘客，同時你也可以偽装成尸體。",
   "announcement.role.morphling": "化形者",
-  "announcement.win.morphling": "殺手勝利！",
+  "announcement.win.morphling": "殺手勝利",
 
   "announcement.goals.awesome_binglus": "你有超多便條，隨便寫吧",
   "announcement.role.awesome_binglus": "超級賓格魯斯",
-  "announcement.win.awesome_binglus": "乘客勝利！",
+  "announcement.win.awesome_binglus": "乘客勝利",
 
   "announcement.goals.conductor": "你可以使用  萬能鑰匙打開列車上的所有門！",
   "announcement.role.conductor": "列車長",
-  "announcement.win.conductor": "乘客勝利！",
+  "announcement.win.conductor": "乘客勝利",
 
   "announcement.goals.the_insane_damned_paranoid_killer": "我聽得到死者的哀嚎。",
   "announcement.role.the_insane_damned_paranoid_killer": "亡語殺手",
-  "announcement.win.the_insane_damned_paranoid_killer": "殺手勝利！",
+  "announcement.win.the_insane_damned_paranoid_killer": "殺手勝利",
 
   "announcement.goals.bartender": "你可以購買上等佳釀，恢復情緒值！還能看出喝過酒的其他乘客。",
   "announcement.role.bartender": "酒保",
-  "announcement.win.bartender": "乘客勝利！",
+  "announcement.win.bartender": "乘客勝利",
 
   "announcement.goals.phantom": "化為隱形，但是要小心他們還能觸碰到你！",
   "announcement.role.phantom": "幽靈",
-  "announcement.win.phantom": "殺手勝利！",
+  "announcement.win.phantom": "殺手勝利",
 
   "announcement.goals.noisemaker": "你會在死亡時向所有人暴露你的位置。",
   "announcement.role.noisemaker": "大嗓門",
-  "announcement.win.noisemaker": "乘客勝利！",
+  "announcement.win.noisemaker": "乘客勝利",
   "noellesroles.noisemaker.death_scream": "§c遠處傳來一聲淒厲的慘叫...",
   "noellesroles.noisemaker.broadcast_start": "§a你扯開嗓子大喊！所有人都能聽到你的聲音！",
 
   "announcement.goals.voodoo": "選擇一名玩家，在你死時與你一起同歸於盡。",
   "announcement.role.voodoo": "巫毒師",
-  "announcement.win.voodoo": "乘客勝利！",
+  "announcement.win.voodoo": "乘客勝利",
   "hud.voodoo.natural_death_disabled": "巫毒死亡必須由其他玩家觸發，才可生效！",
 
   "announcement.goals.swapper": "指定任意兩名玩家交換位置。",
   "announcement.role.swapper": "交換者",
-  "announcement.win.swapper": "殺手勝利！",
+  "announcement.win.swapper": "殺手勝利",
 
   "announcement.goals.coroner": "從屍體上獲取死者身份、姓名、死因以及死亡時間。",
   "announcement.role.coroner": "驗屍官",
-  "announcement.win.coroner": "乘客勝利！",
+  "announcement.win.coroner": "乘客勝利",
   "hud.coroner.sanity_requirements": "情緒值低於50%不可驗屍！",
 
   "announcement.goals.vulture": "吃掉一半玩家的屍體即可獲勝！",
@@ -51,19 +80,19 @@
 
   "announcement.goals.recaller": "儲存一個位置，可以花費金幣傳送回去！",
   "announcement.role.recaller": "回溯者",
-  "announcement.win.recaller": "乘客勝利！",
+  "announcement.win.recaller": "乘客勝利",
 
   "announcement.goals.time_keeper": "你可以看到本場遊戲剩餘時間，並且能使用金幣減少遊戲時間！",
   "announcement.role.time_keeper": "計時員",
-  "announcement.win.time_keeper": "乘客勝利！",
+  "announcement.win.time_keeper": "乘客勝利",
 
   "announcement.goals.undercover": "你沒有情緒值，且殺手會誤以為你是同夥。",
   "announcement.role.undercover": "臥底",
-  "announcement.win.undercover": "乘客勝利!",
+  "announcement.win.undercover": "乘客勝利",
 
   "announcement.goals.toxicologist": "你可以看到誰中毒了，並且你還可以使用解毒劑救治他！",
   "announcement.role.toxicologist": "毒理學家",
-  "announcement.win.toxicologist": "乘客勝利！",
+  "announcement.win.toxicologist": "乘客勝利",
 
   "item.noellesroles.master_key": "萬能鑰匙",
   "item.noellesroles.neutral_master_key": "中立萬能鑰匙",
@@ -97,21 +126,21 @@
 
   "announcement.goals.professor": "使用鐵人藥劑保護其他玩家！",
   "announcement.role.professor": "教授",
-  "announcement.win.professor": "乘客勝利！",
+  "announcement.win.professor": "乘客勝利",
 
   "announcement.goals.jester": "被無辜者用槍擊中即可化為3分鐘的瘋魔模式！",
   "announcement.role.jester": "小丑",
-  "announcement.win.jester": "小丑勝利！",
+  "announcement.win.jester": "小丑勝利",
   "game.win.jester": "你聽見了嗎？那是為你那愚蠢的正義響起的嘲笑聲。",
 
   "announcement.goals.corrupt_cop": "殺光所有人即可獲勝！你存活時，殺手和乘客都無法獲勝。",
   "announcement.role.corrupt_cop": "黑警",
-  "announcement.win.corrupt_cop": "黑警勝利！",
+  "announcement.win.corrupt_cop": "黑警勝利",
   "game.win.corrupt_cop": "正義已經得到伸張……以我的方式。",
 
   "announcement.goals.pathogen": "感染所有存活玩家即可獲勝！",
   "announcement.role.pathogen": "病原體",
-  "announcement.win.pathogen": "病原體勝利！",
+  "announcement.win.pathogen": "病原體勝利",
   "game.win.pathogen": "感染已經擴散到了每一個角落……",
   "tip.pathogen.infect": "按 %s 鍵以感染 %s",
   "tip.pathogen.compass": "%s %s米%s",
@@ -119,7 +148,7 @@
 
   "announcement.goals.bomber": "在玩家身上放置炸彈！你無法購買一般的武器。你可以透視看到攜帶定時炸彈的玩家。",
   "announcement.role.bomber": "炸彈客",
-  "announcement.win.bomber": "殺手勝利！",
+  "announcement.win.bomber": "殺手勝利",
 
   "item.noellesroles.timed_bomb": "定時炸彈",
   "item.noellesroles.timed_bomb.tooltip": "右鍵點擊玩家傳遞炸彈\n10秒後炸彈開始滴滴聲\n可傳遞給其他玩家（3秒冷卻）\n滴滴聲15秒後爆炸",
@@ -138,7 +167,7 @@
 
   "announcement.goals.assassin": "用你的毒辣眼光識破玩家的真實身份！猜對—砰！猜錯—也砰！",
   "announcement.role.assassin": "刺客",
-  "announcement.win.assassin": "殺手勝利！",
+  "announcement.win.assassin": "殺手勝利",
 
   "hud.assassin.select_target": "選擇你的目標——不要犯錯！",
   "hud.assassin.guess_role": "猜猜 %s 是什麼身份？（不許反悔）",
@@ -161,7 +190,7 @@
 
   "announcement.goals.scavenger": "殺人無需蓄力！你殺的人屍體大部分人看不到。此外，你還可以使用 150金幣 重置刀的冷卻時間。",
   "announcement.role.scavenger": "清道夫",
-  "announcement.win.scavenger": "殺手勝利！",
+  "announcement.win.scavenger": "殺手勝利",
 
   "item.noellesroles.scavenger_reset_knife_cd": "重置冷卻時間",
   "item.noellesroles.scavenger_reset_knife_cd.tooltip": "花費 150 金幣\n立即重置刀的冷卻時間",
@@ -185,14 +214,14 @@
 
   "announcement.goals.reporter": "標記一名玩家，即可透視他！",
   "announcement.role.reporter": "記者",
-  "announcement.win.reporter": "乘客勝利！",
+  "announcement.win.reporter": "乘客勝利",
   "tip.reporter.target": "目標: %s 按 [%s] 以標記他",
   "tip.reporter.no_target": "你需要指向一個目標以標記他",
   "tip.reporter.marked": "你標記了 %s ！",
 
   "announcement.goals.serial_killer": "追蹤並擊殺你的目標！可獲得額外金錢獎勵！",
   "announcement.role.serial_killer": "連環殺手",
-  "announcement.win.serial_killer": "殺手勝利！",
+  "announcement.win.serial_killer": "殺手勝利",
   "tip.serial_killer.target": "目標: %s",
   "tip.serial_killer.no_target": "暫無目標",
 
@@ -201,7 +230,7 @@
 
   "announcement.goals.attendant": "你能夠查閱你的乘客登記表，了解每個房間的乘客！",
   "announcement.role.attendant": "乘務員",
-  "announcement.win.attendant": "乘客勝利！",
+  "announcement.win.attendant": "乘客勝利",
 
   "item.noellesroles.antidote": "解毒劑",
   "item.noellesroles.antidote.tooltip": "對中毒的玩家使用以解毒\n需要1.5秒蓄力時間\n使用後5分鐘冷卻",
@@ -210,7 +239,7 @@
 
   "announcement.goals.taotie": "吞噬所有玩家，或在饕餮時刻存活 120秒 即可獲勝！",
   "announcement.role.taotie": "饕餮",
-  "announcement.win.taotie": "饕餮勝利！",
+  "announcement.win.taotie": "饕餮勝利",
   "game.win.taotie": "饑餓...永無止境的饑餓終於得到了滿足。",
   "tip.taotie.swallow": "按 %s 吞噬 %s",
   "tip.taotie.swallowed_count": "肚子裡: %s人",
@@ -227,7 +256,7 @@
 
   "announcement.goals.silencer": "讓目標閉嘴！被沉默的人無法說話、無法聽到別人說話、無法進食或飲酒，且情緒值下降速度加快!",
   "announcement.role.silencer": "沉默者",
-  "announcement.win.silencer": "殺手勝利！",
+  "announcement.win.silencer": "殺手勝利",
   "tip.silencer.mark": "按 %s 標記 %s",
   "tip.silencer.confirm": "按 %s 釋放沉默 %s（%s秒）",
   "tip.silencer.ready": "技能就緒！對準目標按 [%s] 標記",
@@ -292,7 +321,7 @@
 
   "announcement.goals.bodyguard": "保護你的目標！待在3格內，用生命守護目標！",
   "announcement.role.bodyguard": "保鏢",
-  "announcement.win.bodyguard": "乘客勝利！",
+  "announcement.win.bodyguard": "乘客勝利",
   "tip.bodyguard.target": "你需要保護 %s ！",
   "tip.bodyguard.no_target": "暫無保護目標",
   "death_reason.noellesroles.bodyguard_sacrifice": "為保護目標而犧牲",
@@ -303,7 +332,7 @@
   "replay.skill.noellesroles.criminal_reasoner.fail": "%s 推理失敗，%s 並不是 %s 殺害的",
   "announcement.goals.criminal_reasoner": "找出每一位死者的兇手。",
   "announcement.role.criminal_reasoner": "犯罪推理學家",
-  "announcement.win.criminal_reasoner": "犯罪推理學家勝利！",
+  "announcement.win.criminal_reasoner": "犯罪推理學家勝利",
   "game.win.criminal_reasoner": "死者恩怨已了，真相水落石出",
   "tip.criminal_reasoner.guess_success": "已找出兇手，%s 是 %s 殺害的",
   "tip.criminal_reasoner.guess_wrong": "這貌似是錯誤的推理。",
@@ -325,7 +354,7 @@
 
   "announcement.goals.poisoner": "使用毒針和毒氣彈讓敵人中毒！你還可以使用毒藥瓶和蠍子！催化劑可以加快毒發和重置冷卻!",
   "announcement.role.poisoner": "毒師",
-  "announcement.win.poisoner": "殺手勝利！",
+  "announcement.win.poisoner": "殺手勝利",
 
   "item.noellesroles.poison_needle": "毒針",
   "item.noellesroles.poison_needle.tooltip": "右鍵點擊玩家注入毒素\n初始冷卻1分鐘 / 後續冷卻45秒\n可重複使用",
@@ -348,7 +377,7 @@
 
   "announcement.goals.bandit": "使用飛斧遠程擊殺目標！蓄力越久飛得越遠，可貫穿多人！",
   "announcement.role.bandit": "強盜",
-  "announcement.win.bandit": "殺手勝利！",
+  "announcement.win.bandit": "殺手勝利",
 
   "item.noellesroles.throwing_axe": "飛斧",
   "item.noellesroles.throwing_axe.tooltip": "長按右鍵蓄力，鬆開投擲\n蓄力越久投擲距離越遠\n可貫穿多個玩家，一擊必殺",
@@ -361,7 +390,7 @@
 
   "announcement.goals.survival_master": "殺手的本能透視對你無效！當條件滿足時，進入生存時刻，在 120秒 記憶體活即可獲勝！",
   "announcement.role.survival_master": "生存大師",
-  "announcement.win.survival_master": "乘客勝利！",
+  "announcement.win.survival_master": "乘客勝利",
   "tip.survival_master.moment_active": "生存時刻！堅持住！剩餘 %s 秒",
 
   "title.noellesroles.survival_moment": "生存時刻",
@@ -405,7 +434,7 @@
 
   "announcement.goals.engineer": "你可以感知被撬/被鎖的門！維修工具可以修復被撬的門或上鎖/解鎖！",
   "announcement.role.engineer": "工程師",
-  "announcement.win.engineer": "乘客勝利！",
+  "announcement.win.engineer": "乘客勝利",
   "item.noellesroles.repair_tool": "維修工具",
   "item.noellesroles.repair_tool.tooltip": "對被撬的門使用：修復門\n對正常關閉的門使用：上鎖\n對被鎖的門使用：解鎖\n冷卻時間：3分鐘",
   "tip.engineer.door_blasted": "一扇門被撬開了！",

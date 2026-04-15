@@ -220,7 +220,20 @@ public class TaotiePlayerComponent implements AutoSyncedComponent, ServerTicking
             }
         }
 
-        // Perform swallow
+        return performSwallow(taotie, target);
+    }
+
+    public boolean forceSwallowPlayer(ServerPlayerEntity target) {
+        if (!(player instanceof ServerPlayerEntity taotie)) return false;
+        if (SwallowedPlayerComponent.isPlayerSwallowed(target)) return false;
+        if (!GameFunctions.isPlayerPlayingAndAlive(target)) return false;
+        return performSwallow(taotie, target);
+    }
+
+    private boolean performSwallow(ServerPlayerEntity taotie, ServerPlayerEntity target) {
+        SwallowedPlayerComponent targetSwallowed = SwallowedPlayerComponent.KEY.get(target);
+        if (targetSwallowed.isSwallowed()) return false;
+
         targetSwallowed.setSwallowed(taotie.getUuid());
         swallowedPlayers.add(target.getUuid());
 

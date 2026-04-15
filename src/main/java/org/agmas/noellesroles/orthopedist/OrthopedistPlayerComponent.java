@@ -56,8 +56,7 @@ public class OrthopedistPlayerComponent implements AutoSyncedComponent, ServerTi
     }
 
     public static void refreshBoneSetting(ServerPlayerEntity player) {
-        boolean active = player.hasStatusEffect(ModEffects.BONE_SETTING);
-        syncModifier(player, BONE_SETTING_STAMINA_MODIFIER_ID, BONE_SETTING_STAMINA_BONUS, active);
+        KEY.get(player).updateBoneSettingState(player.hasStatusEffect(ModEffects.BONE_SETTING));
     }
 
     @Override
@@ -79,15 +78,11 @@ public class OrthopedistPlayerComponent implements AutoSyncedComponent, ServerTi
             this.sync();
         }
 
-        boolean hasBoneSetting = serverPlayer.hasStatusEffect(ModEffects.BONE_SETTING);
-        if (hasBoneSetting != this.lastBoneSettingActive) {
-            this.lastBoneSettingActive = hasBoneSetting;
-            if (hasBoneSetting) {
-                applyModifier(BONE_SETTING_STAMINA_MODIFIER_ID, BONE_SETTING_STAMINA_BONUS);
-            } else {
-                removeModifier(BONE_SETTING_STAMINA_MODIFIER_ID);
-            }
-        }
+        updateBoneSettingState(serverPlayer.hasStatusEffect(ModEffects.BONE_SETTING));
+    }
+
+    public boolean hasBoneSettingActive() {
+        return this.lastBoneSettingActive;
     }
 
     private void applyModifier(Identifier modifierId, double amount) {
@@ -123,7 +118,15 @@ public class OrthopedistPlayerComponent implements AutoSyncedComponent, ServerTi
         stamina.sync();
     }
 
-    private static void syncModifier(ServerPlayerEntity player, Identifier modifierId, double amount, boolean active) {
+    private void updateBoneSettingState(boolean active) {
+        if (active != this.lastBoneSettingActive) {
+            this.lastBoneSettingActive = active;
+            this.sync();
+        }
+        syncModifier(this.player, BONE_SETTING_STAMINA_MODIFIER_ID, BONE_SETTING_STAMINA_BONUS, active);
+    }
+
+    private static void syncModifier(PlayerEntity player, Identifier modifierId, double amount, boolean active) {
         OrthopedistPlayerComponent component = KEY.get(player);
         if (active) {
             component.applyModifier(modifierId, amount);
@@ -138,26 +141,31 @@ public class OrthopedistPlayerComponent implements AutoSyncedComponent, ServerTi
 
     @Override
     public boolean shouldSyncWith(ServerPlayerEntity recipient) {
-        return recipient == this.player;
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(recipient.getWorld());
+        return recipient == this.player || gameWorld.isRole(recipient, Noellesroles.ORTHOPEDIST);
     }
 
     @Override
     public void writeSyncPacket(RegistryByteBuf buf, ServerPlayerEntity recipient) {
         buf.writeBoolean(this.passiveApplied);
+        buf.writeBoolean(this.lastBoneSettingActive);
     }
 
     @Override
     public void applySyncPacket(RegistryByteBuf buf) {
         this.passiveApplied = buf.readBoolean();
+        this.lastBoneSettingActive = buf.readBoolean();
     }
 
     @Override
     public void writeToNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         tag.putBoolean("passiveApplied", this.passiveApplied);
+        tag.putBoolean("lastBoneSettingActive", this.lastBoneSettingActive);
     }
 
     @Override
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         this.passiveApplied = tag.getBoolean("passiveApplied");
+        this.lastBoneSettingActive = tag.getBoolean("lastBoneSettingActive");
     }
 }

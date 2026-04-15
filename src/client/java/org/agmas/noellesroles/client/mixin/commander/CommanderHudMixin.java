@@ -7,6 +7,7 @@ import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
@@ -34,6 +35,9 @@ public abstract class CommanderHudMixin {
 
         CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(player);
         AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(player);
+        if (commanderComp.isLastBulletCountdownActive()) {
+            renderLastBulletCountdown(context, getTextRenderer(), commanderComp);
+        }
 
         int drawY = context.getScaledWindowHeight();
         List<String> markedNames = commanderComp.getThreatTargetNames();
@@ -54,5 +58,21 @@ public abstract class CommanderHudMixin {
         }
 
         HudRenderHelper.drawBottomRight(context, getTextRenderer(), line1, drawY, 0xCAA1FF);
+    }
+
+    private static void renderLastBulletCountdown(DrawContext context, TextRenderer textRenderer, CommanderPlayerComponent commanderComp) {
+        int centerX = context.getScaledWindowWidth() / 2;
+        int centerY = context.getScaledWindowHeight() / 2;
+        Text title = Text.translatable("title.noellesroles.commander_last_bullet");
+        int secondsLeft = MathHelper.ceil(commanderComp.getLastBulletCountdownTicks() / 20.0F);
+        Text countdown = Text.translatable("tip.noellesroles.commander_last_bullet_countdown", secondsLeft);
+
+        context.getMatrices().push();
+        context.getMatrices().translate(centerX, centerY - 12, 0.0F);
+        context.getMatrices().scale(2.0F, 2.0F, 1.0F);
+        context.drawTextWithShadow(textRenderer, title, -textRenderer.getWidth(title) / 2, 0, 0xFF2E006B);
+        context.getMatrices().pop();
+
+        context.drawCenteredTextWithShadow(textRenderer, countdown, centerX, centerY + 18, 0xFFFF5555);
     }
 }

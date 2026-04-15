@@ -22,6 +22,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.NoellesRolesEntities;
@@ -34,6 +38,9 @@ import java.util.UUID;
 
 public class HunterTrapItem extends Item {
     private static final String POISONED_KEY = "Poisoned";
+    private static final double MAX_SURFACE_SEARCH_DEPTH = 2.0D;
+
+    private record TrapPlacement(BlockPos supportPos, Vec3d spawnPos) {}
 
     public HunterTrapItem(Settings settings) {
         super(settings);
@@ -51,8 +58,8 @@ public class HunterTrapItem extends Item {
             return TypedActionResult.pass(stack);
         }
 
-        BlockPos placePos = hitResult.getBlockPos().up();
-        if (!world.getBlockState(placePos.down()).isSolidBlock(world, placePos.down()) || !world.getBlockState(placePos).isAir()) {
+        TrapPlacement placement = findPlacement(world, hitResult.getPos());
+        if (placement == null) {
             return TypedActionResult.pass(stack);
         }
 
@@ -65,15 +72,16 @@ public class HunterTrapItem extends Item {
                 }
             }
             HunterTrapEntity trap = new HunterTrapEntity(NoellesRolesEntities.HUNTER_TRAP_ENTITY, world);
-            trap.refreshPositionAndAngles(placePos.getX() + 0.5, placePos.getY() + 0.02, placePos.getZ() + 0.5, 0.0F, 0.0F);
+            trap.refreshPositionAndAngles(placement.spawnPos().x, placement.spawnPos().y, placement.spawnPos().z, 0.0F, 0.0F);
             trap.setOwner(user);
+            trap.setSupportPos(placement.supportPos());
             trap.setPoisoned(isPoisoned(stack));
             world.spawnEntity(trap);
             hunterComponent.registerTrap(trap.getUuid());
-            world.playSound(null, placePos, SoundEvents.BLOCK_METAL_PLACE, SoundCategory.PLAYERS, 0.8F, 1.1F);
+            world.playSound(null, placement.supportPos(), SoundEvents.BLOCK_METAL_PLACE, SoundCategory.PLAYERS, 0.8F, 1.1F);
             if (user instanceof ServerPlayerEntity serverPlayer) {
                 NbtCompound extra = new NbtCompound();
-                GameRecordManager.putBlockPos(extra, "pos", placePos);
+                GameRecordManager.putBlockPos(extra, "pos", placement.supportPos().up());
                 extra.putString("action", "place");
                 GameRecordManager.recordItemUse(serverPlayer, Registries.ITEM.getId(this), null, extra);
             }
@@ -111,6 +119,42 @@ public class HunterTrapItem extends Item {
         NbtCompound nbt = customData != null ? customData.copyNbt() : new NbtCompound();
         nbt.putBoolean(POISONED_KEY, poisoned);
         stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+    }
+
+    private static TrapPlacement findPlacement(World world, Vec3d hitPos) {
+        int minBlockY = net.minecraft.util.math.MathHelper.floor(hitPos.y - MAX_SURFACE_SEARCH_DEPTH);
+        int maxBlockY = net.minecraft.util.math.MathHelper.floor(hitPos.y);
+
+        double bestTopY = Double.NEGATIVE_INFINITY;
+        BlockPos bestSupportPos = null;
+
+        for (int y = maxBlockY; y >= minBlockY; y--) {
+            BlockPos supportPos = BlockPos.ofFloored(hitPos.x, y, hitPos.z);
+            VoxelShape collisionShape = world.getBlockState(supportPos).getCollisionShape(world, supportPos);
+            if (collisionShape.isEmpty()) {
+                continue;
+            }
+
+            double topY = supportPos.getY() + collisionShape.getMax(Direction.Axis.Y);
+            if (topY <= bestTopY || hitPos.y < topY - 1.0E-4D) {
+                continue;
+            }
+
+            Vec3d spawnPos = new Vec3d(supportPos.getX() + 0.5D, topY, supportPos.getZ() + 0.5D);
+            Box trapBox = NoellesRolesEntities.HUNTER_TRAP_ENTITY.getDimensions().getBoxAt(spawnPos.x, spawnPos.y, spawnPos.z);
+            if (!world.isSpaceEmpty(null, trapBox)) {
+                continue;
+            }
+
+            bestTopY = topY;
+            bestSupportPos = supportPos.toImmutable();
+        }
+
+        if (bestSupportPos == null) {
+            return null;
+        }
+
+        return new TrapPlacement(bestSupportPos, new Vec3d(bestSupportPos.getX() + 0.5D, bestTopY, bestSupportPos.getZ() + 0.5D));
     }
 
 }

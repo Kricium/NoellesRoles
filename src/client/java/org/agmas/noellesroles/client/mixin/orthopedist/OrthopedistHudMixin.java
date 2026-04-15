@@ -10,10 +10,8 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
-import org.agmas.noellesroles.ModEffects;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
-import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -54,14 +52,7 @@ public abstract class OrthopedistHudMixin {
         } else {
             PlayerEntity target = NoellesrolesClient.crosshairTarget;
             if (target != null && NoellesrolesClient.crosshairTargetDistance <= 3.0 && localPlayer.canSee(target)) {
-                HunterPlayerComponent hunter = HunterPlayerComponent.KEY.get(target);
-                if (hunter.getFractureLayers() > 0) {
-                    line = Text.translatable("tip.orthopedist.heal", NoellesrolesClient.abilityBind.getBoundKeyLocalizedText(), target.getName());
-                } else if (!target.hasStatusEffect(ModEffects.BONE_SETTING)) {
-                    line = Text.translatable("tip.orthopedist.buff", NoellesrolesClient.abilityBind.getBoundKeyLocalizedText(), target.getName());
-                } else {
-                    line = Text.translatable("tip.orthopedist.target_active", target.getName());
-                }
+                line = Text.translatable("tip.orthopedist.buff", NoellesrolesClient.abilityBind.getBoundKeyLocalizedText(), target.getName());
             } else {
                 line = Text.translatable("tip.orthopedist.no_target");
             }

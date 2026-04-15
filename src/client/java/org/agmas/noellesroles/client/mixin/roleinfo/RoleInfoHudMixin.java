@@ -40,10 +40,11 @@ public abstract class RoleInfoHudMixin {
         boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
         boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
         boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning() && !isSwallowed;
-        if (!canOpenRoleInfo && !isInGameSpectator) return;
+        boolean canOpenSpectatorPanel = !canOpenRoleInfo && isInGameSpectator;
+        if (!canOpenRoleInfo && !canOpenSpectatorPanel) return;
 
         String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
-        Text hintText = isInGameSpectator
+        Text hintText = canOpenSpectatorPanel
                 ? Text.translatable("assist_interface.spectator_hint", keyName)
                 : Text.translatable("assist_interface.hint", keyName);
 

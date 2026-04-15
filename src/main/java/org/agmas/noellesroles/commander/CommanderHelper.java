@@ -90,6 +90,7 @@ public final class CommanderHelper {
         for (UUID uuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
             PlayerEntity commanderEntity = world.getPlayerByUuid(uuid);
             if (!(commanderEntity instanceof ServerPlayerEntity commander) || !GameFunctions.isPlayerPlayingAndAlive(commander)) continue;
+            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
 
             boolean hasOtherLivingKillers = false;
             for (UUID killerUuid : gameWorldComponent.getAllKillerTeamPlayers()) {
@@ -102,7 +103,7 @@ public final class CommanderHelper {
             }
 
             if (!hasOtherLivingKillers) {
-                GameFunctions.killPlayer(commander, true, null, Noellesroles.DEATH_REASON_COMMANDER_SUICIDE);
+                commanderComp.startLastBulletCountdown();
             }
         }
     }
