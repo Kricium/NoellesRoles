@@ -39,6 +39,10 @@ public class HunterTrapEntity extends Entity {
     private boolean poisoned;
     private int armTicks = 10;
     private BlockPos supportPos;
+    // 缓存支撑方块的碰撞形状，避免每 tick 重新查询
+    private BlockPos cachedSupportPos;
+    private net.minecraft.block.BlockState cachedSupportState;
+    private VoxelShape cachedSupportShape;
 
     public HunterTrapEntity(EntityType<? extends HunterTrapEntity> type, World world) {
         super(type, world);
@@ -65,11 +69,24 @@ public class HunterTrapEntity extends Entity {
         if (this.supportPos == null) {
             return this.getY();
         }
-        VoxelShape collisionShape = this.getWorld().getBlockState(this.supportPos).getCollisionShape(this.getWorld(), this.supportPos);
+        VoxelShape collisionShape = this.getCachedSupportShape();
         if (collisionShape.isEmpty()) {
             return this.supportPos.getY();
         }
         return this.supportPos.getY() + collisionShape.getMax(net.minecraft.util.math.Direction.Axis.Y);
+    }
+
+    private VoxelShape getCachedSupportShape() {
+        net.minecraft.block.BlockState state = this.getWorld().getBlockState(this.supportPos);
+        // 只有支撑位置或方块状态变化时才重新计算碰撞形状
+        if (this.cachedSupportShape == null
+                || !this.supportPos.equals(this.cachedSupportPos)
+                || state != this.cachedSupportState) {
+            this.cachedSupportPos = this.supportPos;
+            this.cachedSupportState = state;
+            this.cachedSupportShape = state.getCollisionShape(this.getWorld(), this.supportPos);
+        }
+        return this.cachedSupportShape;
     }
 
     public boolean isPoisoned() {
@@ -111,7 +128,7 @@ public class HunterTrapEntity extends Entity {
             this.supportPos = this.getBlockPos().down().toImmutable();
         }
 
-        VoxelShape supportShape = this.getWorld().getBlockState(this.supportPos).getCollisionShape(this.getWorld(), this.supportPos);
+        VoxelShape supportShape = this.getCachedSupportShape();
         if (supportShape.isEmpty()) {
             this.unregisterFromOwner();
             this.discard();

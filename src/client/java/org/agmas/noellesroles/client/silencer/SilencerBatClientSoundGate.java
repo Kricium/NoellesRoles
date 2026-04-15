@@ -8,13 +8,15 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 在客户端短时间屏蔽静语者球棒命中时的本地残留攻击音，
  * 只影响本次球棒击杀附近的一小段时间窗口。
  */
 public final class SilencerBatClientSoundGate {
-    private static final long SUPPRESS_DURATION_NANOS = 750_000_000L;
+    // 静语者球棒命中后音效抑制窗口，覆盖原声播放残留
+    private static final long SUPPRESS_DURATION_NANOS = TimeUnit.MILLISECONDS.toNanos(750);
     private static final Set<Identifier> SUPPRESSED_SOUND_IDS = Set.of(
             WatheSounds.ITEM_BAT_HIT.getId(),
             SoundEvents.ENTITY_PLAYER_ATTACK_STRONG.getId(),

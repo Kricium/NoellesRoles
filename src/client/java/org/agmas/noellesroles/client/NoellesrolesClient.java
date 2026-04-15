@@ -821,7 +821,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         if (WatheClient.isInstinctEnabled() && !gameWorldComponent.isRole(localPlayer, Noellesroles.UNDERCOVER)) {
             return null;
         }
-        if (!isCommanderMarkedTarget(gameWorldComponent, localPlayer, targetPlayer)) {
+        if (getMarkingCommander(gameWorldComponent, localPlayer, targetPlayer.getUuid()) == null) {
             return null;
         }
 
@@ -832,16 +832,21 @@ public class NoellesrolesClient implements ClientModInitializer {
     }
 
     private static boolean isCommanderMarkedTarget(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, PlayerEntity targetPlayer) {
+        return getMarkingCommander(gameWorldComponent, localPlayer, targetPlayer.getUuid()) != null;
+    }
+
+    // 返回将 targetUuid 标记为威胁的任一指挥官，没有则返回 null
+    private static PlayerEntity getMarkingCommander(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer, UUID targetUuid) {
         for (UUID commanderUuid : gameWorldComponent.getAllWithRole(Noellesroles.COMMANDER)) {
             PlayerEntity commander = localPlayer.getWorld().getPlayerByUuid(commanderUuid);
             if (commander == null) continue;
 
             CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(commander);
-            if (commanderComp.isThreatTarget(targetPlayer.getUuid())) {
-                return true;
+            if (commanderComp.isThreatTarget(targetUuid)) {
+                return commander;
             }
         }
-        return false;
+        return null;
     }
 
     private static boolean canSeeCommanderMarkedTargets(GameWorldComponent gameWorldComponent, PlayerEntity localPlayer) {

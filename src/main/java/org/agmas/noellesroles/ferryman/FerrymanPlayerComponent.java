@@ -28,6 +28,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         Identifier.of(Noellesroles.MOD_ID, "ferryman"), FerrymanPlayerComponent.class
     );
 
+    private static final int MAX_FERRIED_BODIES_SYNC = 1024;
     public static final int REACTION_WINDOW_TICKS = 8;
     public static final int REACTION_COOLDOWN_TICKS = GameConstants.getInTicks(0, 10);
     public static final int EMPTY_PENALTY_TICKS = GameConstants.getInTicks(0, 3);
@@ -97,6 +98,10 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         }
         this.ferriedBodies.clear();
         int ferriedSize = buf.readInt();
+        // 限制长度防止恶意包分配超大 List
+        if (ferriedSize < 0 || ferriedSize > MAX_FERRIED_BODIES_SYNC) {
+            throw new io.netty.handler.codec.DecoderException("Invalid ferriedBodies size: " + ferriedSize);
+        }
         for (int i = 0; i < ferriedSize; i++) {
             this.ferriedBodies.add(buf.readUuid());
         }
@@ -160,7 +165,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
         this.reactionTicks = REACTION_WINDOW_TICKS;
         this.pendingAttackerUuid = attackerUuid;
         this.pendingDeathReason = null;
-        this.pendingReactionType = ReactionType.TAOTIE_SWALLOW;
+        this.pendingReactionType = ReactionType.COUNTER_SWALLOW;
         this.sync();
         return true;
     }
@@ -292,7 +297,7 @@ public class FerrymanPlayerComponent implements AutoSyncedComponent, ServerTicki
 
     public enum ReactionType {
         DEATH,
-        TAOTIE_SWALLOW
+        COUNTER_SWALLOW
     }
 
     public record ReactionResult(boolean success, boolean consumeBlessing, UUID attackerUuid, Identifier deathReason, ReactionType reactionType) {

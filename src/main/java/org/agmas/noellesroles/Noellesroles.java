@@ -284,17 +284,21 @@ public class Noellesroles implements ModInitializer {
     // Static helpers have been moved to:
     // - FerrymanHelper, VultureHelper, SaintHelper, CommanderHelper, RoleUtils
 
+    private static final Set<Item> TRAP_DISMANTLE_EXTRA_COOLDOWN_ITEMS = Set.of(
+        ModItems.ANTIDOTE,
+        ModItems.IRON_MAN_VIAL,
+        ModItems.POISON_NEEDLE,
+        ModItems.DOUBLE_BARREL_SHOTGUN,
+        ModItems.REPAIR_TOOL,
+        ModItems.RIOT_SHIELD,
+        ModItems.RIOT_FORK,
+        ModItems.TIMED_BOMB,
+        ModItems.NEUTRAL_MASTER_KEY
+    );
+
     private static boolean isTrapDismantleCooldownItem(Item item) {
         return GameConstants.ITEM_COOLDOWNS.containsKey(item)
-            || item == ModItems.ANTIDOTE
-            || item == ModItems.IRON_MAN_VIAL
-            || item == ModItems.POISON_NEEDLE
-            || item == ModItems.DOUBLE_BARREL_SHOTGUN
-            || item == ModItems.REPAIR_TOOL
-            || item == ModItems.RIOT_SHIELD
-            || item == ModItems.RIOT_FORK
-            || item == ModItems.TIMED_BOMB
-            || item == ModItems.NEUTRAL_MASTER_KEY;
+            || TRAP_DISMANTLE_EXTRA_COOLDOWN_ITEMS.contains(item);
     }
 
     public static boolean isVigilanteSlotRole(Role role) {
@@ -708,7 +712,9 @@ public class Noellesroles implements ModInitializer {
             Box box = new Box(hitResult.getBlockPos()).expand(1.5);
             org.agmas.noellesroles.entity.HunterTrapEntity trap = world.getEntitiesByClass(org.agmas.noellesroles.entity.HunterTrapEntity.class, box, entity -> entity.squaredDistanceTo(hitResult.getPos()) < 2.25)
                 .stream()
-                .min(java.util.Comparator.comparingDouble(entity -> entity.squaredDistanceTo(hitResult.getPos())))
+                .min(java.util.Comparator
+                        .comparingDouble((org.agmas.noellesroles.entity.HunterTrapEntity entity) -> entity.squaredDistanceTo(hitResult.getPos()))
+                        .thenComparingInt(net.minecraft.entity.Entity::getId))
                 .orElse(null);
 
             if (player.isSneaking() && trap != null && player.getUuid().equals(trap.getOwnerUuid())) {
@@ -1863,7 +1869,7 @@ public class Noellesroles implements ModInitializer {
                     if (attacker != null && result.deathReason() == GameConstants.DeathReasons.KNIFE) {
                         AbilityPlayerComponent.KEY.get(attacker).markKnifeCooldownOverride(GameConstants.getInTicks(0, 10));
                     }
-                    if (attacker != null && result.reactionType() == FerrymanPlayerComponent.ReactionType.TAOTIE_SWALLOW) {
+                    if (attacker != null && result.reactionType() == FerrymanPlayerComponent.ReactionType.COUNTER_SWALLOW) {
                         TaotiePlayerComponent.KEY.get(attacker).setSwallowCooldown(GameConstants.getInTicks(0, 10));
                     }
 
@@ -1876,7 +1882,7 @@ public class Noellesroles implements ModInitializer {
                     }
 
                     GameRecordManager.recordSkillUse(context.player(), FERRYMAN_ID, attacker, extra);
-                    if (result.reactionType() == FerrymanPlayerComponent.ReactionType.TAOTIE_SWALLOW) {
+                    if (result.reactionType() == FerrymanPlayerComponent.ReactionType.COUNTER_SWALLOW) {
                         var blockedSwallowEvent = GameRecordManager.event("iron_man_activated")
                                 .actor(context.player())
                                 .put("action", "block_swallow");

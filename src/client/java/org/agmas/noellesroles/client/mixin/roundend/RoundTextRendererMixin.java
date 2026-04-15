@@ -222,23 +222,39 @@ public abstract class RoundTextRendererMixin {
         return drawn;
     }
 
+    // 简单缓存：相同的角色名每帧都会调用此方法，缓存避免重复 codePointCount/切分
+    @Unique
+    private static final java.util.Map<String, List<OrderedText>> WRAP_ROLE_CACHE = new java.util.HashMap<>();
+
     private static List<OrderedText> noellesroles$wrapRoleName(TextRenderer textRenderer, Text text) {
         String raw = text.getString();
-        int totalChars = raw.codePointCount(0, raw.length());
-        if (totalChars <= ROLE_TEXT_MAX_CHARS_PER_LINE) {
-            return textRenderer.wrapLines(text, ROLE_TEXT_MAX_WIDTH);
+        List<OrderedText> cached = WRAP_ROLE_CACHE.get(raw);
+        if (cached != null) {
+            return cached;
         }
 
-        List<OrderedText> lines = new ArrayList<>();
-        int firstLineChars = Math.max(ROLE_TEXT_MIN_FIRST_LINE_CHARS, totalChars - ROLE_TEXT_MAX_CHARS_PER_LINE);
-        firstLineChars = Math.min(firstLineChars, totalChars - 1);
+        int totalChars = raw.codePointCount(0, raw.length());
+        List<OrderedText> result;
+        if (totalChars <= ROLE_TEXT_MAX_CHARS_PER_LINE) {
+            result = textRenderer.wrapLines(text, ROLE_TEXT_MAX_WIDTH);
+        } else {
+            List<OrderedText> lines = new ArrayList<>();
+            int firstLineChars = Math.max(ROLE_TEXT_MIN_FIRST_LINE_CHARS, totalChars - ROLE_TEXT_MAX_CHARS_PER_LINE);
+            firstLineChars = Math.min(firstLineChars, totalChars - 1);
 
-        String firstLine = noellesroles$substringByCodePoints(raw, 0, firstLineChars);
-        String secondLine = noellesroles$substringByCodePoints(raw, firstLineChars, totalChars);
-        lines.add(Text.literal(firstLine).setStyle(text.getStyle()).asOrderedText());
-        lines.add(Text.literal(secondLine).setStyle(text.getStyle()).asOrderedText());
+            String firstLine = noellesroles$substringByCodePoints(raw, 0, firstLineChars);
+            String secondLine = noellesroles$substringByCodePoints(raw, firstLineChars, totalChars);
+            lines.add(Text.literal(firstLine).setStyle(text.getStyle()).asOrderedText());
+            lines.add(Text.literal(secondLine).setStyle(text.getStyle()).asOrderedText());
+            result = lines;
+        }
 
-        return lines;
+        // 防止缓存无限增长（角色名有限，正常不会触发）
+        if (WRAP_ROLE_CACHE.size() > 64) {
+            WRAP_ROLE_CACHE.clear();
+        }
+        WRAP_ROLE_CACHE.put(raw, result);
+        return result;
     }
 
     @Unique

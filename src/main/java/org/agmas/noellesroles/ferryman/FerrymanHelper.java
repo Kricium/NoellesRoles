@@ -173,7 +173,7 @@ public final class FerrymanHelper {
 
             ferrymanComponent.clearReaction();
             AbilityPlayerComponent.KEY.get(ferryman).setCooldown(1);
-            if (pendingReactionType == FerrymanPlayerComponent.ReactionType.TAOTIE_SWALLOW) {
+            if (pendingReactionType == FerrymanPlayerComponent.ReactionType.COUNTER_SWALLOW) {
                 if (attacker instanceof ServerPlayerEntity taotie) {
                     var taotieComponent = org.agmas.noellesroles.taotie.TaotiePlayerComponent.KEY.get(taotie);
                     taotieComponent.forceSwallowPlayer(ferryman);
