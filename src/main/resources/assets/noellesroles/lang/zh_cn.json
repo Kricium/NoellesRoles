@@ -234,7 +234,7 @@
   "roleinfo.skill.orthopedist.swift_stride.effect": "你的体力消耗速度永久降低25%。",
   "roleinfo.skill.pathogen.infect.name": "感染",
   "roleinfo.skill.pathogen.infect.effect": "按下技能键后，会感染3格内距离你最近且处于你视线内的未感染玩家，不能隔墙感染。感染成功后会进入基础冷却：f(开局人数)=20-5·[开局人数≥12]-5·[开局人数≥18]-3·[开局人数≥25] 秒。系统会持续在界面上显示距离你最近的未感染玩家与其大致方向；目标可感染时，也会提示你按键感染。被感染玩家会在10至30秒后打喷嚏并收到提示。",
-  "roleinfo.skill.pathogen.no_sanity.effect": "你可以高亮看到处于你视线内、且被你感染的玩家。你没有理智值，但会接到伪装任务，疾跑体力无限，且无法捡起左轮手枪。",
+  "roleinfo.skill.pathogen.no_sanity.effect": "你可以被动高亮看到处于你视线内、且被你感染的玩家。你没有理智值，但会接到伪装任务，疾跑体力无限，且无法捡起左轮手枪。",
   "roleinfo.skill.phantom.invisibility.name": "隐身术",
   "roleinfo.skill.phantom.invisibility.effect": "你可以将自己隐身，持续30秒，冷却90秒，但杀手队友仍能通过本能透视看到你。",
   "roleinfo.skill.poisoner.catalyst.name": "催化剂",

@@ -415,7 +415,7 @@ public class RoleInfoRegistry {
 
         // 病原体
         m.put("noellesroles:pathogen", r("pathogen")
-                .addSharedNamedHoldUseSkill("no_sanity", "instinct", "shared.name.neutral") // 中立基础能力与本能感知
+                .addSharedNamedPassiveSkill("no_sanity", "shared.name.neutral") // 中立基础能力与感染者高亮
                 .addSkillWithSharedNameEffectAndTrigger("neutral_master_key", null, "shared.name.neutral_master_key", "shared.effect.neutral_master_key", "shared.trigger.initial_item") // 中立万能钥匙
                 .addActiveUseSkill("infect", "ability")); // 感染玩家
 
