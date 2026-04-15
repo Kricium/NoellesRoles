@@ -43,6 +43,7 @@
     "taotie.SpectatorHudMixin",
     "taotie.SwallowedChatHudMixin",
     "voodoo.VoodoScreenMixin",
+    "voicechat.VoiceChatGuiMixin",
     "vulture.VultureHudMixin",
     "silencer.SilencerHudMixin",
     "silencer.SilencedBroadcastFilterMixin",

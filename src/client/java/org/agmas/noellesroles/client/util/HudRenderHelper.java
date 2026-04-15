@@ -33,6 +33,7 @@ import java.util.Map;
 
 public final class HudRenderHelper {
     private static final int UNLIMITED_WIDTH = Integer.MAX_VALUE;
+    private static final float ABOVE_VOICE_CHAT_HUD_Z = 200.0F;
     public static final int LINE_GAP = 2;
     public static final int ASSASSIN_BOTTOM_PADDING = 5;
 
@@ -101,6 +102,19 @@ public final class HudRenderHelper {
 
     public static int measure(TextRenderer renderer, Text text) {
         return renderer.getWrappedLinesHeight(text, UNLIMITED_WIDTH);
+    }
+
+    /**
+     * Pushes a GUI depth layer that renders above Simple Voice Chat group avatars.
+     * Use this for custom bottom-corner overlays that would otherwise be covered.
+     */
+    public static void pushAboveVoiceChatHudLayer(DrawContext context) {
+        context.getMatrices().push();
+        context.getMatrices().translate(0.0F, 0.0F, ABOVE_VOICE_CHAT_HUD_Z);
+    }
+
+    public static void popAboveVoiceChatHudLayer(DrawContext context) {
+        context.getMatrices().pop();
     }
 
     /**
