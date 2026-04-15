@@ -13,10 +13,10 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.DefaultSkinHelper;
-import net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.packet.SpectatorAssistTeleportC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
@@ -95,7 +95,7 @@ public class SpectatorAssistPanelScreen extends Screen {
         entries.clear();
 
         List<UUID> sortedUuids = new ArrayList<>(serverSyncByUuid.keySet());
-        sortedUuids.sort(Comparator.comparing(this::resolveSortName, String.CASE_INSENSITIVE_ORDER));
+        sortedUuids.sort(this::compareSpectatorEntries);
 
         for (UUID uuid : sortedUuids) {
             PlayerListEntry playerEntry = WatheClient.PLAYER_ENTRIES_CACHE.get(uuid);
@@ -241,10 +241,7 @@ public class SpectatorAssistPanelScreen extends Screen {
                 int avatarX = x + 6;
                 int avatarY = y + 6;
                 if (isInAvatar((int) mouseX, (int) mouseY, avatarX, avatarY) && entry.online) {
-                    MinecraftClient client = MinecraftClient.getInstance();
-                    if (client.getNetworkHandler() != null) {
-                        client.getNetworkHandler().sendPacket(new SpectatorTeleportC2SPacket(entry.uuid));
-                    }
+                    ClientPlayNetworking.send(new SpectatorAssistTeleportC2SPacket(entry.uuid));
                     return true;
                 }
             }
@@ -332,6 +329,30 @@ public class SpectatorAssistPanelScreen extends Screen {
             return playerEntry.getProfile().getName();
         }
         return uuid.toString();
+    }
+
+    private int compareSpectatorEntries(UUID leftUuid, UUID rightUuid) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        GameWorldComponent gwc = client.player != null
+                ? GameWorldComponent.KEY.get(client.player.getWorld())
+                : null;
+
+        boolean leftDead = gwc != null && gwc.isPlayerDead(leftUuid);
+        boolean rightDead = gwc != null && gwc.isPlayerDead(rightUuid);
+        if (leftDead != rightDead) {
+            return Boolean.compare(leftDead, rightDead);
+        }
+
+        if (leftDead) {
+            long leftDeathTick = resolveDeathTick(serverSyncByUuid.get(leftUuid));
+            long rightDeathTick = resolveDeathTick(serverSyncByUuid.get(rightUuid));
+            int deathTickCompare = Long.compare(leftDeathTick, rightDeathTick);
+            if (deathTickCompare != 0) {
+                return deathTickCompare;
+            }
+        }
+
+        return String.CASE_INSENSITIVE_ORDER.compare(resolveSortName(leftUuid), resolveSortName(rightUuid));
     }
 
     private static Text resolveNameText(UUID uuid, PlayerListEntry playerEntry) {
@@ -465,6 +486,7 @@ public class SpectatorAssistPanelScreen extends Screen {
                     entry.roleTranslationKey(),
                     entry.roleColor(),
                     entry.deathReasonRaw(),
+                    entry.deathTick(),
                     entry.deathAgeSeconds(),
                     entry.latestRelevantReplayTick(),
                     entry.replaySummary()
@@ -577,6 +599,14 @@ public class SpectatorAssistPanelScreen extends Screen {
         return syncData.replaySummary();
     }
 
+    private static long resolveDeathTick(ServerSyncData syncData) {
+        if (syncData == null) {
+            return Long.MAX_VALUE;
+        }
+        long deathTick = syncData.deathTick();
+        return deathTick >= 0L ? deathTick : Long.MAX_VALUE;
+    }
+
     private Layout getLayout() {
         int contentWidth = Math.min(this.width - PADDING * 2, 540);
         int listTop = 34;
@@ -597,7 +627,7 @@ public class SpectatorAssistPanelScreen extends Screen {
     private record Layout(int startX, int listTop, int rowsPerPage, int columnWidth) {
     }
 
-    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, int deathAgeSeconds, long latestRelevantReplayTick, String replaySummary) {
+    private record ServerSyncData(String roleTranslationKey, int roleColor, String deathReasonRaw, long deathTick, int deathAgeSeconds, long latestRelevantReplayTick, String replaySummary) {
     }
 
     private record ReplayDetailState(long versionTick, List<String> replayLines, boolean pending) {

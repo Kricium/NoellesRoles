@@ -13,6 +13,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.block.BedBlock;
 import net.minecraft.block.BlockState;
@@ -36,6 +37,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.AbilityPlayerComponent;
+import org.agmas.noellesroles.ConfigWorldComponent;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.util.RoleUtils;
@@ -43,7 +45,10 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
+import org.agmas.noellesroles.client.sound.TalkBubblesConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
+import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
@@ -84,6 +89,8 @@ import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
 import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 import org.agmas.noellesroles.NoellesRolesEntities;
+import org.agmas.noellesroles.util.BodyTargetHelper;
+import org.agmas.noellesroles.util.RoleUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.entity.EmptyEntityRenderer;
@@ -102,6 +109,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static final int COMMANDER_MARK_HIGHLIGHT_COLOR = 0x8F6BD1;
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
+    public static KeyBinding ability2Bind;
     public static KeyBinding assistInterfaceBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
@@ -132,6 +140,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         });
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
+        ability2Bind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability2", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Y, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
@@ -145,6 +154,13 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册世界BGM管理器
         WorldMusicManager.register();
+
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) ->
+                client.execute(() -> {
+                    SoundPhysicsConfigLockManager.deactivate();
+                    TalkBubblesConfigLockManager.deactivate();
+                })
+        );
 
         // 注册工程师门高亮渲染器
         EngineerDoorHighlightRenderer.register();
@@ -205,13 +221,8 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册 CanSeeBodyRole 监听器：验尸官可以看到尸体的角色（需要理智值检查）
         CanSeeBodyRole.EVENT.register(player -> {
-            if (player instanceof PlayerEntity playerEntity && playerEntity.getWorld() != null) {
-                GameWorldComponent component = GameWorldComponent.KEY.get(playerEntity.getWorld());
-                if (component.isRole(playerEntity, Noellesroles.CORONER)) {
-                    // 验尸官需要 50% 以上的理智值才能查看尸体信息
-                    PlayerMoodComponent moodComponent = PlayerMoodComponent.KEY.get(playerEntity);
-                    return !moodComponent.isLowerThanMid() || !WatheClient.isPlayerAliveAndInSurvival() || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
-                }
+            if (player instanceof PlayerBodyEntity body && MinecraftClient.getInstance().player != null) {
+                return BodyTargetHelper.canPlayerSeeBody(MinecraftClient.getInstance().player, body);
             }
             return false;
         });
@@ -501,6 +512,16 @@ public class NoellesrolesClient implements ClientModInitializer {
             // 更新世界BGM管理器
             WorldMusicManager.tick();
 
+            if (client.world != null) {
+                SoundPhysicsConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));
+                TalkBubblesConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));
+            } else {
+                SoundPhysicsConfigLockManager.deactivate();
+                TalkBubblesConfigLockManager.deactivate();
+            }
+            SoundPhysicsConfigLockManager.tick(client);
+            TalkBubblesConfigLockManager.tick(client);
+
             insanityTime++;
             if (insanityTime >= 20*6) {
                 insanityTime = 0;
@@ -516,22 +537,17 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             // 更新病原体最近目标
             if (MinecraftClient.getInstance().player != null) {
-                float range = GameFunctions.isPlayerSpectatingOrCreative(MinecraftClient.getInstance().player) ? 8.0F : 2.0F;
-                HitResult line = ProjectileUtil.getCollision(MinecraftClient.getInstance().player, (entity) -> entity instanceof PlayerBodyEntity, range);
-                NoellesrolesClient.targetBody = null;
-                if (line instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerBodyEntity playerBodyEntity) {
-                    GameWorldComponent gameWorld = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
-                    if (gameWorld.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
-                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                ClientPlayerEntity bodyPlayer = MinecraftClient.getInstance().player;
+                GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(bodyPlayer.getWorld());
+                double bodyRange = BodyTargetHelper.getTargetRange(bodyPlayer);
+                NoellesrolesClient.targetBody = BodyTargetHelper.findTargetBody(bodyPlayer, bodyRange, body -> {
+                    if (gameWorldComponent.isRole(bodyPlayer, Noellesroles.FERRYMAN)) {
+                        FerrymanPlayerComponent ferrymanComponent = FerrymanPlayerComponent.KEY.get(bodyPlayer);
                         int decomposedAge = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
-                        if (!ferrymanComponent.hasFerriedBody(playerBodyEntity.getUuid()) && playerBodyEntity.age < decomposedAge) {
-                            NoellesrolesClient.targetBody = playerBodyEntity;
-                        }
-                    } else {
-                        NoellesrolesClient.targetBody = playerBodyEntity;
+                        return !ferrymanComponent.hasFerriedBody(body.getUuid()) && body.age < decomposedAge;
                     }
-                }
-                GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    return true;
+                });
                 if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.PATHOGEN)) {
                     pathogenNearestTarget = null;
                     pathogenNearestTargetDistance = Double.MAX_VALUE;
@@ -698,6 +714,24 @@ public class NoellesrolesClient implements ClientModInitializer {
                         return;
                     }
 
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VOODOO)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.VOODOO));
+                        }
+                        return;
+                    }
+
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.SWAPPER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.SWAPPER));
+                        }
+                        return;
+                    }
+
                     if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE)) {
                         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
                         if (targetBody == null) return;
@@ -766,6 +800,20 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
 
                     ClientPlayNetworking.send(new AbilityC2SPacket());
+                });
+            }
+            if (ability2Bind != null && ability2Bind.wasPressed()) {
+                client.execute(() -> {
+                    if (MinecraftClient.getInstance().player == null) return;
+                    GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.MORPHLING)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && MorphlingPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getMorphTicks() == 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.MORPHLING));
+                        }
+                    }
                 });
             }
             boolean isAssistPressed = assistInterfaceBind != null && assistInterfaceBind.isPressed();

@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.item;
 
-import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import dev.doctor4t.wathe.record.GameRecordManager;
@@ -52,11 +51,6 @@ public class PoisonNeedleItem extends Item {
 
         if (!world.isClient) {
             if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
-                return ActionResult.PASS;
-            }
-
-            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(world);
-            if (!gameWorld.isRole(user, Noellesroles.POISONER)) {
                 return ActionResult.PASS;
             }
 

@@ -7,6 +7,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
+import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 
@@ -107,6 +108,7 @@ public final class SpectatorReplayToastOverlay {
         int rightX = context.getScaledWindowWidth() - SCREEN_MARGIN;
         int y = context.getScaledWindowHeight() - SCREEN_MARGIN;
 
+        HudRenderHelper.pushAboveVoiceChatHudLayer(context);
         for (int i = ACTIVE_TOASTS.size() - 1; i >= 0; i--) {
             ActiveToast toast = ACTIVE_TOASTS.get(i);
             int width = font.getWidth(toast.text());
@@ -115,6 +117,7 @@ public final class SpectatorReplayToastOverlay {
             context.drawTextWithShadow(font, toast.text(), x, y, 0xFFFFFFFF);
             y -= STACK_SPACING;
         }
+        HudRenderHelper.popAboveVoiceChatHudLayer(context);
     }
 
     private static void pruneExpired(long now) {

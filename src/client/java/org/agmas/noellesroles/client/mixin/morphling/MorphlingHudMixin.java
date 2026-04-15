@@ -10,6 +10,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -37,7 +38,7 @@ public abstract class MorphlingHudMixin {
             } else if (morphTicks < 0) {
                 line = Text.translatable("tip.noellesroles.cooldown", (-morphTicks) / 20);
             } else {
-                line = Text.translatable("tip.morphling");
+                line = Text.translatable("tip.morphling", HudRenderHelper.getAbility2KeyText());
             }
 
             drawY -= getTextRenderer().getWrappedLinesHeight(line, 999999);

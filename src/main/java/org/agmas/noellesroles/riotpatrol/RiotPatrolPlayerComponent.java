@@ -83,7 +83,7 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         }
         this.shieldActive = false;
         if (applyCooldown) {
-            this.player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, RiotShieldItem.SHIELD_COOLDOWN_TICKS);
+            this.applyShieldCancelCooldowns(RiotShieldItem.SHIELD_COOLDOWN_TICKS);
         }
         this.sync();
     }
@@ -94,16 +94,25 @@ public class RiotPatrolPlayerComponent implements AutoSyncedComponent, ServerTic
         }
 
         this.shieldActive = false;
-        this.player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, RiotShieldItem.SHIELD_COOLDOWN_TICKS);
+        this.applyShieldCancelCooldowns(RiotShieldItem.SHIELD_COOLDOWN_TICKS);
+
+        this.sync();
+    }
+
+    private void applyShieldCancelCooldowns(int shieldCooldownTicks) {
+        this.player.getItemCooldownManager().set(ModItems.RIOT_SHIELD, shieldCooldownTicks);
+
+        Integer revolverCooldown = GameConstants.ITEM_COOLDOWNS.get(WatheItems.REVOLVER);
+        if (revolverCooldown == null) {
+            return;
+        }
 
         for (ItemStack stack : this.player.getInventory().main) {
             Item item = stack.getItem();
             if (item == WatheItems.REVOLVER) {
-                this.player.getItemCooldownManager().set(item, GameConstants.ITEM_COOLDOWNS.get(WatheItems.REVOLVER));
+                this.player.getItemCooldownManager().set(item, revolverCooldown);
             }
         }
-
-        this.sync();
     }
 
     public boolean isShieldActive() {

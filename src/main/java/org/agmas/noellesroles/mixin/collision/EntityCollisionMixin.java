@@ -7,6 +7,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.ModEffects;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
+import org.agmas.noellesroles.scavenger.ScavengerBodyHelper;
 import org.spongepowered.asm.mixin.Mixin;
 
 /**
@@ -14,6 +15,7 @@ import org.spongepowered.asm.mixin.Mixin;
  * 处理以下情况的 collidesWith：
  * - 龙舌兰无碰撞效果（NO_COLLISION 药水）
  * - 变形者尸体模式（corpseMode）
+ * - 清道夫隐藏尸体
  */
 @Mixin(Entity.class)
 public class EntityCollisionMixin {
@@ -30,6 +32,9 @@ public class EntityCollisionMixin {
     }
 
     private static boolean shouldDisableCollision(Entity entity) {
+        if (ScavengerBodyHelper.isHiddenBody(entity)) {
+            return true;
+        }
         if (entity instanceof LivingEntity living && living.hasStatusEffect(ModEffects.NO_COLLISION)) {
             return true;
         }

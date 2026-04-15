@@ -394,8 +394,9 @@ public class TaotiePlayerComponent implements AutoSyncedComponent, ServerTicking
             }
         }
 
-        // Win if no alive players outside stomach (all are swallowed or dead)
-        return aliveNotSwallowedCount == 0 && !swallowedPlayers.isEmpty();
+        // Win if no alive players remain outside Taotie.
+        // This covers both "everyone alive is in the stomach" and "only Taotie is still alive".
+        return aliveNotSwallowedCount == 0;
     }
 
     /**

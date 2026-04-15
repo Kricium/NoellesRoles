@@ -1,0 +1,395 @@
+package org.agmas.noellesroles.client.screen;
+
+import com.mojang.authlib.GameProfile;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.client.WatheClient;
+import dev.doctor4t.wathe.game.GameFunctions;
+import dev.doctor4t.wathe.util.ShopEntry;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.PlayerSkinDrawer;
+import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.client.util.SkinTextures;
+import net.minecraft.text.Text;
+import org.agmas.noellesroles.AbilityPlayerComponent;
+import org.agmas.noellesroles.ConfigWorldComponent;
+import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
+import org.agmas.noellesroles.packet.MorphC2SPacket;
+import org.agmas.noellesroles.packet.SwapperC2SPacket;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.voodoo.VoodooPlayerComponent;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Consumer;
+
+public class RoleTargetMenuScreen extends Screen {
+    private static final int COLUMNS = 6;
+    private static final int SPACING_X = 36;
+    private static final int SPACING_Y = 45;
+    private static final double SCROLL_STEP = 24.0;
+
+    private final ClientPlayerEntity player;
+    private final MenuType menuType;
+    private UUID firstSelection;
+    private UUID secondSelection;
+    private int scrollOffset;
+    private int maxScroll;
+    private int targetCount;
+
+    public RoleTargetMenuScreen(ClientPlayerEntity player, MenuType menuType) {
+        super(menuType.getTitle());
+        this.player = player;
+        this.menuType = menuType;
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(this.player.getWorld());
+        if (!canStayOpen(gameWorld)) {
+            this.close();
+            return;
+        }
+
+        List<TargetEntry> targets = getTargets(gameWorld);
+        this.targetCount = targets.size();
+
+        int centerX = this.width / 2;
+        int rows = Math.max(1, (targets.size() + COLUMNS - 1) / COLUMNS);
+        int contentHeight = rows * SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
+        int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
+        int viewHeight = Math.max(1, viewBottom - viewTop);
+        this.maxScroll = Math.max(0, contentHeight - viewHeight);
+        this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.maxScroll));
+        int startX = RoleScreenHelper.getGridStartX(targets.size(), COLUMNS, SPACING_X, centerX);
+        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - this.scrollOffset;
+
+        for (int i = 0; i < targets.size(); i++) {
+            TargetEntry target = targets.get(i);
+            int row = i / COLUMNS;
+            int col = i % COLUMNS;
+
+            TargetWidget widget = new TargetWidget(
+                    startX + col * SPACING_X,
+                    startY + row * SPACING_Y,
+                    target,
+                    isSelected(target.uuid()),
+                    this::handleSelection
+            );
+            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+            addDrawableChild(widget);
+        }
+
+        int buttonY = RoleScreenHelper.getMenuButtonY(this.height);
+        if (this.menuType == MenuType.SWAPPER) {
+            addDrawableChild(ButtonWidget.builder(Text.translatable("screen.role_target.button.close"), button -> this.close())
+                    .dimensions(centerX - 86, buttonY, 80, 20)
+                    .build());
+            addDrawableChild(ButtonWidget.builder(Text.translatable("screen.role_target.button.confirm"), button -> this.submitSwap())
+                    .dimensions(centerX + 6, buttonY, 80, 20)
+                    .build());
+        } else {
+            addDrawableChild(ButtonWidget.builder(Text.translatable("screen.role_target.button.close"), button -> this.close())
+                    .dimensions(centerX - 40, buttonY, 80, 20)
+                    .build());
+        }
+    }
+
+    private boolean canStayOpen(GameWorldComponent gameWorld) {
+        if (!GameFunctions.isPlayerPlayingAndAlive(this.player) || SwallowedPlayerComponent.isPlayerSwallowed(this.player)) {
+            return false;
+        }
+        return switch (this.menuType) {
+            case VOODOO -> gameWorld.isRole(this.player, Noellesroles.VOODOO)
+                    && AbilityPlayerComponent.KEY.get(this.player).getCooldown() <= 0;
+            case SWAPPER -> gameWorld.isRole(this.player, Noellesroles.SWAPPER)
+                    && AbilityPlayerComponent.KEY.get(this.player).getCooldown() <= 0;
+            case MORPHLING -> gameWorld.isRole(this.player, Noellesroles.MORPHLING)
+                    && MorphlingPlayerComponent.KEY.get(this.player).getMorphTicks() == 0;
+        };
+    }
+
+    private List<TargetEntry> getTargets(GameWorldComponent gameWorld) {
+        List<TargetEntry> result = new ArrayList<>();
+        switch (this.menuType) {
+            case VOODOO -> {
+                List<UUID> validPlayers = new ArrayList<>(gameWorld.getAllPlayers());
+                validPlayers.remove(this.player.getUuid());
+                for (UUID uuid : WatheClient.PLAYER_ENTRIES_CACHE.keySet()) {
+                    if (validPlayers.contains(uuid)) {
+                        result.add(new TargetEntry(uuid, ShopEntry.Type.TOOL));
+                    }
+                }
+            }
+            case SWAPPER -> {
+                List<UUID> alivePlayers = new ArrayList<>(gameWorld.getAllAlivePlayers());
+                for (UUID uuid : WatheClient.PLAYER_ENTRIES_CACHE.keySet()) {
+                    if (!alivePlayers.contains(uuid)) {
+                        continue;
+                    }
+                    var targetPlayer = this.player.getWorld().getPlayerByUuid(uuid);
+                    if (targetPlayer != null && SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer)) {
+                        continue;
+                    }
+                    result.add(new TargetEntry(uuid, ShopEntry.Type.POISON));
+                }
+            }
+            case MORPHLING -> {
+                List<UUID> allPlayers = new ArrayList<>(gameWorld.getAllPlayers());
+                allPlayers.remove(this.player.getUuid());
+                for (UUID uuid : WatheClient.PLAYER_ENTRIES_CACHE.keySet()) {
+                    if (!allPlayers.contains(uuid)) {
+                        continue;
+                    }
+                    ShopEntry.Type backgroundType = gameWorld.isPlayerDead(uuid) ? ShopEntry.Type.WEAPON : ShopEntry.Type.POISON;
+                    result.add(new TargetEntry(uuid, backgroundType));
+                }
+            }
+        }
+        return result;
+    }
+
+    private boolean isSelected(UUID uuid) {
+        return switch (this.menuType) {
+            case VOODOO -> Objects.equals(VoodooPlayerComponent.KEY.get(this.player).target, uuid);
+            case SWAPPER -> Objects.equals(this.firstSelection, uuid) || Objects.equals(this.secondSelection, uuid);
+            case MORPHLING -> false;
+        };
+    }
+
+    private void handleSelection(UUID targetUuid) {
+        switch (this.menuType) {
+            case VOODOO -> {
+                ClientPlayNetworking.send(new MorphC2SPacket(targetUuid));
+                this.close();
+            }
+            case MORPHLING -> {
+                ClientPlayNetworking.send(new MorphC2SPacket(targetUuid));
+                this.close();
+            }
+            case SWAPPER -> {
+                if (Objects.equals(this.firstSelection, targetUuid)) {
+                    this.firstSelection = null;
+                    if (Objects.equals(this.secondSelection, targetUuid)) {
+                        this.secondSelection = null;
+                    }
+                } else if (this.firstSelection == null) {
+                    this.firstSelection = targetUuid;
+                } else if (Objects.equals(this.secondSelection, targetUuid)) {
+                    this.secondSelection = null;
+                } else {
+                    this.secondSelection = targetUuid;
+                }
+                this.clearAndInit();
+            }
+        }
+    }
+
+    private void submitSwap() {
+        if (this.firstSelection == null || this.secondSelection == null) {
+            return;
+        }
+        ClientPlayNetworking.send(new SwapperC2SPacket(this.firstSelection, this.secondSelection));
+        this.close();
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        renderBackground(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
+
+        int centerX = this.width / 2;
+        int centerY = this.height / 2;
+        TextRenderer font = MinecraftClient.getInstance().textRenderer;
+
+        RoleScreenHelper.drawCenteredTitle(context, font, this.menuType.getTitle(), centerX, RoleScreenHelper.getMenuTitleY(centerY));
+        RoleScreenHelper.drawCenteredSubTitle(context, font, getSubtitle(), centerX, RoleScreenHelper.getMenuSubtitleY(centerY));
+
+        List<Text> statusLines = getStatusLines();
+        for (int i = 0; i < statusLines.size(); i++) {
+            RoleScreenHelper.drawCenteredSubTitle(context, font, statusLines.get(i), centerX, RoleScreenHelper.getMenuStatusY(centerY) + i * 12);
+        }
+
+        if (this.targetCount == 0) {
+            RoleScreenHelper.drawCenteredSubTitle(context, font, this.menuType.getEmptyText(), centerX, centerY);
+        }
+    }
+
+    private Text getSubtitle() {
+        return switch (this.menuType) {
+            case VOODOO -> Text.translatable("screen.role_target.voodoo.subtitle");
+            case SWAPPER -> Text.translatable("screen.role_target.swapper.subtitle");
+            case MORPHLING -> Text.translatable("screen.role_target.morphling.subtitle");
+        };
+    }
+
+    private List<Text> getStatusLines() {
+        List<Text> lines = new ArrayList<>();
+        switch (this.menuType) {
+            case VOODOO -> {
+                UUID currentTarget = VoodooPlayerComponent.KEY.get(this.player).target;
+                if (currentTarget != null && !Objects.equals(currentTarget, this.player.getUuid())) {
+                    lines.add(Text.translatable("screen.role_target.voodoo.current_target", getPlayerName(currentTarget)));
+                }
+
+                ConfigWorldComponent config = ConfigWorldComponent.KEY.get(this.player.getWorld());
+                if (!config.naturalVoodoosAllowed) {
+                    lines.add(Text.translatable("hud.voodoo.natural_death_disabled").styled(style -> style.withColor(0xFF5555)));
+                }
+            }
+            case SWAPPER -> {
+                if (this.firstSelection == null) {
+                    lines.add(Text.translatable("hud.swapper.first_player_selection"));
+                } else if (this.secondSelection == null) {
+                    lines.add(Text.translatable("hud.swapper.second_player_selection"));
+                } else {
+                    lines.add(Text.translatable("screen.role_target.swapper.current_pair", getPlayerName(this.firstSelection), getPlayerName(this.secondSelection)));
+                }
+            }
+            case MORPHLING -> {
+            }
+        }
+        return lines;
+    }
+
+    private Text getPlayerName(UUID uuid) {
+        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(uuid);
+        if (entry != null && entry.getDisplayName() != null) {
+            return entry.getDisplayName();
+        }
+        return entry != null ? Text.literal(entry.getProfile().getName()) : Text.translatable("screen.role_target.unknown_player");
+    }
+
+    @Override
+    public boolean shouldPause() {
+        return false;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
+        if (this.maxScroll > 0) {
+            int nextOffset = this.scrollOffset - (int) Math.round(verticalAmount * SCROLL_STEP);
+            nextOffset = Math.max(0, Math.min(nextOffset, this.maxScroll));
+            if (nextOffset != this.scrollOffset) {
+                this.scrollOffset = nextOffset;
+                this.clearAndInit();
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
+    }
+
+    @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.renderBackground(context, mouseX, mouseY, delta);
+        RoleScreenHelper.renderRoleMenuBackground(context, this.width, this.height, this.menuType.accentColor);
+    }
+
+    @Override
+    public void close() {
+        if (this.client != null) {
+            this.client.setScreen(null);
+        }
+    }
+
+    public enum MenuType {
+        VOODOO(0xFF000000 | (Noellesroles.VOODOO.color() & 0x00FFFFFF)),
+        SWAPPER(0xFF000000 | (Noellesroles.SWAPPER.color() & 0x00FFFFFF)),
+        MORPHLING(0xFF000000 | (Noellesroles.MORPHLING.color() & 0x00FFFFFF));
+
+        private final int accentColor;
+
+        MenuType(int accentColor) {
+            this.accentColor = accentColor;
+        }
+
+        private Text getTitle() {
+            return switch (this) {
+                case VOODOO -> Text.translatable("screen.role_target.voodoo.title");
+                case SWAPPER -> Text.translatable("screen.role_target.swapper.title");
+                case MORPHLING -> Text.translatable("screen.role_target.morphling.title");
+            };
+        }
+
+        private Text getEmptyText() {
+            return switch (this) {
+                case VOODOO -> Text.translatable("screen.role_target.voodoo.empty");
+                case SWAPPER -> Text.translatable("screen.role_target.swapper.empty");
+                case MORPHLING -> Text.translatable("screen.role_target.morphling.empty");
+            };
+        }
+    }
+
+    private record TargetEntry(UUID uuid, ShopEntry.Type backgroundType) {
+    }
+
+    private static final class TargetWidget extends ButtonWidget {
+        private final TargetEntry target;
+        private final boolean selected;
+
+        private TargetWidget(int x, int y, TargetEntry target, boolean selected, Consumer<UUID> onSelected) {
+            super(x, y, 16, 16, getNameText(target.uuid()), button -> onSelected.accept(target.uuid()), DEFAULT_NARRATION_SUPPLIER);
+            this.target = target;
+            this.selected = selected;
+        }
+
+        @Override
+        protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            super.renderWidget(context, mouseX, mouseY, delta);
+
+            context.drawGuiTexture(this.target.backgroundType().getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
+            PlayerSkinDrawer.draw(context, getSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
+
+            if (this.selected) {
+                drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
+            } else if (this.isHovered()) {
+                drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
+            }
+
+            if (this.isHovered()) {
+                Text name = getNameText(this.target.uuid());
+                int tooltipX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2;
+                context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
+            }
+        }
+
+        private static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {
+            context.fillGradient(RenderLayer.getGuiOverlay(), x, y, x + 16, y + 14, color, color, z);
+            context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 14, x + 15, y + 15, color, color, z);
+            context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 15, x + 14, y + 16, color, color, z);
+        }
+
+        @Override
+        public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
+        }
+
+        private static Text getNameText(UUID targetUuid) {
+            PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+            if (entry != null && entry.getDisplayName() != null) {
+                return entry.getDisplayName();
+            }
+            return entry != null ? Text.literal(entry.getProfile().getName()) : Text.translatable("screen.role_target.unknown_player");
+        }
+
+        private static SkinTextures getSkinTextures(UUID targetUuid) {
+            PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+            if (entry != null) {
+                return entry.getSkinTextures();
+            }
+            return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
+        }
+    }
+}
