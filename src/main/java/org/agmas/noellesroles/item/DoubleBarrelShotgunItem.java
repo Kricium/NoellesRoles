@@ -34,7 +34,7 @@ import java.util.List;
 
 public class DoubleBarrelShotgunItem extends Item {
     public static final int MAX_SHELLS = 2;
-    public static final int FIRE_COOLDOWN_TICKS = 12;
+    public static final int FIRE_COOLDOWN_TICKS = 4;
     public static final int EMPTY_COOLDOWN_TICKS = 20 * 30;
     public static final int RELOAD_WINDOW_TICKS = 20 * 10;
     public static final double RANGE = 8.0;
