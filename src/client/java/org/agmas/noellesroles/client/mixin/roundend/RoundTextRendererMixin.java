@@ -13,6 +13,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.util.SurvivalMasterRoundEndAccess;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -286,6 +287,11 @@ public abstract class RoundTextRendererMixin {
 
     @Unique
     private static String noellesroles$getResultSubtitleKey(GameRoundEndComponent roundEnd) {
+        if (roundEnd.getWinStatus() == GameFunctions.WinStatus.PASSENGERS
+                && ((SurvivalMasterRoundEndAccess) roundEnd).noellesroles$isSurvivalMasterMomentWin()) {
+            return "game.win.survival_master";
+        }
+
         if (roundEnd.getWinStatus() == GameFunctions.WinStatus.NEUTRAL) {
             for (GameRoundEndComponent.RoundEndData data : roundEnd.getPlayers()) {
                 if (data.isWinner()) {

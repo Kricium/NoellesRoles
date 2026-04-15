@@ -785,5 +785,6 @@
   "roleinfo.skill.saint.hellfire.effect": "Press your ability key to activate Hellfire for 15 seconds. If you are killed during that window, your killer is permanently burdened with Karma until the round ends. After every later successful kill or item use, they cannot kill or use items again for 5 seconds. If that killer is the Bomber, the lock lasts 20 seconds instead. If you survive the 15 seconds, Hellfire goes on a 60 second cooldown.",
   "roleinfo.skill.saint.divine_focus.name": "Divine Focus",
   "roleinfo.skill.saint.divine_focus.trigger": "Passive",
-  "roleinfo.skill.saint.divine_focus.effect": "You have no sanity, cannot pick up guns, and are immune to voodoo magic. If an innocent-side player tries to kill you, that kill is canceled."
+  "roleinfo.skill.saint.divine_focus.effect": "You have no sanity, cannot pick up guns, and are immune to voodoo magic. If an innocent-side player tries to kill you, that kill is canceled.",
+  "game.win.survival_master": "The Survival Master managed to stay alive in some forgotten corner..."
 }

@@ -417,5 +417,6 @@
   "tip.engineer.door_jammed": "一扇門被堵住咗！",
   "tip.engineer.repaired": "門已修復！",
   "tip.engineer.locked": "門已上鎖！",
-  "tip.engineer.unlocked": "門已解鎖！"
+  "tip.engineer.unlocked": "門已解鎖！",
+  "game.win.survival_master": "生存大師喺某個角落裡存活咗落嚟……"
 }
