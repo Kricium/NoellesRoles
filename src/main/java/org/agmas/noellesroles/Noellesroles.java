@@ -92,6 +92,7 @@ import org.agmas.noellesroles.packet.SilencedStateS2CPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
+import org.agmas.noellesroles.packet.SpectatorAssistTeleportC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
@@ -431,6 +432,7 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(SilencerSilenceC2SPacket.ID, SilencerSilenceC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorInfoRequestC2SPacket.ID, SpectatorInfoRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorReplayDetailRequestC2SPacket.ID, SpectatorReplayDetailRequestC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(SpectatorAssistTeleportC2SPacket.ID, SpectatorAssistTeleportC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(FerrymanBodyAgeSyncS2CPacket.ID, FerrymanBodyAgeSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
@@ -1636,6 +1638,36 @@ public class Noellesroles implements ModInitializer {
             ServerPlayNetworking.send(requester, new SpectatorReplayDetailSyncS2CPacket(payload.requestId(), payload.targetUuid(), replayLines));
         });
 
+        ServerPlayNetworking.registerGlobalReceiver(SpectatorAssistTeleportC2SPacket.ID, (payload, context) -> {
+            ServerPlayerEntity requester = context.player();
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
+            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
+                return;
+            }
+
+            UUID targetUuid = payload.targetUuid();
+            if (!gameWorld.getAllPlayers().contains(targetUuid)) {
+                return;
+            }
+
+            PlayerEntity liveTarget = requester.getServerWorld().getPlayerByUuid(targetUuid);
+            if (liveTarget instanceof ServerPlayerEntity && !gameWorld.isPlayerDead(targetUuid)) {
+                requester.networkHandler.onSpectatorTeleport(new net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket(targetUuid));
+                return;
+            }
+
+            Vec3d deathPos = findSpectatorDeathPosition(targetUuid, requester.getServerWorld());
+            if (deathPos == null) {
+                return;
+            }
+
+            requester.setCameraEntity(requester);
+            if (requester.hasVehicle()) {
+                requester.stopRiding();
+            }
+            requester.requestTeleport(deathPos.x, deathPos.y, deathPos.z);
+        });
+
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.MORPH_PACKET, (payload, context) -> {
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());
             AbilityPlayerComponent abilityPlayerComponent = (AbilityPlayerComponent) AbilityPlayerComponent.KEY.get(context.player());
@@ -2421,6 +2453,46 @@ public class Noellesroles implements ModInitializer {
                 latestRelevantReplayTick,
                 replaySummary
         );
+    }
+
+    private static Vec3d findSpectatorDeathPosition(UUID targetUuid, ServerWorld world) {
+        GameRecordManager.MatchRecord match = GameRecordManager.getCurrentMatch();
+        if (match == null) {
+            match = GameRecordManager.getLastFinishedMatch();
+        }
+        if (match == null) {
+            return null;
+        }
+
+        List<GameRecordEvent> events = new ArrayList<>(match.getEvents());
+        events.sort(Comparator.comparingLong(GameRecordEvent::worldTick));
+
+        for (int i = events.size() - 1; i >= 0; i--) {
+            GameRecordEvent event = events.get(i);
+            if (!GameRecordTypes.DEATH.equals(event.type())) {
+                continue;
+            }
+            NbtCompound data = event.data();
+            if (!data.containsUuid("target") || !targetUuid.equals(data.getUuid("target"))) {
+                continue;
+            }
+            if (data.contains("death_pos")) {
+                NbtCompound deathPos = data.getCompound("death_pos");
+                if (deathPos.contains("x") && deathPos.contains("y") && deathPos.contains("z")) {
+                    return new Vec3d(deathPos.getDouble("x"), deathPos.getDouble("y"), deathPos.getDouble("z"));
+                }
+            }
+            break;
+        }
+
+        for (PlayerBodyEntity body : world.getEntitiesByType(
+                TypeFilter.equals(PlayerBodyEntity.class),
+                world.getWorldBorder().asVoxelShape().getBoundingBox(),
+                body -> targetUuid.equals(body.getPlayerUuid()))) {
+            return body.getPos();
+        }
+
+        return null;
     }
 
     private static List<String> buildSpectatorReplayLines(UUID targetUuid,

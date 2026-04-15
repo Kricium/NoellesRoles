@@ -13,10 +13,10 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.util.DefaultSkinHelper;
-import net.minecraft.network.packet.c2s.play.SpectatorTeleportC2SPacket;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.packet.SpectatorAssistTeleportC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
@@ -241,10 +241,7 @@ public class SpectatorAssistPanelScreen extends Screen {
                 int avatarX = x + 6;
                 int avatarY = y + 6;
                 if (isInAvatar((int) mouseX, (int) mouseY, avatarX, avatarY) && entry.online) {
-                    MinecraftClient client = MinecraftClient.getInstance();
-                    if (client.getNetworkHandler() != null) {
-                        client.getNetworkHandler().sendPacket(new SpectatorTeleportC2SPacket(entry.uuid));
-                    }
+                    ClientPlayNetworking.send(new SpectatorAssistTeleportC2SPacket(entry.uuid));
                     return true;
                 }
             }
