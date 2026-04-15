@@ -24,7 +24,9 @@ import org.agmas.noellesroles.client.util.rolehud.RecallerHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.ReporterHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.RoleHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.SilencerHudRenderer;
+import org.agmas.noellesroles.client.util.rolehud.SwapperHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.TaotieHudRenderer;
+import org.agmas.noellesroles.client.util.rolehud.VoodooHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.VultureHudRenderer;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +55,9 @@ public final class HudRenderHelper {
         ROLE_HUD_REGISTRY.put(Noellesroles.RECALLER, new RecallerHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.REPORTER, new ReporterHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.SILENCER, new SilencerHudRenderer());
+        ROLE_HUD_REGISTRY.put(Noellesroles.SWAPPER, new SwapperHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.TAOTIE, new TaotieHudRenderer());
+        ROLE_HUD_REGISTRY.put(Noellesroles.VOODOO, new VoodooHudRenderer());
         ROLE_HUD_REGISTRY.put(Noellesroles.VULTURE, new VultureHudRenderer());
     }
 
@@ -134,5 +138,17 @@ public final class HudRenderHelper {
         return NoellesrolesClient.abilityBind == null
                 ? Text.empty()
                 : NoellesrolesClient.abilityBind.getBoundKeyLocalizedText();
+    }
+
+    public static String getAbility2KeyName() {
+        return NoellesrolesClient.ability2Bind == null
+                ? ""
+                : NoellesrolesClient.ability2Bind.getBoundKeyLocalizedText().getString();
+    }
+
+    public static Text getAbility2KeyText() {
+        return NoellesrolesClient.ability2Bind == null
+                ? Text.empty()
+                : NoellesrolesClient.ability2Bind.getBoundKeyLocalizedText();
     }
 }

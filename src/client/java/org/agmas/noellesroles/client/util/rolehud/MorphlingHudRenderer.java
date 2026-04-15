@@ -18,7 +18,7 @@ public final class MorphlingHudRenderer implements RoleHudRenderer {
         } else if (morphTicks < 0) {
             statusLine = Text.translatable("tip.noellesroles.cooldown", (-morphTicks) / 20);
         } else {
-            statusLine = Text.translatable("tip.morphling");
+            statusLine = Text.translatable("tip.morphling", HudRenderHelper.getAbility2KeyText());
         }
         int drawY = HudRenderHelper.stackLine(bottom, renderer, statusLine, 0);
 

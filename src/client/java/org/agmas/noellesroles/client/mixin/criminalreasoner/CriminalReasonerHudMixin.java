@@ -51,7 +51,7 @@ public abstract class CriminalReasonerHudMixin {
         int cooldownY = context.getScaledWindowHeight() - 15;
         int progressX = context.getScaledWindowWidth() - getTextRenderer().getWidth(progressText);
         int cooldownX = context.getScaledWindowWidth() - getTextRenderer().getWidth(cooldownText);
-        context.drawTextWithShadow(getTextRenderer(), progressText, progressX, progressY, 0xA37D7D);
-        context.drawTextWithShadow(getTextRenderer(), cooldownText, cooldownX, cooldownY, 0x704B4B);
+        context.drawTextWithShadow(getTextRenderer(), progressText, progressX, progressY, Noellesroles.CRIMINAL_REASONER.color());
+        context.drawTextWithShadow(getTextRenderer(), cooldownText, cooldownX, cooldownY, Noellesroles.CRIMINAL_REASONER.color());
     }
 }

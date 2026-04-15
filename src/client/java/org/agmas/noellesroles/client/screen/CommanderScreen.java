@@ -23,7 +23,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class CommanderScreen extends Screen {
-    private static final int ACCENT_BAR_COLOR = 0xFF2E006B;
+    private static final int ACCENT_BAR_COLOR = 0xFF000000 | (Noellesroles.COMMANDER.color() & 0x00FFFFFF);
     private static final int COLUMNS = 6;
     private static final int SPACING_X = 36;
     private static final int SPACING_Y = 45;

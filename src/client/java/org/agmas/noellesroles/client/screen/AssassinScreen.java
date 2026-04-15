@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class AssassinScreen extends Screen {
-    private static final int ACCENT_BAR_COLOR = 0xFF500000;
+    private static final int ACCENT_BAR_COLOR = 0xFF000000 | (Noellesroles.ASSASSIN.color() & 0x00FFFFFF);
     private static final int CONFIRM_PHASE_EXTRA_DIM_COLOR = 0x90000000;
     private static final int ROLE_COLUMNS = 3;
     private static final int ROLE_BUTTON_WIDTH = 90;

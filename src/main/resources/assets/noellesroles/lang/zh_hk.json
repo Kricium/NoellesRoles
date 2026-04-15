@@ -310,6 +310,7 @@
   "replay.death.noellesroles.bomb.killed": "%s 被 %s 的§e定時炸彈§r炸死",
   "replay.death.noellesroles.bomb.died": "%s 被§e定時炸彈§r炸死",
   "replay.death.noellesroles.voodoo.died": "%s 死於§5巫毒詛咒§r",
+  "replay.death.noellesroles.voodoo.killed": "%s 被 %s 的§5巫毒詛咒§r殺死",
   "replay.death.noellesroles.jester_timeout.died": "%s 的§d瘋魔時間§r耗盡",
 
   "replay.item_use.noellesroles.fine_drink.drink": "%s 喝下了§d上等佳釀§r",

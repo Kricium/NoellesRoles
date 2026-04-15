@@ -44,6 +44,7 @@ import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
+import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
@@ -104,6 +105,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static final int COMMANDER_MARK_HIGHLIGHT_COLOR = 0x8F6BD1;
     public static int insanityTime = 0;
     public static KeyBinding abilityBind;
+    public static KeyBinding ability2Bind;
     public static KeyBinding assistInterfaceBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
@@ -134,6 +136,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         });
 
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
+        ability2Bind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability2", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Y, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
@@ -690,6 +693,24 @@ public class NoellesrolesClient implements ClientModInitializer {
                         return;
                     }
 
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VOODOO)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.VOODOO));
+                        }
+                        return;
+                    }
+
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.SWAPPER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.SWAPPER));
+                        }
+                        return;
+                    }
+
                     if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE)) {
                         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
                         if (targetBody == null) return;
@@ -758,6 +779,20 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
 
                     ClientPlayNetworking.send(new AbilityC2SPacket());
+                });
+            }
+            if (ability2Bind != null && ability2Bind.wasPressed()) {
+                client.execute(() -> {
+                    if (MinecraftClient.getInstance().player == null) return;
+                    GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+
+                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.MORPHLING)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
+                                && MorphlingPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getMorphTicks() == 0) {
+                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.MORPHLING));
+                        }
+                    }
                 });
             }
             boolean isAssistPressed = assistInterfaceBind != null && assistInterfaceBind.isPressed();

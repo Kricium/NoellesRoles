@@ -43,7 +43,7 @@ public abstract class CommanderHudMixin {
         List<String> markedNames = commanderComp.getThreatTargetNames();
         if (!markedNames.isEmpty()) {
             Text line2 = Text.translatable("tip.commander.marked", String.join("、", markedNames));
-            drawY = HudRenderHelper.drawBottomRight(context, getTextRenderer(), line2, drawY, 0xCAA1FF);
+            drawY = HudRenderHelper.drawBottomRight(context, getTextRenderer(), line2, drawY, Noellesroles.COMMANDER.color());
         }
 
         Text line1;
@@ -57,7 +57,7 @@ public abstract class CommanderHudMixin {
             line1 = Text.translatable("tip.commander.no_marks");
         }
 
-        HudRenderHelper.drawBottomRight(context, getTextRenderer(), line1, drawY, 0xCAA1FF);
+        HudRenderHelper.drawBottomRight(context, getTextRenderer(), line1, drawY, Noellesroles.COMMANDER.color());
     }
 
     private static void renderLastBulletCountdown(DrawContext context, TextRenderer textRenderer, CommanderPlayerComponent commanderComp) {
@@ -70,7 +70,7 @@ public abstract class CommanderHudMixin {
         context.getMatrices().push();
         context.getMatrices().translate(centerX, centerY - 12, 0.0F);
         context.getMatrices().scale(2.0F, 2.0F, 1.0F);
-        context.drawTextWithShadow(textRenderer, title, -textRenderer.getWidth(title) / 2, 0, 0xFF2E006B);
+        context.drawTextWithShadow(textRenderer, title, -textRenderer.getWidth(title) / 2, 0, Noellesroles.COMMANDER.color());
         context.getMatrices().pop();
 
         context.drawCenteredTextWithShadow(textRenderer, countdown, centerX, centerY + 18, 0xFFFF5555);

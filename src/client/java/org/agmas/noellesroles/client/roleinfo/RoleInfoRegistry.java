@@ -41,6 +41,7 @@ public class RoleInfoRegistry {
         MinecraftClient mc = MinecraftClient.getInstance();
         return switch (keybindId) {
             case "ability" -> NoellesrolesClient.abilityBind.getBoundKeyLocalizedText().getString();
+            case "ability2" -> NoellesrolesClient.ability2Bind.getBoundKeyLocalizedText().getString();
             case "assist_interface", "role_info" -> NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
             case "inventory" -> mc.options.inventoryKey.getBoundKeyLocalizedText().getString();
             case "use" -> mc.options.useKey.getBoundKeyLocalizedText().getString();
@@ -193,7 +194,7 @@ public class RoleInfoRegistry {
         m.put("noellesroles:morphling", r("morphling")
                 .addSkillWithSharedNameEffectAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.effect.killer_instinct", "shared.trigger.hold_use") // 本能
                 .addSkillWithSharedNameEffectAndTrigger("shop", "inventory", "shared.name.killer_shop", "shared.effect.killer_shop", "shared.trigger.inventory_open") // 商店
-                .addInventoryOpenSkill("morph") // 变形成目标
+                .addSkillWithSharedTrigger("morph", "ability2", "shared.trigger.active_menu") // 变形成目标
                 .addActiveUseSkill("corpse_mode", "ability")); // 尸体伪装
 
         // 幽灵
@@ -206,7 +207,7 @@ public class RoleInfoRegistry {
         m.put("noellesroles:swapper", r("swapper")
                 .addSkillWithSharedNameEffectAndTrigger("instinct", "instinct", "shared.name.killer_instinct", "shared.effect.killer_instinct", "shared.trigger.hold_use") // 本能
                 .addSkillWithSharedNameEffectAndTrigger("shop", "inventory", "shared.name.killer_shop", "shared.effect.killer_shop", "shared.trigger.inventory_open") // 商店
-                .addInventoryOpenSkill("swap")); // 交换两名玩家位置
+                .addSkillWithSharedTrigger("swap", "ability", "shared.trigger.active_menu")); // 交换两名玩家位置
 
         // 亡语杀手
         m.put("noellesroles:the_insane_damned_paranoid_killer", r("the_insane_damned_paranoid_killer")
@@ -295,7 +296,7 @@ public class RoleInfoRegistry {
         // 巫毒师
         m.put("noellesroles:voodoo", r("voodoo")
                 .addSharedNamedPassiveSkillWithSharedEffect("passenger", "shared.name.passenger", "shared.effect.passenger")
-                .addSkillWithSharedTrigger("bind_curse", "inventory", "shared.trigger.inventory_open")); // 绑定巫毒诅咒
+                .addSkillWithSharedTrigger("bind_curse", "ability", "shared.trigger.active_menu")); // 绑定巫毒诅咒
 
         // 验尸官
         m.put("noellesroles:coroner", r("coroner")

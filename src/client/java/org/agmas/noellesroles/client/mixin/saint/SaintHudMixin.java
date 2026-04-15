@@ -6,6 +6,7 @@ import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.client.util.SaintHudHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -34,6 +35,6 @@ public abstract class SaintHudMixin {
                 - getTextRenderer().getWidth(line)
                 - HudRenderHelper.getBottomRightSkillHudRightPadding(player);
 
-        context.drawTextWithShadow(getTextRenderer(), line, drawX, drawY, 0xF29A64);
+        context.drawTextWithShadow(getTextRenderer(), line, drawX, drawY, Noellesroles.SAINT.color());
     }
 }
