@@ -7,6 +7,7 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
+import org.agmas.noellesroles.client.util.InsanityNameHelper;
 import org.agmas.noellesroles.reporter.ReporterPlayerComponent;
 
 public final class ReporterHudRenderer implements RoleHudRenderer {
@@ -19,7 +20,7 @@ public final class ReporterHudRenderer implements RoleHudRenderer {
         if (reporter.hasMarkedTarget()) {
             PlayerEntity markedTarget = player.getWorld().getPlayerByUuid(reporter.getMarkedTarget());
             if (markedTarget != null) {
-                Text line2 = Text.translatable("tip.reporter.marked", markedTarget.getName());
+                Text line2 = Text.translatable("tip.reporter.marked", InsanityNameHelper.getVisiblePlayerName(markedTarget));
                 drawY = HudRenderHelper.stackLine(drawY, renderer, line2, 0);
             }
         }
@@ -30,7 +31,7 @@ public final class ReporterHudRenderer implements RoleHudRenderer {
         } else {
             PlayerEntity target = NoellesrolesClient.crosshairTarget;
             if (target != null && NoellesrolesClient.crosshairTargetDistance <= 3.0) {
-                line1 = Text.translatable("tip.reporter.target", target.getName(), HudRenderHelper.getAbilityKeyText());
+                line1 = Text.translatable("tip.reporter.target", InsanityNameHelper.getVisiblePlayerName(target), HudRenderHelper.getAbilityKeyText());
             } else {
                 line1 = Text.translatable("tip.reporter.no_target");
             }
