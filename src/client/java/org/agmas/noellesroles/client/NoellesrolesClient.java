@@ -28,19 +28,15 @@ import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.text.Text;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.Identifier;
-import com.mojang.authlib.GameProfile;
-import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.ConfigWorldComponent;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
-import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
@@ -68,7 +64,6 @@ import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.VultureEatC2SPacket;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
-import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorReplayDetailSyncS2CPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
@@ -90,7 +85,6 @@ import org.agmas.noellesroles.serialkiller.SerialKillerPlayerComponent;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
 import org.agmas.noellesroles.NoellesRolesEntities;
 import org.agmas.noellesroles.util.BodyTargetHelper;
-import org.agmas.noellesroles.util.RoleUtils;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.minecraft.client.render.entity.FlyingItemEntityRenderer;
 import net.minecraft.client.render.entity.EmptyEntityRenderer;
@@ -167,38 +161,39 @@ public class NoellesrolesClient implements ClientModInitializer {
 
         // 注册工程师门高亮 S2C 包接收
         ClientPlayNetworking.registerGlobalReceiver(EngineerDoorHighlightS2CPacket.ID,
-                (payload, context) -> context.client().execute(() ->
+                (payload, context) -> runOnClient(context.client(), () ->
                         EngineerDoorHighlightRenderer.onPacketReceived(payload.doorPos())
                 ));
 
         ClientPlayNetworking.registerGlobalReceiver(FerrymanBodyAgeSyncS2CPacket.ID,
-                (payload, context) -> context.client().execute(() -> {
-                    if (context.client().world == null) return;
-                    if (context.client().world.getEntityById(payload.entityId()) instanceof PlayerBodyEntity body) {
+                (payload, context) -> runOnClient(context.client(), () -> {
+                    var world = context.client().world;
+                    if (world == null) return;
+                    if (world.getEntityById(payload.entityId()) instanceof PlayerBodyEntity body) {
                         body.age = payload.age();
                     }
                 }));
 
         // 注册职业广播 S2C 包接收：复用对讲机渲染器在屏幕上方显示
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.RoleBroadcastS2CPacket.ID,
-                (payload, context) -> context.client().execute(() ->
+                (payload, context) -> runOnClient(context.client(), () ->
                         dev.doctor4t.wathe.client.gui.WalkieTalkieBroadcastRenderer.addMessage(payload.message())
                 ));
 
         // 注册静语状态同步 S2C 包接收
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.SilencedStateS2CPacket.ID,
-                (payload, context) -> context.client().execute(() ->
+                (payload, context) -> runOnClient(context.client(), () ->
                         isClientSilenced = payload.silenced()
                 ));
 
         // 注册观战信息同步 S2C 包接收
         ClientPlayNetworking.registerGlobalReceiver(SpectatorInfoSyncS2CPacket.ID,
-                (payload, context) -> context.client().execute(() -> {
+                (payload, context) -> runOnClient(context.client(), () -> {
                     SpectatorAssistPanelScreen.applyServerSync(payload);
                     SpectatorReplayToastOverlay.onSpectatorSync(payload);
                 }));
         ClientPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailSyncS2CPacket.ID,
-                (payload, context) -> context.client().execute(() ->
+                (payload, context) -> runOnClient(context.client(), () ->
                         SpectatorAssistPanelScreen.applyReplayDetailSync(payload)
                 ));
 
@@ -486,8 +481,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
 
             RiotPatrolPlayerComponent riotPatrolComponent = RiotPatrolPlayerComponent.KEY.get(player);
-            if (!riotPatrolComponent.isRooted()) {
-            } else {
+            if (riotPatrolComponent.isRooted()) {
                 client.options.forwardKey.setPressed(false);
                 client.options.backKey.setPressed(false);
                 client.options.leftKey.setPressed(false);
@@ -535,8 +529,8 @@ public class NoellesrolesClient implements ClientModInitializer {
             insanityTime++;
             if (insanityTime >= 20*6) {
                 insanityTime = 0;
-                List<UUID> keys = new ArrayList<UUID>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
-                List<UUID> originalkeys = new ArrayList<UUID>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
+                List<UUID> keys = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
+                List<UUID> originalkeys = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
                 Collections.shuffle(keys);
                 int i = 0;
                 for (UUID o : originalkeys) {
@@ -692,99 +686,100 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             if (abilityBind.wasPressed()) {
                 client.execute(() -> {
-                    if (MinecraftClient.getInstance().player == null) return;
-                    GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    ClientPlayerEntity localPlayer = client.player;
+                    if (localPlayer == null) return;
+                    GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
 
                     // 按 H 打开角色信息界面
                     // (此处不处理，下方单独处理)
 
                     // 刺客角色按G打开刺客界面
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.ASSASSIN)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
-                            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.ASSASSIN)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer) && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)) {
+                            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(localPlayer);
                             // 检查是否可以使用技能（不在冷却中且有剩余次数）
                             if (assassinComp.canGuess()) {
-                                MinecraftClient.getInstance().setScreen(new AssassinScreen((net.minecraft.client.network.ClientPlayerEntity) MinecraftClient.getInstance().player));
+                                client.setScreen(new AssassinScreen(localPlayer));
                             }
                             // 如果不能使用，不打开界面，HUD 会显示相应的提示信息
                         }
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.CRIMINAL_REASONER)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
-                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
-                            AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.CRIMINAL_REASONER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)) {
+                            AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(localPlayer);
                             if (abilityComp.getCooldown() > 0) {
                                 return;
                             }
                             // 犯罪推理学家按G打开推理菜单，冷却中则不打开界面
-                            MinecraftClient.getInstance().setScreen(new CriminalReasonerScreen(MinecraftClient.getInstance().player));
+                            client.setScreen(new CriminalReasonerScreen(localPlayer));
                         }
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VOODOO)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
-                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
-                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
-                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.VOODOO));
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.VOODOO)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)
+                                && AbilityPlayerComponent.KEY.get(localPlayer).getCooldown() <= 0) {
+                            client.setScreen(new RoleTargetMenuScreen(localPlayer, RoleTargetMenuScreen.MenuType.VOODOO));
                         }
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.SWAPPER)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
-                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
-                                && AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getCooldown() <= 0) {
-                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.SWAPPER));
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.SWAPPER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)
+                                && AbilityPlayerComponent.KEY.get(localPlayer).getCooldown() <= 0) {
+                            client.setScreen(new RoleTargetMenuScreen(localPlayer, RoleTargetMenuScreen.MenuType.SWAPPER));
                         }
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.VULTURE)) {
-                        if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.VULTURE)) {
+                        if (!GameFunctions.isPlayerPlayingAndAlive(localPlayer) || SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)) return;
                         if (targetBody == null) return;
                         ClientPlayNetworking.send(new VultureEatC2SPacket(targetBody.getUuid()));
                         return;
                     }
 
                     // 记者角色按G发送标记数据包
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.FERRYMAN)) {
-                        if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.FERRYMAN)) {
+                        if (!GameFunctions.isPlayerPlayingAndAlive(localPlayer) || SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)) return;
                         ClientPlayNetworking.send(new AbilityC2SPacket());
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.REPORTER)) {
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.REPORTER)) {
                         if (crosshairTarget != null && crosshairTargetDistance <= 3.0) {
                             ClientPlayNetworking.send(new ReporterMarkC2SPacket(crosshairTarget.getUuid()));
                         }
                         return;
                     }
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.COMMANDER)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
-                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
-                            AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
-                            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.COMMANDER)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)) {
+                            AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(localPlayer);
+                            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(localPlayer);
                             if (abilityComp.getCooldown() <= 0 && commanderComp.canMarkMore()) {
-                                MinecraftClient.getInstance().setScreen(new CommanderScreen((net.minecraft.client.network.ClientPlayerEntity) MinecraftClient.getInstance().player));
+                                client.setScreen(new CommanderScreen(localPlayer));
                             }
                         }
                         return;
                     }
 
                     // 变形者角色按G：切换尸体模式（独立于换皮变形）
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.MORPHLING)) {
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.MORPHLING)) {
                         ClientPlayNetworking.send(new MorphCorpseToggleC2SPacket());
                         return;
                     }
 
                     // 饕餮角色按G吞噬准星目标
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.TAOTIE)) {
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.TAOTIE)) {
                         if (crosshairTarget != null && crosshairTargetDistance <= 3.0) {
-                            TaotiePlayerComponent taotieComp = TaotiePlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                            TaotiePlayerComponent taotieComp = TaotiePlayerComponent.KEY.get(localPlayer);
                             if (taotieComp.getSwallowCooldown() <= 0) {
                                 ClientPlayNetworking.send(new TaotieSwallowC2SPacket(crosshairTarget.getUuid()));
                             }
@@ -794,10 +789,10 @@ public class NoellesrolesClient implements ClientModInitializer {
 
                     // 静语者角色按G：第一次标记目标，第二次释放沉默
                     // 静语者角色按G：第一次标记目标，第二次释放沉默
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.SILENCER)) {
-                        AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.SILENCER)) {
+                        AbilityPlayerComponent abilityComp = AbilityPlayerComponent.KEY.get(localPlayer);
                         if (abilityComp.getCooldown() <= 0) {
-                            SilencerPlayerComponent silencerComp = SilencerPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+                            SilencerPlayerComponent silencerComp = SilencerPlayerComponent.KEY.get(localPlayer);
                             if (silencerComp.hasMarkedTarget()) {
                                 // 已有标记 → 发送释放沉默请求（不判断瞄准）
                                 ClientPlayNetworking.send(new SilencerSilenceC2SPacket(silencerComp.getMarkedTargetUuid()));
@@ -814,14 +809,15 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
             if (ability2Bind != null && ability2Bind.wasPressed()) {
                 client.execute(() -> {
-                    if (MinecraftClient.getInstance().player == null) return;
-                    GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+                    ClientPlayerEntity localPlayer = client.player;
+                    if (localPlayer == null) return;
+                    GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
 
-                    if (gameWorldComponent.isRole(MinecraftClient.getInstance().player, Noellesroles.MORPHLING)) {
-                        if (GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)
-                                && !SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)
-                                && MorphlingPlayerComponent.KEY.get(MinecraftClient.getInstance().player).getMorphTicks() == 0) {
-                            MinecraftClient.getInstance().setScreen(new RoleTargetMenuScreen(MinecraftClient.getInstance().player, RoleTargetMenuScreen.MenuType.MORPHLING));
+                    if (gameWorldComponent.isRole(localPlayer, Noellesroles.MORPHLING)) {
+                        if (GameFunctions.isPlayerPlayingAndAlive(localPlayer)
+                                && !SwallowedPlayerComponent.isPlayerSwallowed(localPlayer)
+                                && MorphlingPlayerComponent.KEY.get(localPlayer).getMorphTicks() == 0) {
+                            client.setScreen(new RoleTargetMenuScreen(localPlayer, RoleTargetMenuScreen.MenuType.MORPHLING));
                         }
                     }
                 });
@@ -923,6 +919,10 @@ public class NoellesrolesClient implements ClientModInitializer {
         wasAssistInterfacePressed = true;
     }
 
+    private static void runOnClient(MinecraftClient client, Runnable action) {
+        client.execute(action);
+    }
+
     /**
      * 检测床方块上是否有睡觉的玩家
      * @return 睡觉的玩家，如果没有则返回 Optional.empty()
@@ -953,18 +953,5 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
         }
         return Optional.empty();
-    }
-
-    /**
-     * 获取玩家皮肤纹理
-     * 优先从模组缓存(PlayerListEntry)获取，如果失效则从客户端皮肤服务(SkinProvider)获取
-     */
-    public static Identifier getPlayerTexture(GameProfile profile) {
-        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(profile.getId());
-        if (entry != null) {
-            return entry.getSkinTextures().texture();
-        }
-
-        return MinecraftClient.getInstance().getSkinProvider().getSkinTextures(profile).texture();
     }
 }

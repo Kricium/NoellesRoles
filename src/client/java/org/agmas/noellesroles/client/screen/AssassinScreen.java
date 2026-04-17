@@ -65,7 +65,7 @@ public class AssassinScreen extends Screen {
 
         // 基础检查
         if (!gameWorld.isRole(player, Noellesroles.ASSASSIN) ||
-                !GameFunctions.isPlayerPlayingAndAlive(player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
+                !GameFunctions.isPlayerPlayingAndAlive(player) || SwallowedPlayerComponent.isPlayerSwallowed(player)) {
             this.close();
             return;
         }
@@ -136,7 +136,6 @@ public class AssassinScreen extends Screen {
                 int row = i / ROLE_COLUMNS;
 
                 AssassinRoleWidget widget = new AssassinRoleWidget(
-                        null,
                         roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X),
                         roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y),
                         allRoles.get(i),
@@ -246,7 +245,9 @@ public class AssassinScreen extends Screen {
 
     @Override
     public void close() {
-        this.client.setScreen(null);
+        if (this.client != null) {
+            this.client.setScreen(null);
+        }
     }
 
     private List<Role> getAllGuessableRoles() {

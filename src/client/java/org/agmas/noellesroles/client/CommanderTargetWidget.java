@@ -6,6 +6,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
@@ -36,8 +37,12 @@ public class CommanderTargetWidget extends ButtonWidget {
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
         try {
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player == null) {
+                return;
+            }
             super.renderWidget(context, mouseX, mouseY, delta);
-            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(player);
             boolean marked = commanderComp.isThreatTarget(this.targetUuid);
 
             context.drawGuiTexture(ShopEntry.Type.WEAPON.getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);

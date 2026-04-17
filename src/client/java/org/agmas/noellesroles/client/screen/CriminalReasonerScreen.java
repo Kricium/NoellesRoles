@@ -127,9 +127,7 @@ public class CriminalReasonerScreen extends Screen {
         // 第二步将活人与死人拆成上下两块，并在内容过长时整体滚动，避免顶到标题和按钮。
         suspectMaxScroll = Math.max(0, contentHeight - viewHeight);
         suspectScrollOffset = Math.max(0, Math.min(suspectScrollOffset, suspectMaxScroll));
-        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - suspectScrollOffset;
-
-        int aliveHeaderY = startY;
+        int aliveHeaderY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - suspectScrollOffset;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
         addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, viewTop, viewBottom);
 

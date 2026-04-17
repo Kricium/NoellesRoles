@@ -49,11 +49,6 @@ public final class RoleScreenHelper {
         return centerX - ((Math.min(itemCount, columns) * spacingX) / 2) + 9;
     }
 
-    public static int getGridStartY(int itemCount, int columns, int spacingY, int centerY) {
-        int totalRows = (itemCount + columns - 1) / columns;
-        return centerY - (totalRows * spacingY / 2) + 20;
-    }
-
     public static int getGridRowCount(int itemCount, int columns) {
         return (itemCount + columns - 1) / columns;
     }

@@ -1,7 +1,6 @@
 package org.agmas.noellesroles.client;
 
 import dev.doctor4t.wathe.api.Role;
-import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedInventoryScreen;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -9,7 +8,6 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.agmas.noellesroles.packet.AssassinGuessRoleC2SPacket;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -24,7 +22,7 @@ public class AssassinRoleWidget extends ButtonWidget {
     private final int clipRight;
     private final int clipBottom;
 
-    public AssassinRoleWidget(@Nullable LimitedInventoryScreen screen, int x, int y, Role role, UUID targetPlayer,
+    public AssassinRoleWidget(int x, int y, Role role, UUID targetPlayer,
                               int clipLeft, int clipTop, int clipRight, int clipBottom) {
         super(x, y, 90, 20, Text.empty(),
                 button -> {

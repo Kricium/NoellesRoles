@@ -6,6 +6,7 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
@@ -28,7 +29,11 @@ public class AssassinTargetWidget extends ButtonWidget {
     public AssassinTargetWidget(int x, int y, @NotNull UUID targetUuid,
                                 Consumer<UUID> onTargetSelected, int clipLeft, int clipTop, int clipRight, int clipBottom) {
         super(x, y, 16, 16, RoleScreenHelper.getPlayerName(targetUuid, UNKNOWN_PLAYER_TEXT), button -> {
-            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player == null) {
+                return;
+            }
+            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
             if (assassinComp.canGuess()) {
                 onTargetSelected.accept(targetUuid);
             }
@@ -44,8 +49,12 @@ public class AssassinTargetWidget extends ButtonWidget {
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
         context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
         try {
+            ClientPlayerEntity player = MinecraftClient.getInstance().player;
+            if (player == null) {
+                return;
+            }
             super.renderWidget(context, mouseX, mouseY, delta);
-            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+            AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
 
             if (!assassinComp.canGuess()) {
                 context.setShaderColor(0.25f, 0.25f, 0.25f, 0.5f);
