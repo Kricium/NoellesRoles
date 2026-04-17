@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import dev.doctor4t.wathe.client.WatheClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Element;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.DefaultSkinHelper;
@@ -105,5 +106,19 @@ public final class RoleScreenHelper {
             return entry.getSkinTextures();
         }
         return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
+    }
+
+    public static void renderTopmostPlayerOverlays(DrawContext context, TextRenderer font, Iterable<? extends Element> children) {
+        for (Element child : children) {
+            if (child instanceof TopmostPlayerOverlayRenderable overlay && overlay.shouldRenderTopmostPlayerOverlay()) {
+                overlay.renderTopmostPlayerOverlay(context, font);
+            }
+        }
+    }
+
+    public interface TopmostPlayerOverlayRenderable {
+        boolean shouldRenderTopmostPlayerOverlay();
+
+        void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer);
     }
 }

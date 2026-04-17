@@ -240,6 +240,7 @@ public class CriminalReasonerScreen extends Screen {
             if (children().size() <= 1) {
                 RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.empty_victims"), centerX, centerY);
             }
+            RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
             return;
         }
 
@@ -251,6 +252,8 @@ public class CriminalReasonerScreen extends Screen {
             Text suspectName = RoleScreenHelper.getPlayerName(selectedSuspect, UNKNOWN_PLAYER_TEXT);
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.criminal_reasoner.subtitle.current_pair", victimName, suspectName), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
+
+        RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
     }
 
     @Override

@@ -9,12 +9,13 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.TopmostPlayerOverlayRenderable;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class CommanderTargetWidget extends ButtonWidget {
+public class CommanderTargetWidget extends ButtonWidget implements TopmostPlayerOverlayRenderable {
     private static final Text UNKNOWN_PLAYER_TEXT = Text.literal("Unknown");
 
     private final UUID targetUuid;
@@ -50,10 +51,6 @@ public class CommanderTargetWidget extends ButtonWidget {
 
             if (marked || this.isHovered()) {
                 RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, marked ? 0xAA4B1A8E : 0x913D3D3D);
-                Text name = RoleScreenHelper.getPlayerName(this.targetUuid, UNKNOWN_PLAYER_TEXT);
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, name,
-                        this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2,
-                        this.getY() - 9);
             }
         } finally {
             context.disableScissor();
@@ -68,5 +65,21 @@ public class CommanderTargetWidget extends ButtonWidget {
 
     @Override
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
+    }
+
+    @Override
+    public boolean shouldRenderTopmostPlayerOverlay() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        if (player == null || !this.visible) {
+            return false;
+        }
+        CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(player);
+        return this.isHovered() || commanderComp.isThreatTarget(this.targetUuid);
+    }
+
+    @Override
+    public void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer) {
+        Text name = RoleScreenHelper.getPlayerName(this.targetUuid, UNKNOWN_PLAYER_TEXT);
+        context.drawTooltip(textRenderer, name, this.getX() - 4 - textRenderer.getWidth(name) / 2, this.getY() - 9);
     }
 }

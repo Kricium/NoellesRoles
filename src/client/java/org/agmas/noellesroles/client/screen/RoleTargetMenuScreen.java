@@ -220,6 +220,8 @@ public class RoleTargetMenuScreen extends Screen {
         if (this.targetCount == 0) {
             RoleScreenHelper.drawCenteredSubTitle(context, font, this.menuType.getEmptyText(), centerX, centerY);
         }
+
+        RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
     }
 
     private Text getSubtitle() {
@@ -325,7 +327,7 @@ public class RoleTargetMenuScreen extends Screen {
     private record TargetEntry(UUID uuid, ShopEntry.Type backgroundType) {
     }
 
-    private static final class TargetWidget extends ButtonWidget {
+    private static final class TargetWidget extends ButtonWidget implements RoleScreenHelper.TopmostPlayerOverlayRenderable {
         private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
 
         private final TargetEntry target;
@@ -361,12 +363,6 @@ public class RoleTargetMenuScreen extends Screen {
                 } else if (this.isHovered()) {
                     RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
                 }
-
-                if (this.isHovered()) {
-                    Text name = RoleScreenHelper.getPlayerName(this.target.uuid(), UNKNOWN_PLAYER_TEXT);
-                    int tooltipX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2;
-                    context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
-                }
             } finally {
                 context.disableScissor();
             }
@@ -380,6 +376,18 @@ public class RoleTargetMenuScreen extends Screen {
 
         @Override
         public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
+        }
+
+        @Override
+        public boolean shouldRenderTopmostPlayerOverlay() {
+            return this.visible && this.isHovered();
+        }
+
+        @Override
+        public void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer) {
+            Text name = RoleScreenHelper.getPlayerName(this.target.uuid(), UNKNOWN_PLAYER_TEXT);
+            int tooltipX = this.getX() - 4 - textRenderer.getWidth(name) / 2;
+            context.drawTooltip(textRenderer, name, tooltipX, this.getY() - 9);
         }
     }
 }

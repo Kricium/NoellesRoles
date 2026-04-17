@@ -119,6 +119,7 @@ public class CommanderScreen extends Screen {
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.commander.current_targets", joined), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
 
+        RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
     }
 
     @Override

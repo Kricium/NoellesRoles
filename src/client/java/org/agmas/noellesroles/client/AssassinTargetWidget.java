@@ -10,13 +10,14 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.TopmostPlayerOverlayRenderable;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-public class AssassinTargetWidget extends ButtonWidget {
+public class AssassinTargetWidget extends ButtonWidget implements TopmostPlayerOverlayRenderable {
     private static final Text UNKNOWN_PLAYER_TEXT = Text.literal("Unknown");
     private static final int HIGHLIGHT_COLOR = -1862287543;
 
@@ -70,10 +71,6 @@ public class AssassinTargetWidget extends ButtonWidget {
 
                 if (this.isHovered()) {
                     RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, HIGHLIGHT_COLOR);
-                    Text name = RoleScreenHelper.getPlayerName(this.targetUuid, UNKNOWN_PLAYER_TEXT);
-                    context.drawTooltip(MinecraftClient.getInstance().textRenderer, name,
-                            this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2,
-                            this.getY() - 9);
                 }
                 return;
             }
@@ -83,10 +80,6 @@ public class AssassinTargetWidget extends ButtonWidget {
 
             if (this.isHovered()) {
                 RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, HIGHLIGHT_COLOR);
-                Text name = RoleScreenHelper.getPlayerName(this.targetUuid, UNKNOWN_PLAYER_TEXT);
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, name,
-                        this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2,
-                        this.getY() - 9);
             }
         } finally {
             context.disableScissor();
@@ -101,5 +94,28 @@ public class AssassinTargetWidget extends ButtonWidget {
 
     @Override
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
+    }
+
+    @Override
+    public boolean shouldRenderTopmostPlayerOverlay() {
+        return this.visible && this.isHovered();
+    }
+
+    @Override
+    public void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer) {
+        context.drawTooltip(textRenderer, this.getTooltipText(), this.getTooltipX(textRenderer), this.getTooltipY());
+    }
+
+    public Text getTooltipText() {
+        return RoleScreenHelper.getPlayerName(this.targetUuid, UNKNOWN_PLAYER_TEXT);
+    }
+
+    public int getTooltipX(TextRenderer textRenderer) {
+        Text tooltip = this.getTooltipText();
+        return this.getX() - 4 - textRenderer.getWidth(tooltip) / 2;
+    }
+
+    public int getTooltipY() {
+        return this.getY() - 9;
     }
 }

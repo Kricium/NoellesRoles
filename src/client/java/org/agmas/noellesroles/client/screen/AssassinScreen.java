@@ -213,6 +213,10 @@ public class AssassinScreen extends Screen {
             RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
+
+        if (selectedTarget == null) {
+            RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
+        }
     }
 
     @Override

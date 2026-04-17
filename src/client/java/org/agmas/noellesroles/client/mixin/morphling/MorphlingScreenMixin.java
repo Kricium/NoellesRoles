@@ -4,12 +4,16 @@ import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedHandledScreen;
 import dev.doctor4t.wathe.client.gui.screen.ingame.LimitedInventoryScreen;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.MorphlingPlayerWidget;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.agmas.noellesroles.client.widget.PlayerSelectWidget;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -47,5 +51,15 @@ public abstract class MorphlingScreenMixin extends LimitedHandledScreen<PlayerSc
                 addDrawableChild(child);
             }
         }
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    void noellesroles$renderTopmostPlayerOverlays(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(player.getWorld());
+        if (!gameWorldComponent.isRole(player, Noellesroles.MORPHLING)) {
+            return;
+        }
+        TextRenderer font = MinecraftClient.getInstance().textRenderer;
+        RoleScreenHelper.renderTopmostPlayerOverlays(context, font, ((LimitedInventoryScreen) (Object) this).children());
     }
 }
