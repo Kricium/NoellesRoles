@@ -219,12 +219,22 @@ public class NoellesrolesClient implements ClientModInitializer {
             return null;
         });
 
-        // 注册 CanSeeBodyRole 监听器：验尸官可以看到尸体的角色（需要理智值检查）
-        CanSeeBodyRole.EVENT.register(player -> {
-            if (player instanceof PlayerBodyEntity body && MinecraftClient.getInstance().player != null) {
-                return BodyTargetHelper.canPlayerSeeBody(MinecraftClient.getInstance().player, body);
+        // 注册 CanSeeBodyRole 监听器：高理智的验尸官查看尸体时可获得完整验尸信息
+        CanSeeBodyRole.EVENT.register(viewer -> {
+            if (!(viewer instanceof PlayerEntity player)) {
+                return false;
             }
-            return false;
+
+            GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
+            if (!gameWorldComponent.isRole(player, Noellesroles.CORONER)) {
+                return false;
+            }
+            if (!GameFunctions.isPlayerPlayingAndAlive(player) || SwallowedPlayerComponent.isPlayerSwallowed(player)) {
+                return false;
+            }
+
+            PlayerMoodComponent moodComponent = PlayerMoodComponent.KEY.get(player);
+            return !moodComponent.isLowerThanMid();
         });
 
         // 注册 GetInstinctHighlight 监听器：各角色的本能高亮逻辑

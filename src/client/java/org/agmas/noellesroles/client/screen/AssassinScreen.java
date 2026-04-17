@@ -112,9 +112,11 @@ public class AssassinScreen extends Screen {
                         (selectedTarget) -> {
                             this.selectedTarget = selectedTarget;
                             this.clearAndInit();
-                        }
+                        },
+                        0, viewTop, this.width, viewBottom
                 );
-                widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+                widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+                        0, viewTop, this.width, viewBottom);
                 addDrawableChild(widget);
             }
         } else {
@@ -142,7 +144,8 @@ public class AssassinScreen extends Screen {
                         roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X),
                         roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y),
                         allRoles.get(i),
-                        selectedTarget
+                        selectedTarget,
+                        0, roleViewportTop, this.width, roleViewportBottom
                 );
                 roleWidgets.add(widget);
                 addDrawableChild(widget);
@@ -271,7 +274,8 @@ public class AssassinScreen extends Screen {
             int x = roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X);
             int y = roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y) - (int) Math.round(roleScrollOffset);
             widget.setPosition(x, y);
-            widget.visible = y + ROLE_BUTTON_HEIGHT > roleViewportTop && y < roleViewportBottom;
+            widget.visible = RoleScreenHelper.intersectsRect(x, y, widget.getWidth(), widget.getHeight(),
+                    0, roleViewportTop, this.width, roleViewportBottom);
         }
     }
 

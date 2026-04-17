@@ -173,7 +173,7 @@
   "roleinfo.skill.civilian.survive.name": "活着就好",
   "roleinfo.skill.civilian.survive.effect": "你没有任何技能，想尽办法活下去吧。",
   "roleinfo.skill.commander.killer_id.name": "统御识别",
-  "roleinfo.skill.commander.killer_id.effect": "所有其他杀手与卧底开局知晓你的玩家名，并可在本能视野中以特殊颜色识别你。你死亡时，所有杀手与卧底都会收到提示。",
+  "roleinfo.skill.commander.killer_id.effect": "所有其他杀手开局知晓你的玩家名，并可在本能视野中以特殊颜色识别你。你死亡时，所有杀手与卧底都会收到提示。",
   "roleinfo.skill.commander.last_bullet.name": "最后一发",
   "roleinfo.skill.commander.last_bullet.trigger": "被动",
   "roleinfo.skill.commander.last_bullet.effect": "当其他所有杀手全部死亡时，你会在屏幕中央看到遗言，并在5秒后饮弹自尽。你的击杀奖励为75金币。",

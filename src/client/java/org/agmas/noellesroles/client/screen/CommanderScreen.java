@@ -82,8 +82,10 @@ public class CommanderScreen extends Screen {
                     selectedUuid -> {
                         ClientPlayNetworking.send(new CommanderMarkC2SPacket(selectedUuid));
                         this.close();
-                    });
-            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+                    },
+                    0, viewTop, this.width, viewBottom);
+            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
 

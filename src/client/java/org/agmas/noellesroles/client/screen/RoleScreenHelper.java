@@ -69,4 +69,12 @@ public final class RoleScreenHelper {
     public static int getMenuButtonY(int height) {
         return height - MENU_BUTTON_Y_OFFSET;
     }
+
+    public static boolean intersectsRect(int x, int y, int width, int height, int left, int top, int right, int bottom) {
+        return x < right && x + width > left && y < bottom && y + height > top;
+    }
+
+    public static boolean containsPoint(double x, double y, int left, int top, int right, int bottom) {
+        return x >= left && x < right && y >= top && y < bottom;
+    }
 }

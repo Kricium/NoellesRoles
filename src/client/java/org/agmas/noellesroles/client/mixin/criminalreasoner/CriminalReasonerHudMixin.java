@@ -40,7 +40,7 @@ public abstract class CriminalReasonerHudMixin {
             cooldownText = Text.translatable("hud.criminal_reasoner.press_key_hint", keyName);
         }
 
-        int requiredReasoningCount = Math.floorDiv(gameWorldComponent.getAllPlayers().size(), 3);
+        int requiredReasoningCount = Math.floorDiv(gameWorldComponent.getAllPlayers().size(), 4);
         Text progressText = Text.translatable(
                 "hud.criminal_reasoner.progress",
                 criminalReasonerComponent.getSuccessfulReasoningCount(),

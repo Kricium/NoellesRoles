@@ -102,9 +102,11 @@ public class CriminalReasonerScreen extends Screen {
                         selectedVictim = selectedUuid;
                         selectedSuspect = null;
                         this.clearAndInit();
-                    }
+                    },
+                    0, viewTop, this.width, viewBottom
             );
-            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
     }
@@ -129,11 +131,11 @@ public class CriminalReasonerScreen extends Screen {
 
         int aliveHeaderY = startY;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY);
+        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, viewTop, viewBottom);
 
         int deadHeaderY = aliveGridY + aliveRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP;
         int deadGridY = deadHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY);
+        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY, viewTop, viewBottom);
 
         int buttonY = RoleScreenHelper.getMenuButtonY(this.height);
 
@@ -170,7 +172,7 @@ public class CriminalReasonerScreen extends Screen {
         return result;
     }
 
-    private void addSuspectSection(List<UUID> suspects, Text title, int centerX, int headerY, int gridY) {
+    private void addSuspectSection(List<UUID> suspects, Text title, int centerX, int headerY, int gridY, int viewTop, int viewBottom) {
         int startX = centerX - ((Math.min(Math.max(suspects.size(), 1), SUSPECT_COLUMNS) * SUSPECT_SPACING_X) / 2) + 9;
 
         for (int i = 0; i < suspects.size(); i++) {
@@ -178,15 +180,19 @@ public class CriminalReasonerScreen extends Screen {
             int row = i / SUSPECT_COLUMNS;
             int col = i % SUSPECT_COLUMNS;
 
-            addDrawableChild(new CriminalReasonerPlayerWidget(
+            CriminalReasonerPlayerWidget widget = new CriminalReasonerPlayerWidget(
                     startX + col * SUSPECT_SPACING_X,
                     gridY + row * SUSPECT_SPACING_Y,
                     suspectUuid,
                     selectedUuid -> {
                         selectedSuspect = selectedUuid;
                         this.clearAndInit();
-                    }
-            ));
+                    },
+                    0, viewTop, this.width, viewBottom
+            );
+            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+                    0, viewTop, this.width, viewBottom);
+            addDrawableChild(widget);
         }
 
         addDrawable(new SectionLabel(centerX, headerY, title, RoleScreenHelper.getMenuViewTop(this.height), this.width, RoleScreenHelper.getMenuViewBottom(this.height)));
@@ -231,14 +237,7 @@ public class CriminalReasonerScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
-
-        if (selectedVictim != null) {
-            CriminalReasonerPlayerWidget.setClipBounds(0, RoleScreenHelper.getMenuViewTop(this.height), this.width, RoleScreenHelper.getMenuViewBottom(this.height));
-        } else {
-            CriminalReasonerPlayerWidget.clearClipBounds();
-        }
         super.render(context, mouseX, mouseY, delta);
-        CriminalReasonerPlayerWidget.clearClipBounds();
 
         int centerX = this.width / 2;
         int centerY = this.height / 2;

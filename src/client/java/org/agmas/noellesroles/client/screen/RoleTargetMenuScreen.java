@@ -87,9 +87,11 @@ public class RoleTargetMenuScreen extends Screen {
                     startY + row * SPACING_Y,
                     target,
                     isSelected(target.uuid()),
-                    this::handleSelection
+                    this::handleSelection,
+                    0, viewTop, this.width, viewBottom
             );
-            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
 
@@ -339,31 +341,51 @@ public class RoleTargetMenuScreen extends Screen {
     private static final class TargetWidget extends ButtonWidget {
         private final TargetEntry target;
         private final boolean selected;
+        private final int clipLeft;
+        private final int clipTop;
+        private final int clipRight;
+        private final int clipBottom;
 
-        private TargetWidget(int x, int y, TargetEntry target, boolean selected, Consumer<UUID> onSelected) {
+        private TargetWidget(int x, int y, TargetEntry target, boolean selected, Consumer<UUID> onSelected,
+                             int clipLeft, int clipTop, int clipRight, int clipBottom) {
             super(x, y, 16, 16, getNameText(target.uuid()), button -> onSelected.accept(target.uuid()), DEFAULT_NARRATION_SUPPLIER);
             this.target = target;
             this.selected = selected;
+            this.clipLeft = clipLeft;
+            this.clipTop = clipTop;
+            this.clipRight = clipRight;
+            this.clipBottom = clipBottom;
         }
 
         @Override
         protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-            super.renderWidget(context, mouseX, mouseY, delta);
+            context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+            try {
+                super.renderWidget(context, mouseX, mouseY, delta);
 
-            context.drawGuiTexture(this.target.backgroundType().getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
-            PlayerSkinDrawer.draw(context, getSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
+                context.drawGuiTexture(this.target.backgroundType().getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
+                PlayerSkinDrawer.draw(context, getSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
 
-            if (this.selected) {
-                drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
-            } else if (this.isHovered()) {
-                drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
+                if (this.selected) {
+                    drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
+                } else if (this.isHovered()) {
+                    drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
+                }
+
+                if (this.isHovered()) {
+                    Text name = getNameText(this.target.uuid());
+                    int tooltipX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2;
+                    context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
+                }
+            } finally {
+                context.disableScissor();
             }
+        }
 
-            if (this.isHovered()) {
-                Text name = getNameText(this.target.uuid());
-                int tooltipX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2;
-                context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
-            }
+        @Override
+        public boolean isMouseOver(double mouseX, double mouseY) {
+            return RoleScreenHelper.containsPoint(mouseX, mouseY, clipLeft, clipTop, clipRight, clipBottom)
+                    && super.isMouseOver(mouseX, mouseY);
         }
 
         private static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {

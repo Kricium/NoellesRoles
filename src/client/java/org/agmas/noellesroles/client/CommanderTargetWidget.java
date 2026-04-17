@@ -13,38 +13,56 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class CommanderTargetWidget extends ButtonWidget {
     private final UUID targetUuid;
-    private final Consumer<UUID> onTargetSelected;
+    private final int clipLeft;
+    private final int clipTop;
+    private final int clipRight;
+    private final int clipBottom;
 
-    public CommanderTargetWidget(int x, int y, UUID targetUuid, Consumer<UUID> onTargetSelected) {
+    public CommanderTargetWidget(int x, int y, UUID targetUuid, Consumer<UUID> onTargetSelected,
+                                 int clipLeft, int clipTop, int clipRight, int clipBottom) {
         super(x, y, 16, 16, getNameText(targetUuid), button -> onTargetSelected.accept(targetUuid), DEFAULT_NARRATION_SUPPLIER);
         this.targetUuid = targetUuid;
-        this.onTargetSelected = onTargetSelected;
+        this.clipLeft = clipLeft;
+        this.clipTop = clipTop;
+        this.clipRight = clipRight;
+        this.clipBottom = clipBottom;
     }
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        super.renderWidget(context, mouseX, mouseY, delta);
-        CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
-        boolean marked = commanderComp.isThreatTarget(this.targetUuid);
+        context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
+        try {
+            super.renderWidget(context, mouseX, mouseY, delta);
+            CommanderPlayerComponent commanderComp = CommanderPlayerComponent.KEY.get(MinecraftClient.getInstance().player);
+            boolean marked = commanderComp.isThreatTarget(this.targetUuid);
 
-        context.drawGuiTexture(ShopEntry.Type.WEAPON.getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
-        PlayerSkinDrawer.draw(context, getSkinTextures().texture(), this.getX(), this.getY(), 16);
+            context.drawGuiTexture(ShopEntry.Type.WEAPON.getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
+            PlayerSkinDrawer.draw(context, getSkinTextures().texture(), this.getX(), this.getY(), 16);
 
-        if (marked || this.isHovered()) {
-            drawSlotHighlight(context, this.getX(), this.getY(), 0, marked ? 0xAA4B1A8E : 0x913D3D3D);
-            Text name = getNameText(this.targetUuid);
-            context.drawTooltip(MinecraftClient.getInstance().textRenderer, name,
-                    this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2,
-                    this.getY() - 9);
+            if (marked || this.isHovered()) {
+                drawSlotHighlight(context, this.getX(), this.getY(), 0, marked ? 0xAA4B1A8E : 0x913D3D3D);
+                Text name = getNameText(this.targetUuid);
+                context.drawTooltip(MinecraftClient.getInstance().textRenderer, name,
+                        this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2,
+                        this.getY() - 9);
+            }
+        } finally {
+            context.disableScissor();
         }
+    }
+
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        return RoleScreenHelper.containsPoint(mouseX, mouseY, clipLeft, clipTop, clipRight, clipBottom)
+                && super.isMouseOver(mouseX, mouseY);
     }
 
     private void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {

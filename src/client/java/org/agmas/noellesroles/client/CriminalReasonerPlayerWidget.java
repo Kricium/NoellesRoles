@@ -12,30 +12,32 @@ import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 import java.util.function.Consumer;
 
 public class CriminalReasonerPlayerWidget extends ButtonWidget {
-    private static boolean clipEnabled = false;
-    private static int clipLeft = Integer.MIN_VALUE;
-    private static int clipTop = Integer.MIN_VALUE;
-    private static int clipRight = Integer.MAX_VALUE;
-    private static int clipBottom = Integer.MAX_VALUE;
-
     private final UUID targetUuid;
+    private final int clipLeft;
+    private final int clipTop;
+    private final int clipRight;
+    private final int clipBottom;
 
-    public CriminalReasonerPlayerWidget(int x, int y, @NotNull UUID targetUuid, Consumer<UUID> onSelected) {
+    public CriminalReasonerPlayerWidget(int x, int y, @NotNull UUID targetUuid, Consumer<UUID> onSelected,
+                                        int clipLeft, int clipTop, int clipRight, int clipBottom) {
         super(x, y, 16, 16, getNameText(targetUuid), button -> onSelected.accept(targetUuid), DEFAULT_NARRATION_SUPPLIER);
         this.targetUuid = targetUuid;
+        this.clipLeft = clipLeft;
+        this.clipTop = clipTop;
+        this.clipRight = clipRight;
+        this.clipBottom = clipBottom;
     }
 
     @Override
     protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-        if (clipEnabled) {
-            context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
-        }
+        context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
         try {
             super.renderWidget(context, mouseX, mouseY, delta);
 
@@ -48,10 +50,14 @@ public class CriminalReasonerPlayerWidget extends ButtonWidget {
                 context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
             }
         } finally {
-            if (clipEnabled) {
-                context.disableScissor();
-            }
+            context.disableScissor();
         }
+    }
+
+    @Override
+    public boolean isMouseOver(double mouseX, double mouseY) {
+        return RoleScreenHelper.containsPoint(mouseX, mouseY, clipLeft, clipTop, clipRight, clipBottom)
+                && super.isMouseOver(mouseX, mouseY);
     }
 
     @Override
@@ -75,19 +81,4 @@ public class CriminalReasonerPlayerWidget extends ButtonWidget {
         return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
     }
 
-    public static void setClipBounds(int left, int top, int right, int bottom) {
-        clipEnabled = true;
-        clipLeft = left;
-        clipTop = top;
-        clipRight = right;
-        clipBottom = bottom;
-    }
-
-    public static void clearClipBounds() {
-        clipEnabled = false;
-        clipLeft = Integer.MIN_VALUE;
-        clipTop = Integer.MIN_VALUE;
-        clipRight = Integer.MAX_VALUE;
-        clipBottom = Integer.MAX_VALUE;
-    }
 }
