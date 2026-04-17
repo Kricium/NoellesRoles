@@ -14,7 +14,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
-import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.client.AssassinRoleWidget;
 import org.agmas.noellesroles.client.AssassinTargetWidget;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
@@ -63,7 +62,6 @@ public class AssassinScreen extends Screen {
         targetCloseButton = null;
 
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
-        AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
 
         // 基础检查
         if (!gameWorld.isRole(player, Noellesroles.ASSASSIN) ||
@@ -104,11 +102,9 @@ public class AssassinScreen extends Screen {
                 int col = i % TARGET_COLUMNS;
 
                 AssassinTargetWidget widget = new AssassinTargetWidget(
-                        null,
                         startX + col * TARGET_SPACING_X,
                         startY + row * TARGET_SPACING_Y,
                         targetUuid,
-                        i,
                         (selectedTarget) -> {
                             this.selectedTarget = selectedTarget;
                             this.clearAndInit();

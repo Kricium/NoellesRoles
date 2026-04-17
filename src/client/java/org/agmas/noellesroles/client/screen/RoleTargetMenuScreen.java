@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.client.screen;
 
-import com.mojang.authlib.GameProfile;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.WatheClient;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -13,10 +12,6 @@ import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.DefaultSkinHelper;
-import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.ConfigWorldComponent;
@@ -34,6 +29,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public class RoleTargetMenuScreen extends Screen {
+    private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
     private static final int COLUMNS = 6;
     private static final int SPACING_X = 36;
     private static final int SPACING_Y = 45;
@@ -67,7 +63,7 @@ public class RoleTargetMenuScreen extends Screen {
         this.targetCount = targets.size();
 
         int centerX = this.width / 2;
-        int rows = Math.max(1, (targets.size() + COLUMNS - 1) / COLUMNS);
+        int rows = Math.max(1, RoleScreenHelper.getGridRowCount(targets.size(), COLUMNS));
         int contentHeight = rows * SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
         int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
         int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
@@ -174,11 +170,7 @@ public class RoleTargetMenuScreen extends Screen {
 
     private void handleSelection(UUID targetUuid) {
         switch (this.menuType) {
-            case VOODOO -> {
-                ClientPlayNetworking.send(new MorphC2SPacket(targetUuid));
-                this.close();
-            }
-            case MORPHLING -> {
+            case VOODOO, MORPHLING -> {
                 ClientPlayNetworking.send(new MorphC2SPacket(targetUuid));
                 this.close();
             }
@@ -244,7 +236,8 @@ public class RoleTargetMenuScreen extends Screen {
             case VOODOO -> {
                 UUID currentTarget = VoodooPlayerComponent.KEY.get(this.player).target;
                 if (currentTarget != null && !Objects.equals(currentTarget, this.player.getUuid())) {
-                    lines.add(Text.translatable("screen.role_target.voodoo.current_target", getPlayerName(currentTarget)));
+                    lines.add(Text.translatable("screen.role_target.voodoo.current_target",
+                            RoleScreenHelper.getPlayerName(currentTarget, UNKNOWN_PLAYER_TEXT)));
                 }
 
                 ConfigWorldComponent config = ConfigWorldComponent.KEY.get(this.player.getWorld());
@@ -258,21 +251,15 @@ public class RoleTargetMenuScreen extends Screen {
                 } else if (this.secondSelection == null) {
                     lines.add(Text.translatable("hud.swapper.second_player_selection"));
                 } else {
-                    lines.add(Text.translatable("screen.role_target.swapper.current_pair", getPlayerName(this.firstSelection), getPlayerName(this.secondSelection)));
+                    lines.add(Text.translatable("screen.role_target.swapper.current_pair",
+                            RoleScreenHelper.getPlayerName(this.firstSelection, UNKNOWN_PLAYER_TEXT),
+                            RoleScreenHelper.getPlayerName(this.secondSelection, UNKNOWN_PLAYER_TEXT)));
                 }
             }
             case MORPHLING -> {
             }
         }
         return lines;
-    }
-
-    private Text getPlayerName(UUID uuid) {
-        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(uuid);
-        if (entry != null && entry.getDisplayName() != null) {
-            return entry.getDisplayName();
-        }
-        return entry != null ? Text.literal(entry.getProfile().getName()) : Text.translatable("screen.role_target.unknown_player");
     }
 
     @Override
@@ -339,6 +326,8 @@ public class RoleTargetMenuScreen extends Screen {
     }
 
     private static final class TargetWidget extends ButtonWidget {
+        private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
+
         private final TargetEntry target;
         private final boolean selected;
         private final int clipLeft;
@@ -348,7 +337,8 @@ public class RoleTargetMenuScreen extends Screen {
 
         private TargetWidget(int x, int y, TargetEntry target, boolean selected, Consumer<UUID> onSelected,
                              int clipLeft, int clipTop, int clipRight, int clipBottom) {
-            super(x, y, 16, 16, getNameText(target.uuid()), button -> onSelected.accept(target.uuid()), DEFAULT_NARRATION_SUPPLIER);
+            super(x, y, 16, 16, RoleScreenHelper.getPlayerName(target.uuid(), UNKNOWN_PLAYER_TEXT),
+                    button -> onSelected.accept(target.uuid()), DEFAULT_NARRATION_SUPPLIER);
             this.target = target;
             this.selected = selected;
             this.clipLeft = clipLeft;
@@ -364,16 +354,16 @@ public class RoleTargetMenuScreen extends Screen {
                 super.renderWidget(context, mouseX, mouseY, delta);
 
                 context.drawGuiTexture(this.target.backgroundType().getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
-                PlayerSkinDrawer.draw(context, getSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
+                PlayerSkinDrawer.draw(context, RoleScreenHelper.getPlayerSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
 
                 if (this.selected) {
-                    drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
+                    RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
                 } else if (this.isHovered()) {
-                    drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
+                    RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
                 }
 
                 if (this.isHovered()) {
-                    Text name = getNameText(this.target.uuid());
+                    Text name = RoleScreenHelper.getPlayerName(this.target.uuid(), UNKNOWN_PLAYER_TEXT);
                     int tooltipX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(name) / 2;
                     context.drawTooltip(MinecraftClient.getInstance().textRenderer, name, tooltipX, this.getY() - 9);
                 }
@@ -388,30 +378,8 @@ public class RoleTargetMenuScreen extends Screen {
                     && super.isMouseOver(mouseX, mouseY);
         }
 
-        private static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {
-            context.fillGradient(RenderLayer.getGuiOverlay(), x, y, x + 16, y + 14, color, color, z);
-            context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 14, x + 15, y + 15, color, color, z);
-            context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 15, x + 14, y + 16, color, color, z);
-        }
-
         @Override
         public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
-        }
-
-        private static Text getNameText(UUID targetUuid) {
-            PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
-            if (entry != null && entry.getDisplayName() != null) {
-                return entry.getDisplayName();
-            }
-            return entry != null ? Text.literal(entry.getProfile().getName()) : Text.translatable("screen.role_target.unknown_player");
-        }
-
-        private static SkinTextures getSkinTextures(UUID targetUuid) {
-            PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
-            if (entry != null) {
-                return entry.getSkinTextures();
-            }
-            return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
         }
     }
 }

@@ -1,8 +1,16 @@
 package org.agmas.noellesroles.client.screen;
 
+import com.mojang.authlib.GameProfile;
+import dev.doctor4t.wathe.client.WatheClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
+
+import java.util.UUID;
 
 public final class RoleScreenHelper {
     public static final int MENU_CONTENT_SHIFT_Y = 10;
@@ -46,6 +54,10 @@ public final class RoleScreenHelper {
         return centerY - (totalRows * spacingY / 2) + 20;
     }
 
+    public static int getGridRowCount(int itemCount, int columns) {
+        return (itemCount + columns - 1) / columns;
+    }
+
     public static int getMenuTitleY(int centerY) {
         return centerY - MENU_TITLE_OFFSET_Y - MENU_TITLE_SHIFT_Y;
     }
@@ -76,5 +88,27 @@ public final class RoleScreenHelper {
 
     public static boolean containsPoint(double x, double y, int left, int top, int right, int bottom) {
         return x >= left && x < right && y >= top && y < bottom;
+    }
+
+    public static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y, x + 16, y + 14, color, color, z);
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 14, x + 15, y + 15, color, color, z);
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 15, x + 14, y + 16, color, color, z);
+    }
+
+    public static Text getPlayerName(UUID targetUuid, Text fallbackText) {
+        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+        if (entry != null && entry.getDisplayName() != null) {
+            return entry.getDisplayName();
+        }
+        return entry != null ? Text.literal(entry.getProfile().getName()) : fallbackText;
+    }
+
+    public static SkinTextures getPlayerSkinTextures(UUID targetUuid) {
+        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+        if (entry != null) {
+            return entry.getSkinTextures();
+        }
+        return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
     }
 }
