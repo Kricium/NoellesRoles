@@ -127,6 +127,7 @@ import org.agmas.noellesroles.bandit.BanditShopHandler;
 import org.agmas.noellesroles.hunter.HunterShopHandler;
 import org.agmas.noellesroles.silencer.SilencerShopHandler;
 import org.agmas.noellesroles.survivalmaster.SurvivalMasterPlayerComponent;
+import org.agmas.noellesroles.voice.NoellesrolesVoiceChatPlugin;
 import dev.doctor4t.wathe.compat.TrainVoicePlugin;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.WrittenBookContentComponent;
@@ -1337,7 +1338,9 @@ public class Noellesroles implements ModInitializer {
                                 SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.5F, 0.8F);
                     }
                 }
+                NoellesrolesVoiceChatPlugin.removeFromVoiceChat(victim.getUuid());
                 victimSwallowed.reset();
+                TrainVoicePlugin.addPlayer(victim.getUuid());
             }
 
             bomberPlayerComponent.reset();
