@@ -9,6 +9,7 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 
 public final class AssistInterfaceHintOverlay {
     private static boolean renderedViaVoiceChatThisFrame;
@@ -38,7 +39,7 @@ public final class AssistInterfaceHintOverlay {
 
         boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
         boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
-        boolean isInGameSpectator = mc.player.isSpectator() && gwc.isRunning() && !isSwallowed;
+        boolean isInGameSpectator = SpectatorStateHelper.isInGameRealSpectator(mc.player, gwc);
         boolean canOpenSpectatorPanel = !canOpenRoleInfo && isInGameSpectator;
         if (!canOpenRoleInfo && !canOpenSpectatorPanel) return;
 

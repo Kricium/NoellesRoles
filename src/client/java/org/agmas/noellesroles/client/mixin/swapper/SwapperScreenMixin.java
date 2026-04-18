@@ -15,7 +15,7 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.screen.RoleScreenHelper;
 import org.agmas.noellesroles.client.SwapperPlayerWidget;
 import org.agmas.noellesroles.client.widget.PlayerSelectWidget;
-import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -63,7 +63,7 @@ public abstract class SwapperScreenMixin extends LimitedHandledScreen<PlayerScre
             entries.removeIf(uuid -> !lives.contains(uuid));
             entries.removeIf(uuid -> {
                 var targetPlayer = player.getWorld().getPlayerByUuid(uuid);
-                return targetPlayer != null && SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer);
+                return SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer);
             });
 
             for(int i = 0; i < entries.size(); ++i) {

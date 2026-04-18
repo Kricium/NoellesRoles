@@ -69,6 +69,8 @@ import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.professor.IronManPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.agmas.noellesroles.taotie.TaotiePlayerComponent;
 import org.agmas.noellesroles.packet.TaotieSwallowC2SPacket;
 import org.agmas.noellesroles.packet.SilencerSilenceC2SPacket;
@@ -124,6 +126,10 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
     private static boolean wasAssistInterfacePressed = false;
+    private static int swallowedLockedSelectedSlot = -1;
+    private static boolean wasClientPlayerSwallowedLastTick = false;
+    private static float swallowedLockedYaw = 0.0F;
+    private static float swallowedLockedPitch = 0.0F;
 
 
     @Override
@@ -235,7 +241,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         // 注册 GetInstinctHighlight 监听器：各角色的本能高亮逻辑
         GetInstinctHighlight.EVENT.register(entity -> {
 
-            if (!(entity instanceof PlayerEntity player) || player.isSpectator() || player.isInvisible()) return null;
+            if (!(entity instanceof PlayerEntity player) || SpectatorStateHelper.isSpectatorLike(player) || player.isInvisible()) return null;
 
             if (MinecraftClient.getInstance().player == null) return null;
 
@@ -404,7 +410,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             return GetInstinctHighlight.HighlightResult.withKeybind(Noellesroles.FERRYMAN.color());
         });
         GetInstinctHighlight.EVENT.register(entity -> {
-            if (!(entity instanceof PlayerEntity player) || player.isSpectator()) return null;
+            if (!(entity instanceof PlayerEntity player) || SpectatorStateHelper.isSpectatorLike(player)) return null;
             if (MinecraftClient.getInstance().player == null) return null;
             if (!WatheClient.isPlayerPlayingAndAlive()) return null;
             PlayerEntity localPlayer = MinecraftClient.getInstance().player;
@@ -420,7 +426,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         // 注册 GetInstinctHighlight 监听器：卧底角色高亮逻辑
         // 让杀手误认为卧底是同伙（按本能时显示红色）
         GetInstinctHighlight.EVENT.register(entity -> {
-            if (!(entity instanceof PlayerEntity player) || player.isSpectator()) return null;
+            if (!(entity instanceof PlayerEntity player) || SpectatorStateHelper.isSpectatorLike(player)) return null;
             if (MinecraftClient.getInstance().player == null) return null;
 
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(
@@ -562,7 +568,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     // 找到最近的未感染玩家（不限距离，用于指南针指向）
                     for (PlayerEntity player : localPlayer.getWorld().getPlayers()) {
                         if (player.equals(localPlayer)) continue;
-                        if (player.isSpectator() || player.isCreative()) continue;
+                        if (SpectatorStateHelper.isSpectatorLike(player) || player.isCreative()) continue;
                         // 检查玩家是否有角色（在游戏中）
                         if (!gameWorldComponent.hasAnyRole(player)) continue;
 
@@ -638,7 +644,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                 var eyePos = localPlayer.getEyePos();
                 var hitResult = ProjectileUtil.getCollision(
                         localPlayer,
-                        entity -> entity instanceof PlayerEntity player && GameFunctions.isPlayerPlayingAndAlive(player),
+                        entity -> entity instanceof PlayerEntity player
+                                && GameFunctions.isPlayerPlayingAndAlive(player)
+                                && !SwallowedInteractionHelper.blocksPlayerTarget(player),
                         maxDistance
                 );
 
@@ -647,7 +655,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                     crosshairTargetDistance = eyePos.distanceTo(entityHitResult.getPos());
                 } else if (hitResult instanceof BlockHitResult blockHitResult){
                     Optional<PlayerEntity> sleepingPlayer = findSleepingPlayerOnBed(localPlayer.getWorld(), blockHitResult);
-                    if (sleepingPlayer.isPresent() && sleepingPlayer.get() != localPlayer) {
+                    if (sleepingPlayer.isPresent()
+                            && sleepingPlayer.get() != localPlayer
+                            && !SwallowedInteractionHelper.blocksPlayerTarget(sleepingPlayer.get())) {
                         crosshairTarget = sleepingPlayer.get();
                         crosshairTargetDistance = eyePos.distanceTo(blockHitResult.getPos());
                     }
@@ -657,9 +667,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity spectatorCandidate = MinecraftClient.getInstance().player;
             if (spectatorCandidate != null) {
                 GameWorldComponent spectatorWorld = GameWorldComponent.KEY.get(spectatorCandidate.getWorld());
-                boolean isInGameSpectator = spectatorCandidate.isSpectator()
-                        && spectatorWorld.isRunning()
-                        && !SwallowedPlayerComponent.isPlayerSwallowed(spectatorCandidate);
+                boolean isInGameSpectator = SpectatorStateHelper.isInGameRealSpectator(spectatorCandidate, spectatorWorld);
                 if (isInGameSpectator) {
                     if (!wasDeadSpectatorLastTick) {
                         SpectatorReplayToastOverlay.beginSpectatorSession();
@@ -841,7 +849,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
                     boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
                     boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
-                    boolean isDeadSpectator = MinecraftClient.getInstance().player.isSpectator() && !isSwallowed;
+                    boolean isDeadSpectator = SpectatorStateHelper.isRealSpectator(MinecraftClient.getInstance().player);
 
                     if (canOpenRoleInfo) {
                         MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
@@ -854,6 +862,60 @@ public class NoellesrolesClient implements ClientModInitializer {
 
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
+                boolean swallowed = SwallowedPlayerComponent.isPlayerSwallowed(player);
+                if (swallowed) {
+                    if (!wasClientPlayerSwallowedLastTick) {
+                        swallowedLockedYaw = player.getYaw();
+                        swallowedLockedPitch = player.getPitch();
+                    }
+                    if (swallowedLockedSelectedSlot < 0) {
+                        swallowedLockedSelectedSlot = player.getInventory().selectedSlot;
+                    } else {
+                        player.getInventory().selectedSlot = swallowedLockedSelectedSlot;
+                    }
+                    player.prevYaw = swallowedLockedYaw;
+                    player.prevPitch = swallowedLockedPitch;
+                    player.setYaw(swallowedLockedYaw);
+                    player.setPitch(swallowedLockedPitch);
+                    player.headYaw = swallowedLockedYaw;
+                    player.bodyYaw = swallowedLockedYaw;
+                    if (client.options.attackKey.isPressed()) {
+                        while (client.options.attackKey.wasPressed()) {
+                        }
+                    }
+                    if (client.options.useKey.isPressed()) {
+                        while (client.options.useKey.wasPressed()) {
+                        }
+                    }
+                    if (client.options.hotbarKeys != null) {
+                        for (var keyBinding : client.options.hotbarKeys) {
+                            while (keyBinding.wasPressed()) {
+                            }
+                        }
+                    }
+                    player.input.movementForward = 0.0F;
+                    player.input.movementSideways = 0.0F;
+                    player.input.jumping = false;
+                    player.input.sneaking = false;
+                    player.input.pressingForward = false;
+                    player.input.pressingBack = false;
+                    player.input.pressingLeft = false;
+                    player.input.pressingRight = false;
+                    player.setSprinting(false);
+                    player.noClip = true;
+                    player.setInvisible(true);
+                    player.setVelocity(0.0, 0.0, 0.0);
+                    client.gameRenderer.setRenderHand(false);
+                } else {
+                    swallowedLockedSelectedSlot = -1;
+                    player.noClip = false;
+                    player.setInvisible(false);
+                    if (wasClientPlayerSwallowedLastTick) {
+                        client.gameRenderer.setRenderHand(true);
+                    }
+                }
+                wasClientPlayerSwallowedLastTick = swallowed;
+
                 JesterTimeRenderer.tick();
 
                 // 切换到不可见物品时在 actionbar 提示
@@ -909,9 +971,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     }
 
     private static boolean isTrapSpectatorViewer(PlayerEntity player, GameWorldComponent gameWorld) {
-        return player.isSpectator()
-                && gameWorld.isRunning()
-                && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+        return SpectatorStateHelper.isInGameRealSpectator(player, gameWorld)
                 && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
     }
 

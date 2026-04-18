@@ -3,15 +3,34 @@ package org.agmas.noellesroles.mixin.scavenger;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.util.KnifeStabPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundEvent;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KnifeStabPayload.Receiver.class)
 public abstract class ScavengerKnifeStabSoundMixin {
+
+    @Inject(method = "receive", at = @At("HEAD"), cancellable = true, remap = false)
+    private void noellesroles$blockKnifeStabOnSwallowedPlayer(KnifeStabPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
+        ServerPlayerEntity attacker = context.player();
+        if (SwallowedInteractionHelper.blocksActor(attacker)) {
+            ci.cancel();
+            return;
+        }
+
+        Entity target = attacker.getServerWorld().getEntityById(payload.target());
+        if (SwallowedInteractionHelper.blocksTarget(target)) {
+            ci.cancel();
+        }
+    }
 
     /**
      * 清道夫角色刺杀时不播放刺杀音效

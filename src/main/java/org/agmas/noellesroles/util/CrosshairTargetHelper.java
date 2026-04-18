@@ -28,7 +28,9 @@ public final class CrosshairTargetHelper {
         for (PlayerEntity candidate : user.getWorld().getEntitiesByClass(
                 PlayerEntity.class,
                 user.getBoundingBox().expand(range + 0.5),
-                player -> player != user && GameFunctions.isPlayerPlayingAndAlive(player))) {
+                player -> player != user
+                        && GameFunctions.isPlayerPlayingAndAlive(player)
+                        && !SwallowedInteractionHelper.blocksPlayerTarget(player))) {
             if (!user.canSee(candidate)) {
                 continue;
             }

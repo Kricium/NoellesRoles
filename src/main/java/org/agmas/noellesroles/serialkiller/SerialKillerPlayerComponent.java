@@ -13,6 +13,7 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.index.WatheItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
@@ -111,7 +112,7 @@ public class SerialKillerPlayerComponent implements AutoSyncedComponent, ServerT
 
         PlayerEntity targetPlayer = serverWorld.getPlayerByUuid(targetUuid);
         if (targetPlayer == null) return false;
-        if (!GameFunctions.isPlayerPlayingAndAlive(targetPlayer) || SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer)) return false;
+        if (!GameFunctions.isPlayerPlayingAndAlive(targetPlayer) || SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer)) return false;
 
         var role = gameWorldComponent.getRole(targetPlayer);
         if (role == null || role == Noellesroles.UNDERCOVER) return false;
@@ -198,7 +199,7 @@ public class SerialKillerPlayerComponent implements AutoSyncedComponent, ServerT
 
             PlayerEntity targetPlayer = serverWorld.getPlayerByUuid(playerUuid);
             if (targetPlayer == null) continue;
-            if (!GameFunctions.isPlayerPlayingAndAlive(targetPlayer) || SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer)) continue;
+            if (!GameFunctions.isPlayerPlayingAndAlive(targetPlayer) || SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer)) continue;
 
 
             // 检查是否为非杀手阵营

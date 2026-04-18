@@ -15,6 +15,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -37,7 +38,7 @@ public abstract class CommanderRoleNameRendererMixin {
         Vec3d end = start.add(dir.multiply(range));
         Box box = player.getBoundingBox().stretch(dir.multiply(range)).expand(1.0);
         EntityHitResult hit = ProjectileUtil.raycast(player, start, end, box,
-                e -> e instanceof PlayerEntity pe && pe != player && !pe.isSpectator(),
+                e -> e instanceof PlayerEntity pe && pe != player && !SpectatorStateHelper.isSpectatorLike(pe),
                 range * range);
         if (hit == null || !(hit.getEntity() instanceof PlayerEntity target)) return;
         if (target == player) return;

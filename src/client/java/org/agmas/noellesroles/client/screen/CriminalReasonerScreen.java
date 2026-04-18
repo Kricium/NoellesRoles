@@ -17,6 +17,8 @@ import org.agmas.noellesroles.client.CriminalReasonerPlayerWidget;
 import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.agmas.noellesroles.packet.CriminalReasonerReasonC2SPacket;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.InteractionBlocker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,11 +85,14 @@ public class CriminalReasonerScreen extends Screen {
         int rows = Math.max(1, RoleScreenHelper.getGridRowCount(victims.size(), SUSPECT_COLUMNS));
         int contentHeight = rows * SUSPECT_SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
         int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
         int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
         int viewHeight = Math.max(1, viewBottom - viewTop);
         victimMaxScroll = Math.max(0, contentHeight - viewHeight);
         victimScrollOffset = Math.max(0, Math.min(victimScrollOffset, victimMaxScroll));
-        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - victimScrollOffset;
+        int startY = contentTop - victimScrollOffset;
+        InteractionBlocker closeButtonBlocker = RoleScreenHelper.getCenteredButtonBlocker(
+                centerX, RoleScreenHelper.getMenuButtonY(this.height), 80, 20);
 
         for (int i = 0; i < victims.size(); i++) {
             UUID victimUuid = victims.get(i);
@@ -103,10 +108,10 @@ public class CriminalReasonerScreen extends Screen {
                         selectedSuspect = null;
                         this.clearAndInit();
                     },
-                    0, viewTop, this.width, viewBottom
+                    0, contentTop, this.width, viewBottom, closeButtonBlocker
             );
-            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
-                    0, viewTop, this.width, viewBottom);
+            widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
+                    0, contentTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
     }
@@ -121,19 +126,22 @@ public class CriminalReasonerScreen extends Screen {
         int totalContentRows = aliveRows + deadRows;
         int contentHeight = totalContentRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP + SUSPECT_SECTION_HEADER_HEIGHT * 2 + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
         int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
         int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
         int viewHeight = Math.max(1, viewBottom - viewTop);
 
         // 第二步将活人与死人拆成上下两块，并在内容过长时整体滚动，避免顶到标题和按钮。
         suspectMaxScroll = Math.max(0, contentHeight - viewHeight);
         suspectScrollOffset = Math.max(0, Math.min(suspectScrollOffset, suspectMaxScroll));
-        int aliveHeaderY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - suspectScrollOffset;
+        int aliveHeaderY = contentTop - suspectScrollOffset;
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, viewTop, viewBottom);
+        InteractionBlocker backButtonBlocker = new InteractionBlocker(centerX - 86, RoleScreenHelper.getMenuButtonY(this.height), centerX - 6, RoleScreenHelper.getMenuButtonY(this.height) + 20);
+        InteractionBlocker confirmButtonBlocker = new InteractionBlocker(centerX + 6, RoleScreenHelper.getMenuButtonY(this.height), centerX + 86, RoleScreenHelper.getMenuButtonY(this.height) + 20);
+        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, contentTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
 
         int deadHeaderY = aliveGridY + aliveRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP;
         int deadGridY = deadHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY, viewTop, viewBottom);
+        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY, contentTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
 
         int buttonY = RoleScreenHelper.getMenuButtonY(this.height);
 
@@ -170,7 +178,8 @@ public class CriminalReasonerScreen extends Screen {
         return result;
     }
 
-    private void addSuspectSection(List<UUID> suspects, Text title, int centerX, int headerY, int gridY, int viewTop, int viewBottom) {
+    private void addSuspectSection(List<UUID> suspects, Text title, int centerX, int headerY, int gridY, int viewTop, int viewBottom,
+                                   InteractionBlocker... blockers) {
         int startX = RoleScreenHelper.getGridStartX(Math.max(suspects.size(), 1), SUSPECT_COLUMNS, SUSPECT_SPACING_X, centerX);
 
         for (int i = 0; i < suspects.size(); i++) {
@@ -186,9 +195,9 @@ public class CriminalReasonerScreen extends Screen {
                         selectedSuspect = selectedUuid;
                         this.clearAndInit();
                     },
-                    0, viewTop, this.width, viewBottom
+                    0, viewTop, this.width, viewBottom, blockers
             );
-            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
+            widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
                     0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
@@ -197,7 +206,11 @@ public class CriminalReasonerScreen extends Screen {
     }
 
     private List<UUID> getAliveReasoningTargets(GameWorldComponent gameWorld) {
-        return new ArrayList<>(gameWorld.getAllAlivePlayers());
+        List<UUID> result = new ArrayList<>(gameWorld.getAllAlivePlayers());
+        result.removeIf(uuid -> SwallowedInteractionHelper.blocksPlayerTarget(
+                this.player.getWorld().getPlayerByUuid(uuid),
+                SwallowedInteractionHelper.TargetingRule.CRIMINAL_REASONER_SUSPECT));
+        return result;
     }
 
     private List<UUID> getDeadReasoningTargets(GameWorldComponent gameWorld) {

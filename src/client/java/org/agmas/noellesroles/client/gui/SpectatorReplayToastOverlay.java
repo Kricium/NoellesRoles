@@ -10,6 +10,7 @@ import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -89,9 +90,7 @@ public final class SpectatorReplayToastOverlay {
         }
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(player.getWorld());
-        boolean isInGameSpectator = player.isSpectator()
-                && gwc.isRunning()
-                && !SwallowedPlayerComponent.isPlayerSwallowed(player);
+        boolean isInGameSpectator = SpectatorStateHelper.isInGameRealSpectator(player, gwc);
         if (!isInGameSpectator) {
             ACTIVE_TOASTS.clear();
             return;

@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.PlayerSkinDrawer;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -20,7 +19,9 @@ import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.packet.MorphC2SPacket;
 import org.agmas.noellesroles.packet.SwapperC2SPacket;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.agmas.noellesroles.voodoo.VoodooPlayerComponent;
+import org.agmas.noellesroles.client.widget.MenuPlayerTargetWidget;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,12 +67,13 @@ public class RoleTargetMenuScreen extends Screen {
         int rows = Math.max(1, RoleScreenHelper.getGridRowCount(targets.size(), COLUMNS));
         int contentHeight = rows * SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
         int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
         int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
         int viewHeight = Math.max(1, viewBottom - viewTop);
         this.maxScroll = Math.max(0, contentHeight - viewHeight);
         this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.maxScroll));
         int startX = RoleScreenHelper.getGridStartX(targets.size(), COLUMNS, SPACING_X, centerX);
-        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - this.scrollOffset;
+        int startY = contentTop - this.scrollOffset;
 
         for (int i = 0; i < targets.size(); i++) {
             TargetEntry target = targets.get(i);
@@ -84,10 +86,10 @@ public class RoleTargetMenuScreen extends Screen {
                     target,
                     isSelected(target.uuid()),
                     this::handleSelection,
-                    0, viewTop, this.width, viewBottom
+                    0, contentTop, this.width, viewBottom
             );
-            widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
-                    0, viewTop, this.width, viewBottom);
+            widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
+                    0, contentTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
 
@@ -127,9 +129,14 @@ public class RoleTargetMenuScreen extends Screen {
                 List<UUID> validPlayers = new ArrayList<>(gameWorld.getAllPlayers());
                 validPlayers.remove(this.player.getUuid());
                 for (UUID uuid : WatheClient.PLAYER_ENTRIES_CACHE.keySet()) {
-                    if (validPlayers.contains(uuid)) {
-                        result.add(new TargetEntry(uuid, ShopEntry.Type.TOOL));
+                    if (!validPlayers.contains(uuid)) {
+                        continue;
                     }
+                    var targetPlayer = this.player.getWorld().getPlayerByUuid(uuid);
+                    if (targetPlayer != null && SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer, SwallowedInteractionHelper.TargetingRule.VOODOO_TARGET)) {
+                        continue;
+                    }
+                    result.add(new TargetEntry(uuid, ShopEntry.Type.TOOL));
                 }
             }
             case SWAPPER -> {
@@ -139,7 +146,7 @@ public class RoleTargetMenuScreen extends Screen {
                         continue;
                     }
                     var targetPlayer = this.player.getWorld().getPlayerByUuid(uuid);
-                    if (targetPlayer != null && SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer)) {
+                    if (targetPlayer != null && SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer)) {
                         continue;
                     }
                     result.add(new TargetEntry(uuid, ShopEntry.Type.POISON));
@@ -150,6 +157,10 @@ public class RoleTargetMenuScreen extends Screen {
                 allPlayers.remove(this.player.getUuid());
                 for (UUID uuid : WatheClient.PLAYER_ENTRIES_CACHE.keySet()) {
                     if (!allPlayers.contains(uuid)) {
+                        continue;
+                    }
+                    var targetPlayer = this.player.getWorld().getPlayerByUuid(uuid);
+                    if (targetPlayer != null && SwallowedInteractionHelper.blocksPlayerTarget(targetPlayer)) {
                         continue;
                     }
                     ShopEntry.Type backgroundType = gameWorld.isPlayerDead(uuid) ? ShopEntry.Type.WEAPON : ShopEntry.Type.POISON;
@@ -327,67 +338,43 @@ public class RoleTargetMenuScreen extends Screen {
     private record TargetEntry(UUID uuid, ShopEntry.Type backgroundType) {
     }
 
-    private static final class TargetWidget extends ButtonWidget implements RoleScreenHelper.TopmostPlayerOverlayRenderable {
+    private static final class TargetWidget extends MenuPlayerTargetWidget {
         private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
 
         private final TargetEntry target;
         private final boolean selected;
-        private final int clipLeft;
-        private final int clipTop;
-        private final int clipRight;
-        private final int clipBottom;
 
         private TargetWidget(int x, int y, TargetEntry target, boolean selected, Consumer<UUID> onSelected,
                              int clipLeft, int clipTop, int clipRight, int clipBottom) {
-            super(x, y, 16, 16, RoleScreenHelper.getPlayerName(target.uuid(), UNKNOWN_PLAYER_TEXT),
-                    button -> onSelected.accept(target.uuid()), DEFAULT_NARRATION_SUPPLIER);
+            super(x, y, RoleScreenHelper.getPlayerName(target.uuid(), UNKNOWN_PLAYER_TEXT),
+                    button -> onSelected.accept(target.uuid()), clipLeft, clipTop, clipRight, clipBottom);
             this.target = target;
             this.selected = selected;
-            this.clipLeft = clipLeft;
-            this.clipTop = clipTop;
-            this.clipRight = clipRight;
-            this.clipBottom = clipBottom;
         }
 
         @Override
-        protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-            context.enableScissor(clipLeft, clipTop, clipRight, clipBottom);
-            try {
-                super.renderWidget(context, mouseX, mouseY, delta);
-
-                context.drawGuiTexture(this.target.backgroundType().getTexture(), this.getX() - 7, this.getY() - 7, 30, 30);
-                PlayerSkinDrawer.draw(context, RoleScreenHelper.getPlayerSkinTextures(this.target.uuid()).texture(), this.getX(), this.getY(), 16);
-
-                if (this.selected) {
-                    RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, 0xAA4B1A8E);
-                } else if (this.isHovered()) {
-                    RoleScreenHelper.drawSlotHighlight(context, this.getX(), this.getY(), 0, 0x913D3D3D);
-                }
-            } finally {
-                context.disableScissor();
-            }
+        protected net.minecraft.client.util.SkinTextures getSkinTextures() {
+            return RoleScreenHelper.getPlayerSkinTextures(this.target.uuid());
         }
 
         @Override
-        public boolean isMouseOver(double mouseX, double mouseY) {
-            return RoleScreenHelper.containsPoint(mouseX, mouseY, clipLeft, clipTop, clipRight, clipBottom)
-                    && super.isMouseOver(mouseX, mouseY);
+        protected ShopEntry.Type getBackgroundType() {
+            return this.target.backgroundType();
         }
 
         @Override
-        public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
+        protected Text getOverlayText() {
+            return RoleScreenHelper.getPlayerName(this.target.uuid(), UNKNOWN_PLAYER_TEXT);
         }
 
         @Override
-        public boolean shouldRenderTopmostPlayerOverlay() {
-            return this.visible && this.isHovered();
+        protected boolean shouldHighlight() {
+            return this.selected || super.shouldHighlight();
         }
 
         @Override
-        public void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer) {
-            Text name = RoleScreenHelper.getPlayerName(this.target.uuid(), UNKNOWN_PLAYER_TEXT);
-            int tooltipX = this.getX() - 4 - textRenderer.getWidth(name) / 2;
-            context.drawTooltip(textRenderer, name, tooltipX, this.getY() - 9);
+        protected int getHighlightColor() {
+            return this.selected ? 0xAA4B1A8E : super.getHighlightColor();
         }
     }
 }

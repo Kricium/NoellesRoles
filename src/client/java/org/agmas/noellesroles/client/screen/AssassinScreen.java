@@ -16,7 +16,9 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.AssassinRoleWidget;
 import org.agmas.noellesroles.client.AssassinTargetWidget;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.InteractionBlocker;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,18 +85,25 @@ public class AssassinScreen extends Screen {
             // 获取目标列表
             List<UUID> alivePlayers = gameWorld.getAllAlivePlayers();
             List<UUID> targets = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
-            targets.removeIf(uuid -> uuid.equals(player.getUuid()) || !alivePlayers.contains(uuid));
+            targets.removeIf(uuid -> uuid.equals(player.getUuid())
+                    || !alivePlayers.contains(uuid)
+                    || SwallowedInteractionHelper.blocksPlayerTarget(
+                    player.getWorld().getPlayerByUuid(uuid),
+                    SwallowedInteractionHelper.TargetingRule.ASSASSIN_GUESS_TARGET));
 
             // 动态网格布局：每行最多 TARGET_COLUMNS 个人
             int rows = Math.max(1, (targets.size() + TARGET_COLUMNS - 1) / TARGET_COLUMNS);
             int contentHeight = rows * TARGET_SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
             int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+            int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
             int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
             int viewHeight = Math.max(1, viewBottom - viewTop);
             targetMaxScroll = Math.max(0, contentHeight - viewHeight);
             targetScrollOffset = Math.max(0, Math.min(targetScrollOffset, targetMaxScroll));
             int startX = RoleScreenHelper.getGridStartX(targets.size(), TARGET_COLUMNS, TARGET_SPACING_X, centerX);
-            int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - targetScrollOffset;
+            int startY = contentTop - targetScrollOffset;
+            InteractionBlocker closeButtonBlocker = RoleScreenHelper.getCenteredButtonBlocker(
+                    centerX, RoleScreenHelper.getMenuButtonY(this.height), 80, 20);
 
             for (int i = 0; i < targets.size(); i++) {
                 UUID targetUuid = targets.get(i);
@@ -109,10 +118,10 @@ public class AssassinScreen extends Screen {
                             this.selectedTarget = selectedTarget;
                             this.clearAndInit();
                         },
-                        0, viewTop, this.width, viewBottom
+                        0, contentTop, this.width, viewBottom, closeButtonBlocker
                 );
-                widget.visible = RoleScreenHelper.intersectsRect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight(),
-                        0, viewTop, this.width, viewBottom);
+                widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
+                        0, contentTop, this.width, viewBottom);
                 addDrawableChild(widget);
             }
         } else {

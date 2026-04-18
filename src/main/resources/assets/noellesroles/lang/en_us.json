@@ -26,6 +26,7 @@
   "itemGroup.noellesroles.items": "NoellesRoles Items",
   "noellesroles.noisemaker.death_scream": "§cA piercing scream echoes from afar...",
   "noellesroles.noisemaker.broadcast_start": "§aYou raise your voice! Everyone can hear you now!",
+  "shop.error.swallowed": "You cannot buy items while swallowed by Taotie",
   "announcement.goals.voodoo": "Choose another player to go down with you.",
   "announcement.role.voodoo": "Voodoo",
   "announcement.win.voodoo": "Passengers Win",

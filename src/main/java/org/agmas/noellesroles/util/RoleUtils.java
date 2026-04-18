@@ -37,7 +37,7 @@ public final class RoleUtils {
     public static int countAliveAndNotSwallowed(ServerWorld serverWorld) {
         int count = 0;
         for (ServerPlayerEntity p : serverWorld.getPlayers()) {
-            if (!GameFunctions.isPlayerPlayingAndAlive(p) || p.isSpectator()) continue;
+            if (!GameFunctions.isPlayerPlayingAndAlive(p) || SpectatorStateHelper.isRealSpectator(p)) continue;
             SwallowedPlayerComponent swallowed = SwallowedPlayerComponent.KEY.get(p);
             if (!swallowed.isSwallowed()) {
                 count++;

@@ -8,6 +8,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.ModEffects;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.scavenger.ScavengerBodyHelper;
+import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 
 /**
@@ -40,7 +41,7 @@ public class EntityCollisionMixin {
         }
         if (entity instanceof PlayerEntity player) {
             MorphlingPlayerComponent comp = MorphlingPlayerComponent.KEY.get(player);
-            return comp.corpseMode;
+            return comp.corpseMode || SwallowedPlayerComponent.isPlayerSwallowed(player);
         }
         return false;
     }

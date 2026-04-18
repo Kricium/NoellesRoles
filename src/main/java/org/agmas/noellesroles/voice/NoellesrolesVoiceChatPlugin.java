@@ -16,6 +16,7 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -117,7 +118,7 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         ServerPlayerEntity spectator = ((ServerPlayerEntity)event.getSenderConnection().getPlayer().getPlayer());
         GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(spectator.getWorld());
         SwallowedPlayerComponent swallowedComp = SwallowedPlayerComponent.KEY.get(spectator);
-        if (spectator.interactionManager.getGameMode().equals(GameMode.SPECTATOR) && !swallowedComp.isSwallowed()) {
+        if (SpectatorStateHelper.isRealSpectator(spectator)) {
             spectator.getWorld().getPlayers().forEach((p) -> {
                 if (gameWorldComponent.isRole(p, Noellesroles.THE_INSANE_DAMNED_PARANOID_KILLER_OF_DOOM_DEATH_DESTRUCTION_AND_WAFFLES) && GameFunctions.isPlayerPlayingAndAlive(p)) {
                     if (spectator.distanceTo(p) <= api.getVoiceChatDistance()) {
@@ -170,7 +171,7 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         boolean shouldBlock = false;
 
         // Case 1: Speaker is a real spectator (not swallowed) - block
-        if (speaker.isSpectator() && !speakerSwallowed.isSwallowed()) {
+        if (SpectatorStateHelper.isRealSpectator(speaker)) {
             shouldBlock = true;
         }
 

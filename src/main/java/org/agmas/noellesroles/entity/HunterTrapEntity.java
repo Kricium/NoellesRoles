@@ -25,6 +25,7 @@ import net.minecraft.entity.damage.DamageSource;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 
 import java.util.UUID;
@@ -216,9 +217,7 @@ public class HunterTrapEntity extends Entity {
     }
 
     private boolean isInGameSpectator(PlayerEntity player, GameWorldComponent gameWorld) {
-        return player.isSpectator()
-            && gameWorld.isRunning()
-            && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+        return SpectatorStateHelper.isInGameRealSpectator(player, gameWorld)
             && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
     }
 

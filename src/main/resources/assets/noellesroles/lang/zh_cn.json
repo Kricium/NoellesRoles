@@ -649,6 +649,7 @@
   "noellesroles.infected.notification": "你感觉身体不太舒服...",
   "noellesroles.noisemaker.broadcast_start": "§a你扯开嗓子大喊！所有人都能听到你的声音！",
   "noellesroles.noisemaker.death_scream": "§c远处传来一声凄厉的惨叫...",
+  "shop.error.swallowed": "你被饕餮吞噬时无法购买物品",
 
   "replay.death.noellesroles.assassin_misfire.died": "%s §c刺杀失手§r身亡",
   "replay.death.noellesroles.assassinated.died": "%s 被§c识破身份§r击杀",

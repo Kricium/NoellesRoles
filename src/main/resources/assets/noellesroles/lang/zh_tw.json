@@ -57,6 +57,7 @@
   "announcement.win.noisemaker": "乘客勝利",
   "noellesroles.noisemaker.death_scream": "§c遠處傳來一聲淒厲的慘叫...",
   "noellesroles.noisemaker.broadcast_start": "§a你扯開嗓子大喊！所有人都能聽到你的聲音！",
+  "shop.error.swallowed": "你被饕餮吞噬時無法購買物品",
 
   "announcement.goals.voodoo": "選擇一名玩家，在你死時與你一起同歸於盡。",
   "announcement.role.voodoo": "巫毒師",

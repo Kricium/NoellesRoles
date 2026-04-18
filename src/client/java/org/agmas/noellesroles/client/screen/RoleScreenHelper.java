@@ -18,6 +18,8 @@ public final class RoleScreenHelper {
     public static final int MENU_BUTTON_Y_OFFSET = 42;
     public static final int MENU_BACKGROUND_OVERLAY_COLOR = 0xB0000000;
     public static final int MENU_BAR_HEIGHT = 20;
+    public static final int PLAYER_WIDGET_FRAME_OFFSET = 7;
+    public static final int PLAYER_WIDGET_FRAME_SIZE = 30;
 
     private static final int MENU_TITLE_SHIFT_Y = 5;
     private static final int MENU_TITLE_OFFSET_Y = 115;
@@ -70,6 +72,10 @@ public final class RoleScreenHelper {
         return height / 2 - MENU_VIEW_TOP_OFFSET - MENU_TITLE_SHIFT_Y;
     }
 
+    public static int getMenuContentTop(int height) {
+        return getMenuViewTop(height) + MENU_CONTENT_SHIFT_Y;
+    }
+
     public static int getMenuViewBottom(int height) {
         return height - MENU_BUTTON_Y_OFFSET - MENU_VIEW_BOTTOM_GAP;
     }
@@ -78,12 +84,51 @@ public final class RoleScreenHelper {
         return height - MENU_BUTTON_Y_OFFSET;
     }
 
+    public static InteractionBlocker getCenteredButtonBlocker(int centerX, int y, int width, int height) {
+        int halfWidth = width / 2;
+        return new InteractionBlocker(centerX - halfWidth, y, centerX - halfWidth + width, y + height);
+    }
+
     public static boolean intersectsRect(int x, int y, int width, int height, int left, int top, int right, int bottom) {
         return x < right && x + width > left && y < bottom && y + height > top;
     }
 
     public static boolean containsPoint(double x, double y, int left, int top, int right, int bottom) {
         return x >= left && x < right && y >= top && y < bottom;
+    }
+
+    public static boolean isPointWithinPlayerWidgetFrame(double x, double y, int widgetX, int widgetY,
+                                                         int clipLeft, int clipTop, int clipRight, int clipBottom,
+                                                         InteractionBlocker... blockers) {
+        int frameLeft = Math.max(widgetX - PLAYER_WIDGET_FRAME_OFFSET, clipLeft);
+        int frameTop = Math.max(widgetY - PLAYER_WIDGET_FRAME_OFFSET, clipTop);
+        int frameRight = Math.min(widgetX - PLAYER_WIDGET_FRAME_OFFSET + PLAYER_WIDGET_FRAME_SIZE, clipRight);
+        int frameBottom = Math.min(widgetY - PLAYER_WIDGET_FRAME_OFFSET + PLAYER_WIDGET_FRAME_SIZE, clipBottom);
+        if (!containsPoint(x, y, frameLeft, frameTop, frameRight, frameBottom)) {
+            return false;
+        }
+        if (blockers != null) {
+            for (InteractionBlocker blocker : blockers) {
+                if (blocker != null && blocker.contains(x, y)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static boolean intersectsPlayerWidgetFrame(int widgetX, int widgetY,
+                                                      int clipLeft, int clipTop, int clipRight, int clipBottom) {
+        return intersectsRect(
+                widgetX - PLAYER_WIDGET_FRAME_OFFSET,
+                widgetY - PLAYER_WIDGET_FRAME_OFFSET,
+                PLAYER_WIDGET_FRAME_SIZE,
+                PLAYER_WIDGET_FRAME_SIZE,
+                clipLeft,
+                clipTop,
+                clipRight,
+                clipBottom
+        );
     }
 
     public static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {
@@ -120,5 +165,11 @@ public final class RoleScreenHelper {
         boolean shouldRenderTopmostPlayerOverlay();
 
         void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer);
+    }
+
+    public record InteractionBlocker(int left, int top, int right, int bottom) {
+        public boolean contains(double x, double y) {
+            return RoleScreenHelper.containsPoint(x, y, left, top, right, bottom);
+        }
     }
 }

@@ -115,8 +115,10 @@ import org.agmas.noellesroles.commander.CommanderHelper;
 import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownEntryAccessor;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownManagerAccessor;
-import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.util.BodyTargetHelper;
+import org.agmas.noellesroles.util.RoleUtils;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.agmas.noellesroles.vulture.VultureHelper;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.music.WorldMusicComponent;
@@ -983,6 +985,12 @@ public class Noellesroles implements ModInitializer {
                 playerShopComponent.addToBalance(50);
             }
         });
+        ShopPurchase.BEFORE.register((player, entry, amount) -> {
+            if (SwallowedPlayerComponent.isPlayerSwallowed(player)) {
+                return ShopPurchase.PurchaseResult.deny("shop.error.swallowed");
+            }
+            return ShopPurchase.PurchaseResult.allow();
+        });
         CheckWinCondition.EVENT.register((world, gameComponent, currentStatus) -> {
             // 秃鹫胜利检查（优先级最高）
             for (UUID uuid : gameComponent.getAllWithRole(VULTURE)) {
@@ -1590,7 +1598,7 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorInfoRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
                 return;
             }
 
@@ -1617,7 +1625,7 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
                 return;
             }
 
@@ -1640,7 +1648,7 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorAssistTeleportC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!requester.isSpectator() || !gameWorld.isRunning() || SwallowedPlayerComponent.isPlayerSwallowed(requester)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
                 return;
             }
 
@@ -1676,6 +1684,7 @@ public class Noellesroles implements ModInitializer {
             PlayerEntity abilityTarget = context.player().getWorld().getPlayerByUuid(payload.player());
 
             if (abilityTarget != null && gameWorldComponent.isRole(context.player(), VOODOO) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                if (SwallowedInteractionHelper.blocksPlayerTarget(abilityTarget, SwallowedInteractionHelper.TargetingRule.VOODOO_TARGET)) return;
                 if (gameWorldComponent.isRole(abilityTarget, SAINT)) {
                     context.player().sendMessage(Text.translatable("tip.saint.voodoo_immune"), true);
                     return;
@@ -1690,6 +1699,7 @@ public class Noellesroles implements ModInitializer {
             }
             // 变形者允许变形为已死亡玩家（旁观者），只需目标在线即可
             if (abilityTarget != null && gameWorldComponent.isRole(context.player(), MORPHLING) && GameFunctions.isPlayerPlayingAndAlive(context.player()) && !SwallowedPlayerComponent.isPlayerSwallowed(context.player())) {
+                if (SwallowedInteractionHelper.blocksPlayerTarget(abilityTarget)) return;
                 if (!gameWorldComponent.getAllPlayers().contains(payload.player())) return;
                 MorphlingPlayerComponent morphlingPlayerComponent = (MorphlingPlayerComponent) MorphlingPlayerComponent.KEY.get(context.player());
                 // 服务端验证冷却是否结束，防止作弊
@@ -2034,6 +2044,7 @@ public class Noellesroles implements ModInitializer {
                     PlayerEntity player = context.player().getWorld().getPlayerByUuid(playerUuid);
                     if (player == null || player.equals(context.player())) continue;
                     if (!GameFunctions.isPlayerPlayingAndAlive(player)) continue;
+                    if (SwallowedInteractionHelper.blocksPlayerTarget(player)) continue;
 
                     InfectedPlayerComponent infected = InfectedPlayerComponent.KEY.get(player);
                     if (infected.isInfected()) continue;
@@ -2091,6 +2102,7 @@ public class Noellesroles implements ModInitializer {
             ServerPlayerEntity target = (ServerPlayerEntity) assassin.getWorld().getPlayerByUuid(payload.targetPlayer());
             if (target == null) return;
             if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(target, SwallowedInteractionHelper.TargetingRule.ASSASSIN_GUESS_TARGET)) return;
 
             // 🔒 关键安全验证：防止恶意客户端猜测不可猜测的角色
             if (target.equals(assassin)) return;  // 不能猜测自己
@@ -2174,6 +2186,7 @@ public class Noellesroles implements ModInitializer {
             if (target == null) return;
             if (target.equals(reporter)) return;
             if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(target)) return;
 
             // 验证距离（3格内）
             double distance = reporter.squaredDistanceTo(target);
@@ -2208,6 +2221,7 @@ public class Noellesroles implements ModInitializer {
             ServerPlayerEntity target = (ServerPlayerEntity) commander.getWorld().getPlayerByUuid(payload.targetPlayer());
             if (target == null || target.equals(commander)) return;
             if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(target)) return;
             if (commanderComp.isThreatTarget(target.getUuid())) return;
 
             String targetName = target.getName().getString();
@@ -2245,6 +2259,7 @@ public class Noellesroles implements ModInitializer {
             if (victim == null || suspect == null) return;
             if (victim.equals(criminalReasoner)) return;
             if (!gameWorldComponent.isPlayerDead(victim.getUuid())) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(suspect, SwallowedInteractionHelper.TargetingRule.CRIMINAL_REASONER_SUSPECT)) return;
 
             CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
             boolean reasonSuccess = criminalReasonerComponent.isCorrectReasoning(victim.getUuid(), suspect.getUuid());
@@ -2297,6 +2312,7 @@ public class Noellesroles implements ModInitializer {
             if (target.equals(taotie)) return;
             if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
             if (!GameFunctions.isPlayerAliveAndSurvival(target)) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(target)) return;
 
             // 验证距离（3格内）
             double distance = taotie.squaredDistanceTo(target);
@@ -2339,7 +2355,7 @@ public class Noellesroles implements ModInitializer {
 
                 if (target == null) return;
                 if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
-                if (SwallowedPlayerComponent.isPlayerSwallowed(target)) return;
+                if (SwallowedInteractionHelper.blocksPlayerTarget(target)) return;
 
                 // 检查目标是否已被沉默
                 SilencedPlayerComponent silencedComp = SilencedPlayerComponent.KEY.get(target);
@@ -2371,7 +2387,7 @@ public class Noellesroles implements ModInitializer {
             if (target == null) return;
             if (target.equals(silencer)) return;
             if (!GameFunctions.isPlayerPlayingAndAlive(target)) return;
-            if (SwallowedPlayerComponent.isPlayerSwallowed(target)) return;
+            if (SwallowedInteractionHelper.blocksPlayerTarget(target)) return;
 
             // 验证距离（3格内）
             double distance = silencer.squaredDistanceTo(target);
