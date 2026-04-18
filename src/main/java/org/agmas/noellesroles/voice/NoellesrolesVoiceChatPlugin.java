@@ -229,6 +229,59 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
     }
 
     /**
+     * 对局内禁止玩家自行创建语音组，避免绕过当前语音限制。
+     * 模组内部的隐藏组通过服务端 API 创建，不会走玩家创建事件。
+     */
+    public void onGroupCreated(CreateGroupEvent event) {
+        if (shouldBlockManualGroupCreation(event.getConnection())) {
+            event.cancel();
+        }
+    }
+
+    /**
+     * 对局内禁止存活玩家加入非模组维护的语音组。
+     * 死后系统自动加入死人语音组需要保留，因此不拦真实旁观者。
+     */
+    public void onGroupJoined(JoinGroupEvent event) {
+        if (shouldBlockManualGroupJoin(event.getConnection(), event.getGroup())) {
+            event.cancel();
+        }
+    }
+
+    private static boolean shouldBlockManualGroupCreation(VoicechatConnection connection) {
+        if (connection == null || connection.getPlayer() == null || connection.getPlayer().getPlayer() == null) {
+            return false;
+        }
+
+        ServerPlayerEntity player = (ServerPlayerEntity) connection.getPlayer().getPlayer();
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorld == null || !gameWorld.isRunning()) {
+            return false;
+        }
+
+        return GameFunctions.isPlayerPlayingAndAlive(player)
+                || SpectatorStateHelper.isInGameRealSpectator(player, gameWorld);
+    }
+
+    private static boolean shouldBlockManualGroupJoin(VoicechatConnection connection, Group group) {
+        if (connection == null || connection.getPlayer() == null || connection.getPlayer().getPlayer() == null) {
+            return false;
+        }
+
+        ServerPlayerEntity player = (ServerPlayerEntity) connection.getPlayer().getPlayer();
+        GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorld == null || !gameWorld.isRunning()) {
+            return false;
+        }
+
+        if (taotieStomachGroups.containsValue(group)) {
+            return false;
+        }
+
+        return GameFunctions.isPlayerPlayingAndAlive(player);
+    }
+
+    /**
      * 大嗓门广播：广播期间将语音发送给所有玩家
      * 被沉默时不生效；死亡后不生效；被吞噬时不生效
      */
@@ -306,6 +359,8 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
         registration.registerEvent(MicrophonePacketEvent.class, this::taotieVoiceEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::silencerVoiceEvent);
         registration.registerEvent(MicrophonePacketEvent.class, this::noisemakerBroadcastEvent);
+        registration.registerEvent(CreateGroupEvent.class, this::onGroupCreated);
+        registration.registerEvent(JoinGroupEvent.class, this::onGroupJoined);
         registration.registerEvent(RemoveGroupEvent.class, this::onGroupRemoved);
 
         registration.registerEvent(EntitySoundPacketEvent.class, this::blockVoiceToSwallowedPlayers);
