@@ -42,6 +42,7 @@ import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.configscreen.NoellesRolesConfigScreenFactory;
+import org.agmas.noellesroles.client.silencer.SilencedTalkBubbleCleaner;
 import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
 import org.agmas.noellesroles.client.sound.TalkBubblesConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
@@ -120,9 +121,6 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     public static Map<UUID, UUID> SHUFFLED_PLAYER_ENTRIES_CACHE = Maps.newHashMap();
 
-    /** 客户端玩家是否处于被静语状态（由服务端同步） */
-    public static boolean isClientSilenced = false;
-
     // 不可见物品提示：切换到不可见物品时提示
     private static boolean wasHoldingInvisible = false;
     private static long spectatorReplayPollRequestId = 10_000L;
@@ -190,12 +188,6 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.RoleBroadcastS2CPacket.ID,
                 (payload, context) -> runOnClient(context.client(), () ->
                         dev.doctor4t.wathe.client.gui.WalkieTalkieBroadcastRenderer.addMessage(payload.message())
-                ));
-
-        // 注册静语状态同步 S2C 包接收
-        ClientPlayNetworking.registerGlobalReceiver(org.agmas.noellesroles.packet.SilencedStateS2CPacket.ID,
-                (payload, context) -> runOnClient(context.client(), () ->
-                        isClientSilenced = payload.silenced()
                 ));
 
         // 注册观战信息同步 S2C 包接收
@@ -527,6 +519,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // 更新世界BGM管理器
             WorldMusicManager.tick();
+            SilencedTalkBubbleCleaner.tick(client);
 
             if (client.world != null) {
                 SoundPhysicsConfigLockManager.updateFromWorld(ConfigWorldComponent.KEY.get(client.world));

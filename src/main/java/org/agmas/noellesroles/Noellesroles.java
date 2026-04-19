@@ -88,7 +88,6 @@ import org.agmas.noellesroles.timekeeper.TimekeeperShopHandler;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.packet.ReporterMarkC2SPacket;
 import org.agmas.noellesroles.packet.RoleBroadcastS2CPacket;
-import org.agmas.noellesroles.packet.SilencedStateS2CPacket;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoRequestC2SPacket;
 import org.agmas.noellesroles.packet.SpectatorInfoSyncS2CPacket;
@@ -440,7 +439,6 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(FerrymanBodyAgeSyncS2CPacket.ID, FerrymanBodyAgeSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
-        PayloadTypeRegistry.playS2C().register(SilencedStateS2CPacket.ID, SilencedStateS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SpectatorInfoSyncS2CPacket.ID, SpectatorInfoSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SpectatorReplayDetailSyncS2CPacket.ID, SpectatorReplayDetailSyncS2CPacket.CODEC);
 
@@ -491,11 +489,6 @@ public class Noellesroles implements ModInitializer {
                 SwallowedPlayerComponent swallowedComp = SwallowedPlayerComponent.KEY.get(player);
                 if (!swallowedComp.isSwallowed()) {
                     TrainVoicePlugin.addPlayer(player.getUuid());
-                }
-                // 断线重连时同步静语状态
-                SilencedPlayerComponent silencedComp = SilencedPlayerComponent.KEY.get(player);
-                if (silencedComp.isSilenced()) {
-                    ServerPlayNetworking.send(player, new SilencedStateS2CPacket(true));
                 }
                 ConfigWorldComponent.KEY.get(player.getServerWorld()).sync();
             });

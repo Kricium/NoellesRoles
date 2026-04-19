@@ -25,9 +25,33 @@ public class SwallowedPlayerNetworkHandlerMixin {
     @Shadow
     public ServerPlayerEntity player;
 
+    @Shadow
+    private boolean floating;
+
+    @Shadow
+    private int floatingTicks;
+
+    @Shadow
+    private boolean vehicleFloating;
+
+    @Shadow
+    private int vehicleFloatingTicks;
+
+    @Inject(method = "tick", at = @At("HEAD"))
+    private void noellesroles$clearSwallowedFloatingState(CallbackInfo ci) {
+        if (SwallowedInteractionHelper.blocksActor(this.player)) {
+            this.floating = false;
+            this.floatingTicks = 0;
+            this.vehicleFloating = false;
+            this.vehicleFloatingTicks = 0;
+        }
+    }
+
     @Inject(method = "onPlayerMove", at = @At("HEAD"), cancellable = true)
     private void noellesroles$blockSwallowedMove(PlayerMoveC2SPacket packet, CallbackInfo ci) {
         if (SwallowedInteractionHelper.blocksActor(this.player)) {
+            this.floating = false;
+            this.floatingTicks = 0;
             ci.cancel();
         }
     }
