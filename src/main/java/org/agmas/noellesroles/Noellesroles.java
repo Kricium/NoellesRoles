@@ -1744,8 +1744,8 @@ public class Noellesroles implements ModInitializer {
                     // 吃掉尸体后获得速度加成
                     context.player().addStatusEffect(new StatusEffectInstance(StatusEffects.SPEED, GameConstants.getInTicks(0, 10), 2, false, false, true));
 
-                    // 吃掉尸体后获得本能高亮透视所有人10秒
-                    vulturePlayerComponent.setHighlightTicks(GameConstants.getInTicks(0, 10));
+                    // 吃掉尸体后获得10格范围透视10秒
+                    vulturePlayerComponent.activateHighlight(GameConstants.getInTicks(0, 10), 10.0D);
 
                     // 移除尸体
                     body.discard();

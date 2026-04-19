@@ -369,7 +369,7 @@
   "roleinfo.skill.voodoo.bind_curse.name": "巫毒绑定",
   "roleinfo.skill.voodoo.bind_curse.effect": "你可以按角色技能打开巫毒菜单并绑定一名玩家；默认只有当你因其他玩家而死时，绑定目标才会和你同归于尽。你不能绑定圣徒；若你被刺客刺杀且绑定目标正是刺客，诅咒不会触发。",
   "roleinfo.skill.vulture.eat_body.name": "啃食",
-  "roleinfo.skill.vulture.eat_body.effect": "瞄准5格内尸体并按下技能键后，可将其吃掉。成功后会产生明显粒子效果，并获得10秒速度III，同时透视到所有存活玩家10秒；吃掉至少一半玩家的尸体后即可获胜。冷却5秒。",
+  "roleinfo.skill.vulture.eat_body.effect": "瞄准5格内尸体并按下技能键后，可将其吃掉。成功后会产生明显粒子效果，并获得10秒速度III，同时获得10秒的10格范围透视；吃掉至少一半玩家的尸体后即可获胜。冷却5秒。",
   "roleinfo.skill.vulture.no_sanity.effect": "你可以高亮看到尸体。你没有理智值，但会接到伪装任务，疾跑体力无限，且无法捡起左轮手枪。",
 
   "screen.assassin.button.cancel": "撤销目标",

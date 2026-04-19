@@ -416,8 +416,9 @@ public class NoellesrolesClient implements ClientModInitializer {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(localPlayer.getWorld());
             if (!gameWorldComponent.isRole(localPlayer, Noellesroles.VULTURE)) return null;
             VulturePlayerComponent vultureComp = VulturePlayerComponent.KEY.get(localPlayer);
-            if (vultureComp.getHighlightTicks() <= 0) return null;
+            if (!vultureComp.hasActiveHighlight()) return null;
             if (!GameFunctions.isPlayerPlayingAndAlive(player)) return null;
+            if (!vultureComp.isEntityWithinHighlightRange(player)) return null;
             return GetInstinctHighlight.HighlightResult.always(Noellesroles.VULTURE.color());
         });
 
