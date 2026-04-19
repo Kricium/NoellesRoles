@@ -926,9 +926,9 @@ public class NoellesrolesClient implements ClientModInitializer {
                     client.gameRenderer.setRenderHand(false);
                 } else {
                     swallowedLockedSelectedSlot = -1;
-                    player.noClip = false;
-                    player.setInvisible(false);
                     if (wasClientPlayerSwallowedLastTick) {
+                        player.noClip = false;
+                        player.setInvisible(false);
                         client.gameRenderer.setRenderHand(true);
                     }
                 }
