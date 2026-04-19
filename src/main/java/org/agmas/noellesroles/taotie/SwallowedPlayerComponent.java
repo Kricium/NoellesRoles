@@ -94,6 +94,9 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
             this.previousGameMode = serverPlayer.interactionManager.getGameMode();
             serverPlayer.noClip = true;
             serverPlayer.setInvisible(true);
+            serverPlayer.setOnGround(true);
+            serverPlayer.setVelocity(Vec3d.ZERO);
+            serverPlayer.fallDistance = 0.0F;
 
             // Teleport to Taotie's position
             if (player.getWorld() instanceof ServerWorld serverWorld) {
@@ -123,6 +126,9 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
             serverPlayer.setCameraEntity(serverPlayer);
             serverPlayer.noClip = false;
             serverPlayer.setInvisible(false);
+            serverPlayer.setOnGround(true);
+            serverPlayer.setVelocity(Vec3d.ZERO);
+            serverPlayer.fallDistance = 0.0F;
 
             GameMode restoredGameMode = this.previousGameMode == GameMode.SPECTATOR
                     ? GameMode.ADVENTURE

@@ -33,6 +33,7 @@
     "taotie.SwallowedPlayerInteractionBlockMixin",
     "taotie.SwallowedPlayerMoveBlockMixin",
     "taotie.SwallowedPlayerNetworkHandlerMixin",
+    "taotie.SwallowedPlayerKeepAliveMixin",
     "taotie.SwallowedPlayerSpectatorMixin",
     "taotie.SwallowedPlayerSkyVisibilityMixin",
     "taotie.SwallowedPlayerStepSoundMixin",
