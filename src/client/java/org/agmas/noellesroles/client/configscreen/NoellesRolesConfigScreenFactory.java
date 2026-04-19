@@ -19,13 +19,13 @@ public final class NoellesRolesConfigScreenFactory {
         return List.of(
                 new ConfigCategoryDefinition(
                         "client",
-                        Text.literal("客户端"),
-                        Text.literal("本地界面与 Wathe 客户端显示相关设置。"),
+                        Text.translatable("config_screen.category.client"),
+                        Text.translatable("config_screen.category.client.description"),
                         List.of(
                                 ConfigOptionDefinition.enumeration(
                                         "wathe_instinct_mode",
-                                        Text.literal("本能模式"),
-                                        Text.literal("设置 Wathe 的本能键行为：按住生效或按一下切换。"),
+                                        Text.translatable("config_screen.option.wathe_instinct_mode"),
+                                        Text.translatable("config_screen.option.wathe_instinct_mode.description"),
                                         List.of(WatheConfig.InstinctModeConfig.values()),
                                         NoellesRolesConfigScreenFactory::getInstinctModeText,
                                         ConfigScreenState::instinctMode,
@@ -34,8 +34,8 @@ public final class NoellesRolesConfigScreenFactory {
                                 ),
                                 ConfigOptionDefinition.number(
                                         "wathe_chat_history_limit",
-                                        Text.literal("聊天栏记录条数"),
-                                        Text.literal("设置 Wathe 聊天记录保留上限。"),
+                                        Text.translatable("config_screen.option.wathe_chat_history_limit"),
+                                        Text.translatable("config_screen.option.wathe_chat_history_limit.description"),
                                         WatheConfig.MIN_CHAT_HISTORY_LIMIT,
                                         WatheConfig.MAX_CHAT_HISTORY_LIMIT,
                                         ConfigScreenState::chatHistoryLimit,
@@ -44,24 +44,24 @@ public final class NoellesRolesConfigScreenFactory {
                                 ),
                                 ConfigOptionDefinition.toggle(
                                         "wathe_show_match_player_count",
-                                        Text.literal("对局玩家数显示"),
-                                        Text.literal("控制是否在 HUD 头部显示当前对局玩家数。"),
+                                        Text.translatable("config_screen.option.wathe_show_match_player_count"),
+                                        Text.translatable("config_screen.option.wathe_show_match_player_count.description"),
                                         ConfigScreenState::showMatchPlayerCount,
                                         ConfigScreenState::showMatchPlayerCount,
                                         (state, value) -> state.showMatchPlayerCount(value)
                                 ),
                                 ConfigOptionDefinition.toggle(
                                         "show_assist_interface_hint",
-                                        Text.literal("显示辅助界面提示"),
-                                        Text.literal("控制 `~` 辅助界面的底角提示是否显示。"),
+                                        Text.translatable("config_screen.option.show_assist_interface_hint"),
+                                        Text.translatable("config_screen.option.show_assist_interface_hint.description"),
                                         state -> state.noellesRolesConfig().showAssistInterfaceHint,
                                         state -> state.noellesRolesConfig().showAssistInterfaceHint,
                                         (state, value) -> state.noellesRolesConfig().showAssistInterfaceHint = value
                                 ),
                                 ConfigOptionDefinition.toggle(
                                         "show_config_screen_hint",
-                                        Text.literal("显示配置界面提示"),
-                                        Text.literal("控制配置界面的底角提示是否显示。"),
+                                        Text.translatable("config_screen.option.show_config_screen_hint"),
+                                        Text.translatable("config_screen.option.show_config_screen_hint.description"),
                                         state -> state.noellesRolesConfig().showConfigScreenHint,
                                         state -> state.noellesRolesConfig().showConfigScreenHint,
                                         (state, value) -> state.noellesRolesConfig().showConfigScreenHint = value
@@ -70,21 +70,21 @@ public final class NoellesRolesConfigScreenFactory {
                 ),
                 new ConfigCategoryDefinition(
                         "gameplay",
-                        Text.literal("游戏规则"),
-                        Text.literal("会直接影响玩法体验的核心开关。"),
+                        Text.translatable("config_screen.category.gameplay"),
+                        Text.translatable("config_screen.category.gameplay.description"),
                         List.of(
                                 ConfigOptionDefinition.toggle(
                                         "insane_players_see_morphs",
-                                        Text.literal("疯魔错觉"),
-                                        Text.literal("让疯魔玩家随机把其他人看成变形后的样子。"),
+                                        Text.translatable("config_screen.option.insane_players_see_morphs"),
+                                        Text.translatable("config_screen.option.insane_players_see_morphs.description"),
                                         state -> state.noellesRolesConfig().insanePlayersSeeMorphs,
                                         state -> state.noellesRolesConfig().insanePlayersSeeMorphs,
                                         (state, value) -> state.noellesRolesConfig().insanePlayersSeeMorphs = value
                                 ),
                                 ConfigOptionDefinition.number(
                                         "general_cooldown_ticks",
-                                        Text.literal("通用冷却"),
-                                        Text.literal("统一技能冷却，单位为 ticks。"),
+                                        Text.translatable("config_screen.option.general_cooldown_ticks"),
+                                        Text.translatable("config_screen.option.general_cooldown_ticks.description"),
                                         0,
                                         20 * 60 * 10,
                                         state -> state.noellesRolesConfig().generalCooldownTicks,
@@ -93,8 +93,8 @@ public final class NoellesRolesConfigScreenFactory {
                                 ),
                                 ConfigOptionDefinition.toggle(
                                         "voodoo_non_killer_deaths",
-                                        Text.literal("自然死亡触发巫蛊"),
-                                        Text.literal("允许没有明确击杀者的死亡也触发巫蛊效果。"),
+                                        Text.translatable("config_screen.option.voodoo_non_killer_deaths"),
+                                        Text.translatable("config_screen.option.voodoo_non_killer_deaths.description"),
                                         state -> state.noellesRolesConfig().voodooNonKillerDeaths,
                                         state -> state.noellesRolesConfig().voodooNonKillerDeaths,
                                         (state, value) -> state.noellesRolesConfig().voodooNonKillerDeaths = value
@@ -103,21 +103,21 @@ public final class NoellesRolesConfigScreenFactory {
                 ),
                 new ConfigCategoryDefinition(
                         "compatibility",
-                        Text.literal("联机兼容"),
-                        Text.literal("和外部模组配置联动的安全锁定项。"),
+                        Text.translatable("config_screen.category.compatibility"),
+                        Text.translatable("config_screen.category.compatibility.description"),
                         List.of(
                                 ConfigOptionDefinition.toggle(
                                         "lock_sound_physics_remastered_config",
-                                        Text.literal("锁定 Sound Physics"),
-                                        Text.literal("进入服务器后，自动把 Sound Physics Remastered 配置锁成服务端要求的值。"),
+                                        Text.translatable("config_screen.option.lock_sound_physics_remastered_config"),
+                                        Text.translatable("config_screen.option.lock_sound_physics_remastered_config.description"),
                                         state -> state.noellesRolesConfig().lockSoundPhysicsRemasteredConfig,
                                         state -> state.noellesRolesConfig().lockSoundPhysicsRemasteredConfig,
                                         (state, value) -> state.noellesRolesConfig().lockSoundPhysicsRemasteredConfig = value
                                 ),
                                 ConfigOptionDefinition.toggle(
                                         "lock_talk_bubbles_config",
-                                        Text.literal("锁定 TalkBubbles"),
-                                        Text.literal("进入服务器后，自动把 TalkBubbles 配置锁成服务端要求的值。"),
+                                        Text.translatable("config_screen.option.lock_talk_bubbles_config"),
+                                        Text.translatable("config_screen.option.lock_talk_bubbles_config.description"),
                                         state -> state.noellesRolesConfig().lockTalkBubblesConfig,
                                         state -> state.noellesRolesConfig().lockTalkBubblesConfig,
                                         (state, value) -> state.noellesRolesConfig().lockTalkBubblesConfig = value
@@ -129,8 +129,8 @@ public final class NoellesRolesConfigScreenFactory {
 
     private static Text getInstinctModeText(WatheConfig.InstinctModeConfig instinctMode) {
         return switch (instinctMode) {
-            case HOLD -> Text.literal("按住");
-            case TOGGLE -> Text.literal("切换");
+            case HOLD -> Text.translatable("config_screen.enum.wathe_instinct_mode.hold");
+            case TOGGLE -> Text.translatable("config_screen.enum.wathe_instinct_mode.toggle");
         };
     }
 }

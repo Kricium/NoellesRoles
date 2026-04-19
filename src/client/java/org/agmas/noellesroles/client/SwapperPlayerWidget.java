@@ -70,6 +70,6 @@ public class SwapperPlayerWidget extends PlayerSelectWidget {
         if (entry != null && entry.getDisplayName() != null) {
             return entry.getDisplayName();
         }
-        return entry != null ? Text.literal(entry.getProfile().getName()) : Text.literal("Unknown");
+        return entry != null ? Text.literal(entry.getProfile().getName()) : Text.translatable("screen.role_target.unknown_player");
     }
 }

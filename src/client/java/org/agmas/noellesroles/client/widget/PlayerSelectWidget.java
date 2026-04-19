@@ -144,7 +144,7 @@ public abstract class PlayerSelectWidget extends ButtonWidget implements Topmost
         }
 
         if (this.isSelected()) {
-            Text selectedText = Text.literal("Selected");
+            Text selectedText = Text.translatable("screen.player_select.selected");
             int textX = this.getX() - 4 - textRenderer.getWidth(selectedText) / 2;
             context.drawTooltip(textRenderer, selectedText, textX, this.getY() - 9);
         }

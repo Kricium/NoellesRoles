@@ -50,7 +50,7 @@ public class NoellesRolesConfigScreen extends Screen {
     private int maxScroll;
 
     public NoellesRolesConfigScreen(Screen parent, List<ConfigCategoryDefinition> categories) {
-        super(Text.literal("NoellesRoles 配置"));
+        super(Text.translatable("config_screen.title"));
         this.parent = parent;
         this.categories = List.copyOf(categories);
         this.savedSnapshot = ConfigScreenState.capture();
@@ -72,9 +72,9 @@ public class NoellesRolesConfigScreen extends Screen {
                 layout.searchY,
                 layout.searchWidth,
                 SEARCH_HEIGHT,
-                Text.literal("搜索")
+                Text.translatable("config_screen.search")
         ));
-        this.searchField.setPlaceholder(Text.literal("搜索设置"));
+        this.searchField.setPlaceholder(Text.translatable("config_screen.search.placeholder"));
         this.searchField.setText(previousSearch);
         this.searchField.setChangedListener(value -> {
             scrollOffset = 0;
@@ -132,10 +132,10 @@ public class NoellesRolesConfigScreen extends Screen {
         int totalWidth = buttonWidth * 2 + gap;
         int startX = this.width / 2 - totalWidth / 2;
 
-        this.cancelButton = this.addDrawableChild(ButtonWidget.builder(Text.literal("取消"), button -> cancelAndClose())
+        this.cancelButton = this.addDrawableChild(ButtonWidget.builder(Text.translatable("config_screen.button.cancel"), button -> cancelAndClose())
                 .dimensions(startX, buttonY, buttonWidth, 20)
                 .build());
-        this.doneButton = this.addDrawableChild(ButtonWidget.builder(Text.literal("完成"), button -> saveAndClose())
+        this.doneButton = this.addDrawableChild(ButtonWidget.builder(Text.translatable("config_screen.button.done"), button -> saveAndClose())
                 .dimensions(startX + buttonWidth + gap, buttonY, buttonWidth, 20)
                 .build());
     }
@@ -200,7 +200,7 @@ public class NoellesRolesConfigScreen extends Screen {
         boolean hasInvalidRow = allRows.stream().anyMatch(row -> !row.isValid());
         if (doneButton != null) {
             doneButton.active = !hasInvalidRow;
-            doneButton.setTooltip(hasInvalidRow ? Tooltip.of(Text.literal("请先修正无效输入项。")) : null);
+            doneButton.setTooltip(hasInvalidRow ? Tooltip.of(Text.translatable("config_screen.tooltip.invalid_input")) : null);
         }
     }
 
@@ -270,7 +270,7 @@ public class NoellesRolesConfigScreen extends Screen {
         if (visibleRows.isEmpty()) {
             context.drawCenteredTextWithShadow(
                     this.textRenderer,
-                    Text.literal("没有匹配当前筛选条件的设置项"),
+                    Text.translatable("config_screen.empty"),
                     layout.optionsX + layout.optionsWidth / 2,
                     layout.listTop + layout.listHeight / 2 - 4,
                     0xFFFFFF
@@ -379,7 +379,7 @@ public class NoellesRolesConfigScreen extends Screen {
         if (canAccessCategory(category)) {
             return category.description();
         }
-        return Text.literal("需要管理员权限才能修改这一类配置");
+        return Text.translatable("config_screen.tooltip.category_requires_permission");
     }
 
     private void restoreRestrictedValuesFromSnapshot() {
@@ -480,12 +480,12 @@ public class NoellesRolesConfigScreen extends Screen {
         }
 
         private ButtonWidget createResetButton() {
-            return ButtonWidget.builder(Text.literal("重置"), button -> {
+            return ButtonWidget.builder(Text.translatable("config_screen.button.reset"), button -> {
                         resetToDefault();
                         refreshFromConfig();
                     })
                     .dimensions(0, 0, RESET_BUTTON_WIDTH, 20)
-                    .tooltip(Tooltip.of(Text.literal("恢复这一项的默认值")))
+                    .tooltip(Tooltip.of(Text.translatable("config_screen.tooltip.reset")))
                     .build();
         }
 
@@ -533,7 +533,7 @@ public class NoellesRolesConfigScreen extends Screen {
         private void refreshFromConfig() {
             if (definition instanceof ConfigOptionDefinition.ToggleOptionDefinition toggleOption) {
                 boolean enabled = toggleOption.getValue(workingCopy);
-                control.setMessage(enabled ? Text.literal("开启") : Text.literal("关闭"));
+                control.setMessage(enabled ? Text.translatable("config_screen.toggle.on") : Text.translatable("config_screen.toggle.off"));
                 control.setTooltip(null);
                 valid = true;
                 return;
@@ -542,7 +542,7 @@ public class NoellesRolesConfigScreen extends Screen {
             if (definition instanceof ConfigOptionDefinition.EnumOptionDefinition<?> enumOption) {
                 Object current = enumOption.getValue(workingCopy);
                 control.setMessage(getEnumValueText(enumOption, current));
-                control.setTooltip(Tooltip.of(Text.literal("点击切换下一个选项")));
+                control.setTooltip(Tooltip.of(Text.translatable("config_screen.tooltip.cycle_enum")));
                 valid = true;
                 return;
             }
@@ -627,7 +627,7 @@ public class NoellesRolesConfigScreen extends Screen {
         private List<Text> getPermissionTooltip() {
             return List.of(
                     definition.label(),
-                    Text.literal("需要管理员权限才能修改这一项配置。")
+                    Text.translatable("config_screen.tooltip.option_requires_permission")
             );
         }
 

@@ -12,7 +12,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public class CriminalReasonerPlayerWidget extends MenuPlayerTargetWidget {
-    private static final Text UNKNOWN_PLAYER_TEXT = Text.literal("Unknown");
+    private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
 
     private final UUID targetUuid;
 

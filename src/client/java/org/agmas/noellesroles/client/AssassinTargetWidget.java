@@ -18,7 +18,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 public class AssassinTargetWidget extends MenuPlayerTargetWidget {
-    private static final Text UNKNOWN_PLAYER_TEXT = Text.literal("Unknown");
+    private static final Text UNKNOWN_PLAYER_TEXT = Text.translatable("screen.role_target.unknown_player");
     private static final int HIGHLIGHT_COLOR = -1862287543;
 
     public final UUID targetUuid;
