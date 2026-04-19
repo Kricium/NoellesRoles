@@ -164,6 +164,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                 client.execute(() -> {
                     SoundPhysicsConfigLockManager.deactivate();
                     TalkBubblesConfigLockManager.deactivate();
+                    SHUFFLED_PLAYER_ENTRIES_CACHE.clear();
                 })
         );
 
@@ -543,6 +544,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                 List<UUID> keys = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
                 List<UUID> originalkeys = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
                 Collections.shuffle(keys);
+                SHUFFLED_PLAYER_ENTRIES_CACHE.clear();
                 int i = 0;
                 for (UUID o : originalkeys) {
                     SHUFFLED_PLAYER_ENTRIES_CACHE.put(o, keys.get(i));

@@ -3,6 +3,7 @@ package org.agmas.noellesroles.client.mixin.morphling;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.doctor4t.wathe.client.WatheClient;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.entity.feature.ElytraFeatureRenderer;
 import net.minecraft.client.util.SkinTextures;
@@ -22,9 +23,9 @@ public class MorphlingElytraRendererMixin {
             at = @At(value = "INVOKE",
                     target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getSkinTextures()Lnet/minecraft/client/util/SkinTextures;"))
     private SkinTextures morphling_wrapElytraTexture(AbstractClientPlayerEntity instance, Operation<SkinTextures> original) {
+        ConfigWorldComponent config = ConfigWorldComponent.KEY.get(instance.getWorld());
         // 优先处理疯狂模式
         if (WatheClient.moodComponent != null) {
-            ConfigWorldComponent config = ConfigWorldComponent.KEY.get(instance.getWorld());
             if (config.insaneSeesMorphs &&
                 WatheClient.moodComponent.isLowerThanDepressed() &&
                 NoellesrolesClient.SHUFFLED_PLAYER_ENTRIES_CACHE.containsKey(instance.getUuid())) {
@@ -35,6 +36,9 @@ public class MorphlingElytraRendererMixin {
                     return entry.getSkinTextures();
                 }
             }
+        }
+        if (!GameWorldComponent.KEY.get(instance.getWorld()).isRunning()) {
+            return original.call(instance);
         }
 
         // 处理变形者伪装

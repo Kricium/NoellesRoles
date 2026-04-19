@@ -13,6 +13,7 @@
     "ferryman.FerrymanHudMixin",
     "jester.JesterHudMixin",
     "roundend.RoundTextRendererMixin",
+    "roundend.RoundTextRendererSkinCacheMixin",
     "morphling.MorphlingCapeRendererMixin",
     "morphling.MorphlingCorpseAnglesMixin",
     "morphling.MorphlingCorpseRendererMixin",

@@ -8,6 +8,7 @@ import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import org.agmas.noellesroles.ConfigWorldComponent;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
@@ -29,12 +30,13 @@ public class MorphlingRendererDispatchMixin {
     @Inject(method = "getRenderer", at = @At("HEAD"), cancellable = true)
     public <T extends Entity> void noellesroles$morphlingModelSwap(T entity, CallbackInfoReturnable<EntityRenderer<? super T>> cir) {
         if (!(entity instanceof AbstractClientPlayerEntity player)) return;
+        ConfigWorldComponent config = ConfigWorldComponent.KEY.get(player.getWorld());
+        if (!GameWorldComponent.KEY.get(player.getWorld()).isRunning()) return;
 
         SkinTextures.Model targetModel = null;
 
         // 优先处理疯狂模式
         if (WatheClient.moodComponent != null) {
-            ConfigWorldComponent config = ConfigWorldComponent.KEY.get(player.getWorld());
             if (config.insaneSeesMorphs
                     && WatheClient.moodComponent.isLowerThanDepressed()
                     && NoellesrolesClient.SHUFFLED_PLAYER_ENTRIES_CACHE.containsKey(player.getUuid())) {
