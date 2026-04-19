@@ -453,6 +453,8 @@
   "replay.item_use.noellesroles.repair_tool.unlock": "%s §bunlocked§r a door",
 
   "key.noellesroles.assist_interface": "Open Assist Interface",
+  "config_screen.hint_ingame": "Press [%s] to open the config screen",
+  "config_screen.hint_lobby": "Press [%s] to open the config screen",
   "assist_interface.hint": "Press [%s] to toggle role info",
   "assist_interface.spectator_hint": "Press [%s] to toggle spectator assist panel",
   "roleinfo.screen.title": "Role Info",
@@ -760,6 +762,7 @@
   "item.noellesroles.special_spice.effect": "Makes the drink restore 60% sanity instead of the normal amount",
   "key.noellesroles.ability": "Role Ability",
   "key.noellesroles.ability2": "Role Ability 2",
+  "key.noellesroles.config_screen": "Open Config Screen",
   "announcement.goals.commander": "You are part of the killer faction. Other killers know your player name at the start and can identify you by a special color in instinct vision. You can open a menu to mark Threat Targets up to a total quota of one third of all players, rounded down, while keeping at most two active marks at once. Marking a third target removes the oldest active mark. If another killer eliminates them, every killer-faction player gains 50 coins. If every other killer dies, you immediately shoot yourself.",
   "title.noellesroles.commander_last_bullet": "My plans fail. Such is fate.",
   "tip.noellesroles.commander_last_bullet_countdown": "Shot in %s second(s)",

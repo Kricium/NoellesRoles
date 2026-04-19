@@ -41,10 +41,12 @@ import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.client.configscreen.NoellesRolesConfigScreenFactory;
 import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
 import org.agmas.noellesroles.client.sound.TalkBubblesConfigLockManager;
 import org.agmas.noellesroles.client.screen.RoleInfoScreen;
 import org.agmas.noellesroles.client.screen.RoleTargetMenuScreen;
+import org.agmas.noellesroles.client.screen.NoellesRolesConfigScreen;
 import org.agmas.noellesroles.client.screen.SpectatorAssistPanelScreen;
 import org.agmas.noellesroles.util.HiddenEquipmentHelper;
 import dev.doctor4t.wathe.index.WatheItems;
@@ -107,6 +109,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static KeyBinding abilityBind;
     public static KeyBinding ability2Bind;
     public static KeyBinding assistInterfaceBind;
+    public static KeyBinding configScreenBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
     public static double pathogenNearestTargetDistance;
@@ -126,6 +129,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
     private static boolean wasAssistInterfacePressed = false;
+    private static boolean wasConfigScreenPressed = false;
     private static int swallowedLockedSelectedSlot = -1;
     private static boolean wasClientPlayerSwallowedLastTick = false;
     private static float swallowedLockedYaw = 0.0F;
@@ -142,6 +146,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
         ability2Bind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability2", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Y, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
+        configScreenBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".config_screen", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
 
@@ -860,6 +865,19 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
             wasAssistInterfacePressed = isAssistPressed;
 
+            boolean isConfigScreenPressed = configScreenBind != null && configScreenBind.isPressed();
+            if (isConfigScreenPressed && !wasConfigScreenPressed) {
+                MinecraftClient minecraftClient = MinecraftClient.getInstance();
+                if (minecraftClient.currentScreen instanceof NoellesRolesConfigScreen) {
+                    markConfigScreenKeyHandled();
+                    minecraftClient.currentScreen.close();
+                } else if (minecraftClient.currentScreen == null) {
+                    minecraftClient.setScreen(NoellesRolesConfigScreenFactory.create(null));
+                    markConfigScreenKeyHandled();
+                }
+            }
+            wasConfigScreenPressed = isConfigScreenPressed;
+
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
                 boolean swallowed = SwallowedPlayerComponent.isPlayerSwallowed(player);
@@ -977,6 +995,10 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     public static void markAssistInterfaceKeyHandled() {
         wasAssistInterfacePressed = true;
+    }
+
+    public static void markConfigScreenKeyHandled() {
+        wasConfigScreenPressed = true;
     }
 
     private static void runOnClient(MinecraftClient client, Runnable action) {

@@ -29,7 +29,10 @@
   "key.noellesroles.ability": "角色技能",
   "key.noellesroles.ability2": "角色技能2",
   "key.noellesroles.assist_interface": "开关辅助界面",
+  "key.noellesroles.config_screen": "打开配置界面",
   "key.noellesroles.role_info": "查看职业介绍",
+  "config_screen.hint_ingame": "按 [%s] 打开配置界面",
+  "config_screen.hint_lobby": "按 [%s] 打开配置界面",
 
   "category.noellesroles.testing_removed": "NoellesRoles 测试",
   "itemGroup.noellesroles.items": "NoellesRoles道具",
