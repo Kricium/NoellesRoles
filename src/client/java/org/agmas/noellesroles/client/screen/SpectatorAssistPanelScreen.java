@@ -305,6 +305,14 @@ public class SpectatorAssistPanelScreen extends Screen {
             this.close();
             return true;
         }
+        if (NoellesrolesClient.roleInfoBind != null
+                && NoellesrolesClient.roleInfoBind.matchesKey(keyCode, scanCode)) {
+            NoellesrolesClient.markRoleInfoKeyHandled();
+            if (this.client != null) {
+                this.client.setScreen(new RoleInfoScreen());
+            }
+            return true;
+        }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 

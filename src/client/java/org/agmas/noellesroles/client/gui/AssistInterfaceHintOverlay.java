@@ -38,37 +38,45 @@ public final class AssistInterfaceHintOverlay {
         if (mc.currentScreen != null) return;
 
         GameWorldComponent gwc = GameWorldComponent.KEY.get(mc.player.getWorld());
-        Text assistHint = getAssistHintText(mc, gwc);
+        Text roleInfoHint = getRoleInfoHintText(mc, gwc);
+        Text spectatorHint = getSpectatorHintText(mc, gwc);
         Text configHint = getConfigHintText(mc, gwc);
-        if (assistHint == null && configHint == null) return;
+        if (roleInfoHint == null && spectatorHint == null && configHint == null) return;
 
         int color = getPulseColor();
         HudRenderHelper.pushAboveVoiceChatHudLayer(context);
         if (gwc.isRunning()) {
-            renderInGameHints(context, textRenderer, assistHint, configHint, color);
+            renderInGameHints(context, textRenderer, roleInfoHint, spectatorHint, configHint, color);
         } else {
-            renderLobbyHints(context, textRenderer, assistHint, configHint, color);
+            renderLobbyHints(context, textRenderer, roleInfoHint, configHint, color);
         }
         HudRenderHelper.popAboveVoiceChatHudLayer(context);
     }
 
-    private static void renderInGameHints(DrawContext context, TextRenderer textRenderer, Text assistHint, Text configHint, int color) {
-        int assistBaseY = context.getScaledWindowHeight() - SCREEN_MARGIN;
+    private static void renderInGameHints(DrawContext context, TextRenderer textRenderer, Text roleInfoHint, Text spectatorHint, Text configHint, int color) {
+        int drawBaseY = context.getScaledWindowHeight() - SCREEN_MARGIN;
         if (configHint != null) {
             int configHeight = textRenderer.getWrappedLinesHeight(configHint, Integer.MAX_VALUE);
-            int configDrawY = assistBaseY - configHeight;
+            int configDrawY = drawBaseY - configHeight;
             context.drawTextWithShadow(textRenderer, configHint, SCREEN_MARGIN, configDrawY, color);
-            assistBaseY = configDrawY - STACK_SPACING;
+            drawBaseY = configDrawY - STACK_SPACING;
         }
 
-        if (assistHint != null) {
-            int assistHeight = textRenderer.getWrappedLinesHeight(assistHint, Integer.MAX_VALUE);
-            int assistDrawY = assistBaseY - assistHeight;
-            context.drawTextWithShadow(textRenderer, assistHint, SCREEN_MARGIN, assistDrawY, color);
+        if (roleInfoHint != null) {
+            int roleInfoHeight = textRenderer.getWrappedLinesHeight(roleInfoHint, Integer.MAX_VALUE);
+            int roleInfoDrawY = drawBaseY - roleInfoHeight;
+            context.drawTextWithShadow(textRenderer, roleInfoHint, SCREEN_MARGIN, roleInfoDrawY, color);
+            drawBaseY = roleInfoDrawY - STACK_SPACING;
+        }
+
+        if (spectatorHint != null) {
+            int spectatorHeight = textRenderer.getWrappedLinesHeight(spectatorHint, Integer.MAX_VALUE);
+            int spectatorDrawY = drawBaseY - spectatorHeight;
+            context.drawTextWithShadow(textRenderer, spectatorHint, SCREEN_MARGIN, spectatorDrawY, color);
         }
     }
 
-    private static void renderLobbyHints(DrawContext context, TextRenderer textRenderer, Text assistHint, Text configHint, int color) {
+    private static void renderLobbyHints(DrawContext context, TextRenderer textRenderer, Text roleInfoHint, Text configHint, int color) {
         int rightEdge = context.getScaledWindowWidth() - SCREEN_MARGIN;
         int drawY = context.getScaledWindowHeight() - SCREEN_MARGIN;
 
@@ -77,33 +85,52 @@ public final class AssistInterfaceHintOverlay {
             context.drawTextWithShadow(textRenderer, configHint, rightEdge - textRenderer.getWidth(configHint), drawY, color);
             drawY -= STACK_SPACING;
         }
-        if (assistHint != null) {
-            drawY -= textRenderer.getWrappedLinesHeight(assistHint, Integer.MAX_VALUE);
-            context.drawTextWithShadow(textRenderer, assistHint, rightEdge - textRenderer.getWidth(assistHint), drawY, color);
+        if (roleInfoHint != null) {
+            drawY -= textRenderer.getWrappedLinesHeight(roleInfoHint, Integer.MAX_VALUE);
+            context.drawTextWithShadow(textRenderer, roleInfoHint, rightEdge - textRenderer.getWidth(roleInfoHint), drawY, color);
         }
     }
 
-    private static Text getAssistHintText(MinecraftClient mc, GameWorldComponent gwc) {
+    private static Text getRoleInfoHintText(MinecraftClient mc, GameWorldComponent gwc) {
+        if (!NoellesRolesConfig.HANDLER.instance().showAssistInterfaceHint) {
+            return null;
+        }
+        if (NoellesrolesClient.roleInfoBind == null) {
+            return null;
+        }
+
+        if (!gwc.isRunning()) {
+            String keyName = NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
+            return Text.translatable("role_info.hint", keyName);
+        }
+
+        boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
+        boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
+        boolean isInGameSpectator = SpectatorStateHelper.isInGameRealSpectator(mc.player, gwc);
+        if (!canOpenRoleInfo && !isInGameSpectator) {
+            return null;
+        }
+
+        String keyName = NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
+        return Text.translatable("role_info.hint", keyName);
+    }
+
+    private static Text getSpectatorHintText(MinecraftClient mc, GameWorldComponent gwc) {
         if (!NoellesRolesConfig.HANDLER.instance().showAssistInterfaceHint) {
             return null;
         }
         if (NoellesrolesClient.assistInterfaceBind == null) {
             return null;
         }
-
-        boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(mc.player);
-        boolean canOpenRoleInfo = gwc.hasAnyRole(mc.player) && (GameFunctions.isPlayerPlayingAndAlive(mc.player) || isSwallowed);
-        boolean isInGameSpectator = SpectatorStateHelper.isInGameRealSpectator(mc.player, gwc);
-        boolean canOpenSpectatorPanel = !canOpenRoleInfo && isInGameSpectator;
-        boolean canOpenInLobby = !gwc.isRunning() && gwc.hasAnyRole(mc.player);
-        if (!canOpenRoleInfo && !canOpenSpectatorPanel && !canOpenInLobby) {
+        if (!gwc.isRunning()) {
+            return null;
+        }
+        if (!SpectatorStateHelper.isInGameRealSpectator(mc.player, gwc)) {
             return null;
         }
 
         String keyName = NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
-        return canOpenSpectatorPanel
-                ? Text.translatable("assist_interface.spectator_hint", keyName)
-                : Text.translatable("assist_interface.hint", keyName);
+        return Text.translatable("assist_interface.spectator_hint", keyName);
     }
 
     private static Text getConfigHintText(MinecraftClient mc, GameWorldComponent gwc) {

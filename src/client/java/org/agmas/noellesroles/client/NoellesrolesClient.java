@@ -110,6 +110,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static KeyBinding abilityBind;
     public static KeyBinding ability2Bind;
     public static KeyBinding assistInterfaceBind;
+    public static KeyBinding roleInfoBind;
     public static KeyBinding configScreenBind;
     public static PlayerBodyEntity targetBody;
     public static PlayerEntity pathogenNearestTarget;
@@ -127,6 +128,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
     private static boolean wasAssistInterfacePressed = false;
+    private static boolean wasRoleInfoPressed = false;
     private static boolean wasConfigScreenPressed = false;
     private static int swallowedLockedSelectedSlot = -1;
     private static boolean wasClientPlayerSwallowedLastTick = false;
@@ -144,6 +146,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
         ability2Bind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability2", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Y, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
+        roleInfoBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".role_info", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_U, "category.wathe.keybinds"));
         configScreenBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".config_screen", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "category.wathe.keybinds"));
         // 加载角色信息配置
         RoleInfoRegistry.load();
@@ -831,6 +834,35 @@ public class NoellesrolesClient implements ClientModInitializer {
                     }
                 });
             }
+            boolean isRoleInfoPressed = roleInfoBind != null && roleInfoBind.isPressed();
+            if (isRoleInfoPressed && !wasRoleInfoPressed) {
+                if (MinecraftClient.getInstance().player == null) {
+                    wasRoleInfoPressed = true;
+                    return;
+                }
+                GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
+
+                if (MinecraftClient.getInstance().currentScreen instanceof RoleInfoScreen) {
+                    MinecraftClient.getInstance().setScreen(null);
+                } else if (MinecraftClient.getInstance().currentScreen == null) {
+                    if (!gwc.isRunning()) {
+                        MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                        return;
+                    }
+                    boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
+                    boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
+                    boolean hasRole = gwc.hasAnyRole(MinecraftClient.getInstance().player);
+                    boolean isDeadSpectator = gwc.isRunning()
+                            && SpectatorStateHelper.isRealSpectator(MinecraftClient.getInstance().player);
+                    boolean canOpenRoleInfo = (hasRole && (isAlive || isSwallowed)) || isDeadSpectator;
+
+                    if (canOpenRoleInfo) {
+                        MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
+                    }
+                }
+            }
+            wasRoleInfoPressed = isRoleInfoPressed;
+
             boolean isAssistPressed = assistInterfaceBind != null && assistInterfaceBind.isPressed();
             if (isAssistPressed && !wasAssistInterfacePressed) {
                 if (MinecraftClient.getInstance().player == null) {
@@ -838,23 +870,13 @@ public class NoellesrolesClient implements ClientModInitializer {
                     return;
                 }
                 GameWorldComponent gwc = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());
-                if (!gwc.isRunning()) {
-                    wasAssistInterfacePressed = true;
-                    return;
-                }
 
-                if (MinecraftClient.getInstance().currentScreen instanceof RoleInfoScreen
-                        || MinecraftClient.getInstance().currentScreen instanceof SpectatorAssistPanelScreen) {
+                if (MinecraftClient.getInstance().currentScreen instanceof SpectatorAssistPanelScreen) {
                     MinecraftClient.getInstance().setScreen(null);
                 } else if (MinecraftClient.getInstance().currentScreen == null) {
-                    boolean isAlive = GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player);
-                    boolean isSwallowed = SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player);
-                    boolean canOpenRoleInfo = gwc.hasAnyRole(MinecraftClient.getInstance().player) && (isAlive || isSwallowed);
-                    boolean isDeadSpectator = SpectatorStateHelper.isRealSpectator(MinecraftClient.getInstance().player);
-
-                    if (canOpenRoleInfo) {
-                        MinecraftClient.getInstance().setScreen(new RoleInfoScreen());
-                    } else if (isDeadSpectator) {
+                    boolean isDeadSpectator = gwc.isRunning()
+                            && SpectatorStateHelper.isRealSpectator(MinecraftClient.getInstance().player);
+                    if (isDeadSpectator) {
                         MinecraftClient.getInstance().setScreen(new SpectatorAssistPanelScreen());
                     }
                 }
@@ -991,6 +1013,10 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     public static void markAssistInterfaceKeyHandled() {
         wasAssistInterfacePressed = true;
+    }
+
+    public static void markRoleInfoKeyHandled() {
+        wasRoleInfoPressed = true;
     }
 
     public static void markConfigScreenKeyHandled() {
