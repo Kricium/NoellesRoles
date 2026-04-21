@@ -2,6 +2,7 @@ package org.agmas.noellesroles.client;
 
 import com.google.common.collect.Maps;
 import dev.doctor4t.wathe.api.event.*;
+import dev.doctor4t.wathe.api.WatheRoles;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerMoodComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
@@ -40,6 +41,7 @@ import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
+import org.agmas.noellesroles.client.gui.LooseEndsRadarHudRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
 import org.agmas.noellesroles.client.configscreen.NoellesRolesConfigScreenFactory;
 import org.agmas.noellesroles.client.silencer.SilencedTalkBubbleCleaner;
@@ -57,6 +59,7 @@ import org.agmas.noellesroles.client.screen.CriminalReasonerScreen;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
@@ -96,6 +99,7 @@ import net.minecraft.client.render.entity.EmptyEntityRenderer;
 import org.agmas.noellesroles.client.renderer.ThrowingAxeEntityRenderer;
 import org.agmas.noellesroles.client.roleinfo.RoleInfoRegistry;
 import org.agmas.noellesroles.client.renderer.HunterTrapEntityRenderer;
+import org.agmas.noellesroles.client.util.NoellesRolesItemTooltips;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -157,6 +161,8 @@ public class NoellesrolesClient implements ClientModInitializer {
                     if (!(entity instanceof PlayerEntity player)) return 0.0f;
                     return player.getItemCooldownManager().isCoolingDown(stack.getItem()) ? 1.0f : 0.0f;
                 });
+
+        NoellesRolesItemTooltips.register();
 
         // 注册世界BGM管理器
         WorldMusicManager.register();
@@ -220,6 +226,8 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
             return null;
         });
+
+        ClientTickEvents.END_CLIENT_TICK.register(client -> LooseEndsRadarHudRenderer.tick());
 
         // 注册 CanSeeBodyRole 监听器：高理智的验尸官查看尸体时可获得完整验尸信息
         CanSeeBodyRole.EVENT.register(viewer -> {
@@ -475,6 +483,12 @@ public class NoellesrolesClient implements ClientModInitializer {
             boolean isInGameSpectator = isTrapSpectatorViewer(localPlayer, gameWorld);
             if (!WatheClient.isPlayerPlayingAndAlive() && !isInGameSpectator) return null;
             if (!trap.canBeSeenBy(localPlayer)) return null;
+            if (trap.isPoisoned()) {
+                return GetInstinctHighlight.HighlightResult.withKeybind(0x0B6623);
+            }
+            if (gameWorld.isRole(localPlayer, WatheRoles.LOOSE_END)) {
+                return GetInstinctHighlight.HighlightResult.withKeybind(WatheRoles.LOOSE_END.color());
+            }
             if (!gameWorld.canUseKillerFeatures(localPlayer) && !isInGameSpectator) {
                 return null;
             }
@@ -899,6 +913,7 @@ public class NoellesrolesClient implements ClientModInitializer {
             ClientPlayerEntity player = MinecraftClient.getInstance().player;
             if (player != null) {
                 boolean swallowed = SwallowedPlayerComponent.isPlayerSwallowed(player);
+                boolean looseEndOpeningPhase = LooseEndPlayerComponent.KEY.get(player).isOpeningPhased();
                 if (swallowed) {
                     if (!wasClientPlayerSwallowedLastTick) {
                         swallowedLockedYaw = player.getYaw();
@@ -942,9 +957,19 @@ public class NoellesrolesClient implements ClientModInitializer {
                     player.setInvisible(true);
                     player.setVelocity(0.0, 0.0, 0.0);
                     client.gameRenderer.setRenderHand(false);
+                } else if (looseEndOpeningPhase) {
+                    player.noClip = false;
+                    player.setInvisible(true);
+                    player.setOnGround(true);
+                    player.fallDistance = 0.0F;
+                    client.gameRenderer.setRenderHand(false);
                 } else {
                     swallowedLockedSelectedSlot = -1;
                     if (wasClientPlayerSwallowedLastTick) {
+                        player.noClip = false;
+                        player.setInvisible(false);
+                        client.gameRenderer.setRenderHand(true);
+                    } else {
                         player.noClip = false;
                         player.setInvisible(false);
                         client.gameRenderer.setRenderHand(true);

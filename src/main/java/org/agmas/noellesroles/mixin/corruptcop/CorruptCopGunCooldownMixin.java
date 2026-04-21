@@ -5,9 +5,11 @@ import dev.doctor4t.wathe.index.WatheItems;
 import dev.doctor4t.wathe.util.GunShootPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.corruptcop.CorruptCopPlayerComponent;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GunShootPayload.Receiver.class)
 public abstract class CorruptCopGunCooldownMixin {
+    private static final int LOOSE_END_REVOLVER_COOLDOWN_TICKS = 20 * 60 * 3;
 
     @Inject(method = "receive", at = @At("HEAD"), cancellable = true, remap = false)
     private void noellesroles$blockGunOnSwallowedPlayer(GunShootPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
@@ -46,6 +49,37 @@ public abstract class CorruptCopGunCooldownMixin {
                 // 重置为黑警时刻的冷却时间
                 player.getItemCooldownManager().set(WatheItems.REVOLVER, customCooldown);
             }
+        }
+
+        if (gameWorldComponent.isRole(player, dev.doctor4t.wathe.api.WatheRoles.LOOSE_END)) {
+            LooseEndPlayerComponent looseEndComponent = LooseEndPlayerComponent.KEY.get(player);
+            int queuedCooldown = looseEndComponent.consumeQueuedRevolverCooldown();
+            if (queuedCooldown > 0) {
+                player.getItemCooldownManager().set(WatheItems.REVOLVER, queuedCooldown);
+            }
+        }
+    }
+
+    @Inject(
+            method = "receive",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Ldev/doctor4t/wathe/game/GameFunctions;killPlayer(Lnet/minecraft/class_3222;ZLnet/minecraft/class_3222;Lnet/minecraft/class_2960;)V",
+                    ordinal = 1,
+                    shift = At.Shift.BEFORE
+            ),
+            remap = false
+    )
+    private void noellesroles$handleLooseEndRevolverHit(GunShootPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
+        ServerPlayerEntity player = context.player();
+        Entity target = player.getServerWorld().getEntityById(payload.target());
+        GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorldComponent.isRole(player, dev.doctor4t.wathe.api.WatheRoles.LOOSE_END)
+                && target instanceof PlayerEntity targetPlayer
+                && dev.doctor4t.wathe.game.GameFunctions.isPlayerAliveAndSurvival(targetPlayer)) {
+            LooseEndPlayerComponent looseEndComponent = LooseEndPlayerComponent.KEY.get(player);
+            looseEndComponent.consumeOneRevolver();
+            looseEndComponent.queueRevolverCooldown(LOOSE_END_REVOLVER_COOLDOWN_TICKS);
         }
     }
 }

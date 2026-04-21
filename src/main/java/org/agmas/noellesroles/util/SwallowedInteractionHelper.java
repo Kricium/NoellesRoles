@@ -2,6 +2,7 @@ package org.agmas.noellesroles.util;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,7 @@ public final class SwallowedInteractionHelper {
     }
 
     public static boolean blocksTarget(@Nullable Entity target) {
-        return target instanceof PlayerEntity player && SwallowedPlayerComponent.isPlayerSwallowed(player);
+        return target instanceof PlayerEntity player && isUntargetablePlayer(player);
     }
 
     public static boolean blocksPlayerTarget(@Nullable PlayerEntity target) {
@@ -31,7 +32,7 @@ public final class SwallowedInteractionHelper {
     }
 
     public static boolean blocksPlayerTarget(@Nullable PlayerEntity target, TargetingRule rule) {
-        if (target == null || !SwallowedPlayerComponent.isPlayerSwallowed(target)) {
+        if (target == null || !isUntargetablePlayer(target)) {
             return false;
         }
         return !isWhitelisted(rule);
@@ -47,5 +48,9 @@ public final class SwallowedInteractionHelper {
 
     public static boolean isSwallowedTarget(@Nullable PlayerEntity target) {
         return target != null && SwallowedPlayerComponent.isPlayerSwallowed(target);
+    }
+
+    public static boolean isUntargetablePlayer(@Nullable PlayerEntity target) {
+        return target != null && (SwallowedPlayerComponent.isPlayerSwallowed(target) || LooseEndPlayerComponent.KEY.get(target).isOpeningPhased());
     }
 }

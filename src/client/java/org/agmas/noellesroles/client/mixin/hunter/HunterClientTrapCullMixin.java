@@ -2,6 +2,7 @@ package org.agmas.noellesroles.client.mixin.hunter;
 
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
+import org.agmas.noellesroles.client.util.HunterTrapVisibilityHelper;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +20,7 @@ public class HunterClientTrapCullMixin {
         if (!(net.minecraft.client.MinecraftClient.getInstance().player instanceof ClientPlayerEntity player)) {
             return;
         }
-        if (!trap.canRenderFor(player)) {
+        if (!HunterTrapVisibilityHelper.shouldRenderForClient(trap, player)) {
             cir.setReturnValue(false);
         }
     }

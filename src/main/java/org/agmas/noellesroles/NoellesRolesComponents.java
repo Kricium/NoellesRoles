@@ -30,6 +30,8 @@ import org.agmas.noellesroles.orthopedist.OrthopedistPlayerComponent;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.agmas.noellesroles.survivalmaster.SurvivalMasterPlayerComponent;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
+import org.agmas.noellesroles.looseend.LooseEndsRadarWorldComponent;
 import org.agmas.noellesroles.music.WorldMusicComponent;
 import org.agmas.noellesroles.scavenger.HiddenBodiesWorldComponent;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
@@ -75,6 +77,7 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, FerrymanPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(FerrymanPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, CommanderPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CommanderPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, SaintPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(SaintPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, LooseEndPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(LooseEndPlayerComponent::new);
     }
 
     @Override
@@ -82,5 +85,6 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         worldComponentFactoryRegistry.register(ConfigWorldComponent.KEY, ConfigWorldComponent::new);
         worldComponentFactoryRegistry.register(WorldMusicComponent.KEY, WorldMusicComponent::new);
         worldComponentFactoryRegistry.register(HiddenBodiesWorldComponent.KEY, HiddenBodiesWorldComponent::new);
+        worldComponentFactoryRegistry.register(LooseEndsRadarWorldComponent.KEY, LooseEndsRadarWorldComponent::new);
     }
 }

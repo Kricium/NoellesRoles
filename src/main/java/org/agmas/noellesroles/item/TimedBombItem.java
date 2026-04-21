@@ -1,5 +1,7 @@
 package org.agmas.noellesroles.item;
 
+import dev.doctor4t.wathe.api.WatheRoles;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -67,6 +69,9 @@ public class TimedBombItem extends Item {
                 return ActionResult.PASS;
             }
             targetComponent.placeBomb(user);
+            if (GameWorldComponent.KEY.get(world).isRole(user, WatheRoles.LOOSE_END)) {
+                user.getItemCooldownManager().set(this, 20 * 30);
+            }
             stack.decrementUnlessCreative(1, user);
             return ActionResult.CONSUME; // 成功但不挥手
         }

@@ -4,11 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import org.agmas.noellesroles.ModEffects;
-import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
-import org.agmas.noellesroles.scavenger.ScavengerBodyHelper;
-import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.NoCollisionStateHelper;
 import org.spongepowered.asm.mixin.Mixin;
 
 /**
@@ -31,27 +27,13 @@ public class LivingEntityCollisionMixin {
 
     @WrapMethod(method = "pushAway")
     private void noellesroles$disablePushAway(Entity entity, Operation<Void> original) {
-        if (shouldDisableCollision((Entity) (Object) this) || shouldDisableCollision(entity)) {
+        if (NoCollisionStateHelper.shouldDisableCollision((Entity) (Object) this) || NoCollisionStateHelper.shouldDisableCollision(entity)) {
             return;
         }
         original.call(entity);
     }
 
     private boolean shouldDisableCollision() {
-        return shouldDisableCollision((Entity) (Object) this);
-    }
-
-    private static boolean shouldDisableCollision(Entity entity) {
-        if (ScavengerBodyHelper.isHiddenBody(entity)) {
-            return true;
-        }
-        if (entity instanceof LivingEntity living && living.hasStatusEffect(ModEffects.NO_COLLISION)) {
-            return true;
-        }
-        if (entity instanceof PlayerEntity player) {
-            MorphlingPlayerComponent comp = MorphlingPlayerComponent.KEY.get(player);
-            return comp.corpseMode || SwallowedPlayerComponent.isPlayerSwallowed(player);
-        }
-        return false;
+        return NoCollisionStateHelper.shouldDisableCollision((Entity) (Object) this);
     }
 }

@@ -12,6 +12,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 
 import java.util.ArrayList;
@@ -88,7 +89,9 @@ public final class HiddenEquipmentHelper {
             ItemStack stack = pair.getSecond();
 
             if ((slot == EquipmentSlot.MAINHAND || slot == EquipmentSlot.OFFHAND)
-                    && (SwallowedPlayerComponent.isPlayerSwallowed(holder) || shouldHideItem(stack, holder))) {
+                    && (SwallowedPlayerComponent.isPlayerSwallowed(holder)
+                    || LooseEndPlayerComponent.KEY.get(holder).isOpeningPhased()
+                    || shouldHideItem(stack, holder))) {
                 filtered.add(Pair.of(slot, ItemStack.EMPTY));
                 modified = true;
             } else {

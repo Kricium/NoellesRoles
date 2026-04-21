@@ -26,6 +26,8 @@
     "saint.SaintAttackBlockMixin",
     "saint.SaintInteractionBlockMixin",
     "saint.SaintItemUseMixin",
+    "looseend.LooseEndOpeningPhaseEntityMixin",
+    "looseend.LooseEndOpeningPhaseStepSoundMixin",
     "taotie.SpectatorTeleportMixin",
     "taotie.SwallowedPlayerAttackBlockMixin",
     "taotie.SwallowedPlayerEntityInteractionBlockMixin",
@@ -43,13 +45,16 @@
     "silencer.SilencerBatSoundMixin",
     "wathe.GameRoundEndComponentMixin",
     "wathe.GameRecordManagerDeathMixin",
+    "wathe.GrenadeEntityMixin",
+    "wathe.LooseEndsGameModeMixin",
     "wathe.ScoreboardRoleSelectorComponentAccessor",
     "wathe.ScoreboardRoleSelectorComponentMixin",
     "silencer.SilencerPsychoStopMixin",
     "accessor.ItemCooldownManagerAccessor",
     "accessor.ItemCooldownEntryAccessor",
     "accessor.ServerItemCooldownManagerAccessor",
-    "bartender.StimulationCooldownMixin"
+    "bartender.StimulationCooldownMixin",
+    "stealth.StealthSprintingParticlesMixin"
   ],
   "injectors": {
     "defaultRequire": 1

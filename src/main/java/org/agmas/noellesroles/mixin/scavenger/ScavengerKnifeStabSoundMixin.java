@@ -1,6 +1,7 @@
 package org.agmas.noellesroles.mixin.scavenger;
 
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.api.WatheRoles;
 import dev.doctor4t.wathe.util.KnifeStabPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.Entity;
@@ -17,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KnifeStabPayload.Receiver.class)
 public abstract class ScavengerKnifeStabSoundMixin {
+    private static final int LOOSE_END_KNIFE_COOLDOWN_TICKS = 20 * 45;
 
     @Inject(method = "receive", at = @At("HEAD"), cancellable = true, remap = false)
     private void noellesroles$blockKnifeStabOnSwallowedPlayer(KnifeStabPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
@@ -42,5 +44,19 @@ public abstract class ScavengerKnifeStabSoundMixin {
             return;
         }
         target.playSound(sound, volume, pitch);
+    }
+
+    @Inject(method = "receive", at = @At("RETURN"), remap = false)
+    private void noellesroles$applyLooseEndKnifeCooldown(KnifeStabPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
+        ServerPlayerEntity attacker = context.player();
+        Entity target = attacker.getServerWorld().getEntityById(payload.target());
+        if (!(target instanceof PlayerEntity) || SwallowedInteractionHelper.blocksActor(attacker) || SwallowedInteractionHelper.blocksTarget(target)) {
+            return;
+        }
+
+        GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(attacker.getWorld());
+        if (gameWorldComponent.isRole(attacker, WatheRoles.LOOSE_END)) {
+            attacker.getItemCooldownManager().set(dev.doctor4t.wathe.index.WatheItems.KNIFE, LOOSE_END_KNIFE_COOLDOWN_TICKS);
+        }
     }
 }

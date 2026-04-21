@@ -166,7 +166,12 @@
   "announcement.win.toxicologist": "乘客勝利",
 
   "item.noellesroles.master_key": "萬能鑰匙",
+  "item.noellesroles.medical_splint": "醫用夾板",
+  "item.noellesroles.medical_splint.tooltip": "持續右鍵蓄力使用\n蓄力期間無法移動\n每持續2秒獲得1秒正骨\n停止蓄力或切換物品欄後消耗",
   "item.noellesroles.neutral_master_key": "中立萬能鑰匙",
+  "item.noellesroles.portable_radar": "便攜式雷達",
+  "item.noellesroles.portable_radar.tooltip": "右鍵啟動一次雷達掃描\n使所有參與對局的玩家發光5秒\n使用者自己不會發光\n使用後消失",
+  "item.noellesroles.portable_radar.busy": "雷達正在掃描中，暫時無法使用。",
   "item.noellesroles.defense_vial": "防禦藥劑",
   "item.noellesroles.defense_vial.tooltip": "右鍵點擊飲品托盤使用\n清除托盤上的所有毒藥\n飲用被防禦飲品的人可額外承受一擊。",
 
@@ -175,6 +180,8 @@
 
   "item.noellesroles.iron_man_vial": "鐵人藥劑",
   "item.noellesroles.iron_man_vial.tooltip": "對3格內的玩家使用\n使目標獲得護甲buff\n可抵禦一次致命傷害",
+  "item.noellesroles.adrenaline": "腎上腺素",
+  "item.noellesroles.adrenaline.tooltip": "長按右鍵蓄力2秒後注射並消耗\n使用後獲得速度II 7秒\n使用後獲得亢奮 7秒",
 
   "death_reason.noellesroles.voodoo": "巫毒魔法。",
 
@@ -436,6 +443,9 @@
 
   "replay.item_use.noellesroles.poison_needle": "%s 用§5毒針§r刺了 %s",
   "replay.item_use.noellesroles.poison_gas_bomb": "%s 投擲了§5毒氣彈§r",
+  "replay.item_use.noellesroles.portable_radar": "%s 啟動了§b便攜式雷達§r",
+  "replay.item_use.noellesroles.adrenaline": "%s 注射了§b腎上腺素§r",
+  "replay.item_use.noellesroles.medical_splint": "%s 使用了§b醫用夾板§r",
 
   "item.noellesroles.catalyst": "催化劑",
   "item.noellesroles.catalyst.tooltip": "對中毒玩家使用：5秒內毒發身亡\n同時重置毒針冷卻\n對空氣或非中毒玩家使用僅重置冷卻",
@@ -535,5 +545,7 @@
   "screen.role_target.morphling.title": "變形選單",
   "screen.role_target.morphling.subtitle": "選擇一名玩家進行易容",
   "screen.role_target.morphling.empty": "目前沒有可變形的目標",
+  "subtitle.noellesroles.loose_ends_radar_countdown": "雷達掃描倒數計時",
+  "subtitle.noellesroles.loose_ends_radar_active": "雷達掃描中",
   "game.win.survival_master": "生存大師在某個角落裡存活了下來……"
 }

@@ -19,6 +19,7 @@ import net.minecraft.util.math.random.Random;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.mixin.riotpatrol.ItemRendererInvoker;
+import org.agmas.noellesroles.client.util.HunterTrapVisibilityHelper;
 import org.agmas.noellesroles.entity.HunterTrapEntity;
 
 public class HunterTrapEntityRenderer extends EntityRenderer<HunterTrapEntity> {
@@ -76,7 +77,7 @@ public class HunterTrapEntityRenderer extends EntityRenderer<HunterTrapEntity> {
     @Override
     public boolean shouldRender(HunterTrapEntity entity, Frustum frustum, double x, double y, double z) {
         var player = MinecraftClient.getInstance().player;
-        return player != null && entity.canRenderFor(player);
+        return player != null && HunterTrapVisibilityHelper.shouldRenderForClient(entity, player);
     }
 
     @Override

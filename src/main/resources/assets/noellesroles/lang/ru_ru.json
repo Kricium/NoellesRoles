@@ -142,6 +142,10 @@
 
   "item.noellesroles.throwing_axe": "Метательный топор",
   "item.noellesroles.throwing_axe.tooltip": "Зажмите ПКМ для зарядки, отпустите для броска\nЧем дольше зарядка, тем дальше полёт\nПробивает несколько игроков, мгновенное убийство",
+  "item.noellesroles.medical_splint": "Медицинская шина",
+  "item.noellesroles.medical_splint.tooltip": "Удерживайте ПКМ для непрерывного применения\nВо время применения нельзя двигаться\nКаждые 2 сек. даёт 1 сек. вправления\nТратится при отпускании или смене слота",
+  "item.noellesroles.adrenaline": "Адреналин",
+  "item.noellesroles.adrenaline.tooltip": "Удерживайте ПКМ 2 секунды, чтобы вколоть и потратить\nДаёт Скорость II на 7 сек.\nДаёт Эйфорию на 7 сек.",
 
   "death_reason.noellesroles.throwing_axe": "рассечён метательным топором",
 
