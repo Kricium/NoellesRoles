@@ -1,5 +1,6 @@
 package org.agmas.noellesroles.client.mixin.looseend;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
@@ -25,7 +26,11 @@ public class LooseEndOpeningPhasePlayerLabelMixin {
             float tickDelta,
             CallbackInfo ci
     ) {
-        if (LooseEndPlayerComponent.KEY.get(player).isOpeningPhased()) {
+        var localPlayer = MinecraftClient.getInstance().player;
+        if (LooseEndPlayerComponent.KEY.get(player).isOpeningPhased()
+                || (localPlayer != null
+                && LooseEndPlayerComponent.KEY.get(localPlayer).isOpeningPhased()
+                && !player.getUuid().equals(localPlayer.getUuid()))) {
             ci.cancel();
         }
     }

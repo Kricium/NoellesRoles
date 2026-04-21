@@ -42,6 +42,12 @@ public class NoellesRolesConfig {
     @SerialEntry(comment = "Visual theme preset used by the handmade config screen example")
     public UiThemePreset uiThemePreset = UiThemePreset.MODERN;
 
+    @SerialEntry(comment = "Map registry id used by Death Arena for loading spawn rooms and map enhancements.")
+    public String deathArenaMapId = "wathe:yangguan_siwang";
+
+    @SerialEntry(comment = "World dimension id used by Death Arena. If blank, the dimension from deathArenaMapId will be used.")
+    public String deathArenaDimensionId = "wathe:yangguan_siwang";
+
     @SerialEntry(comment = "Lock Sound Physics Remastered config to the server-defined values while connected")
     public boolean lockSoundPhysicsRemasteredConfig = true;
 
@@ -119,6 +125,8 @@ public class NoellesRolesConfig {
         this.showConfigScreenHint = other.showConfigScreenHint;
         this.preferredServerLabel = other.preferredServerLabel;
         this.uiThemePreset = other.uiThemePreset;
+        this.deathArenaMapId = other.deathArenaMapId;
+        this.deathArenaDimensionId = other.deathArenaDimensionId;
         this.lockSoundPhysicsRemasteredConfig = other.lockSoundPhysicsRemasteredConfig;
         this.soundPhysicsRemasteredLockedValues = new LinkedHashMap<>(other.soundPhysicsRemasteredLockedValues);
         this.lockTalkBubblesConfig = other.lockTalkBubblesConfig;

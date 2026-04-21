@@ -27,8 +27,24 @@ public final class SwallowedInteractionHelper {
         return target instanceof PlayerEntity player && isUntargetablePlayer(player);
     }
 
+    public static boolean blocksTargetForViewer(@Nullable PlayerEntity viewer, @Nullable Entity target) {
+        return target instanceof PlayerEntity player && blocksPlayerTargetForViewer(viewer, player);
+    }
+
     public static boolean blocksPlayerTarget(@Nullable PlayerEntity target) {
         return blocksPlayerTarget(target, TargetingRule.DEFAULT);
+    }
+
+    public static boolean blocksPlayerTargetForViewer(@Nullable PlayerEntity viewer, @Nullable PlayerEntity target) {
+        if (target == null) {
+            return false;
+        }
+        if (viewer != null
+                && !target.getUuid().equals(viewer.getUuid())
+                && LooseEndPlayerComponent.KEY.get(viewer).isOpeningPhased()) {
+            return true;
+        }
+        return blocksPlayerTarget(target);
     }
 
     public static boolean blocksPlayerTarget(@Nullable PlayerEntity target, TargetingRule rule) {

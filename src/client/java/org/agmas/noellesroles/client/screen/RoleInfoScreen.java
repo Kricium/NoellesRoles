@@ -397,6 +397,7 @@ public class RoleInfoScreen extends Screen {
         TreeNode killer = new TreeNode(RoleInfoRegistry.CATEGORY_KILLER, RoleInfoRegistry.resolveText("tr:roleinfo.category.killer.name"), true, RoleInfoRegistry.CATEGORY_CLASSIC);
         TreeNode neutral = new TreeNode(RoleInfoRegistry.CATEGORY_NEUTRAL, RoleInfoRegistry.resolveText("tr:roleinfo.category.neutral.name"), true, RoleInfoRegistry.CATEGORY_CLASSIC);
         TreeNode looseEnds = new TreeNode(RoleInfoRegistry.CATEGORY_LOOSE_ENDS, RoleInfoRegistry.resolveText("tr:roleinfo.category.loose_ends.name"), true, null);
+        TreeNode deathArena = new TreeNode(RoleInfoRegistry.CATEGORY_DEATH_ARENA, RoleInfoRegistry.resolveText("tr:roleinfo.category.death_arena.name"), true, null);
 
         appendRoleChildren(passenger, rolesByFaction.get(RoleInfoRegistry.CATEGORY_PASSENGER));
         appendRoleChildren(killer, rolesByFaction.get(RoleInfoRegistry.CATEGORY_KILLER));
@@ -418,6 +419,7 @@ public class RoleInfoScreen extends Screen {
 
         root.children.add(classic);
         root.children.add(looseEnds);
+        root.children.add(deathArena);
         return root;
     }
 
@@ -460,6 +462,10 @@ public class RoleInfoScreen extends Screen {
             selectedEntryId = rootId;
             return;
         }
+        if (RoleInfoRegistry.CATEGORY_DEATH_ARENA.equals(rootId)) {
+            selectedEntryId = rootId;
+            return;
+        }
 
         selectedEntryId = currentRoleId;
         expandedCategoryIds.add(rootId);
@@ -472,6 +478,7 @@ public class RoleInfoScreen extends Screen {
     private void expandAllCategories() {
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_CLASSIC);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_LOOSE_ENDS);
+        expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_DEATH_ARENA);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_PASSENGER);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_KILLER);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_NEUTRAL);
@@ -575,10 +582,20 @@ public class RoleInfoScreen extends Screen {
                     WatheGameModes.MURDER_ID,
                     RoleInfoRegistry.CATEGORY_CLASSIC,
                     RoleInfoRegistry.CATEGORY_CLASSIC_OVERVIEW,
+                    "roleinfo.category.classic.subtitle",
                     false
             );
         }
         GameWorldComponent gwc = GameWorldComponent.KEY.get(client.player.getWorld());
+        if (NoellesrolesClient.isDeathArenaActiveForClientPlayer()) {
+            return new ModeContext(
+                    WatheGameModes.LOOSE_ENDS_ID,
+                    RoleInfoRegistry.CATEGORY_DEATH_ARENA,
+                    RoleInfoRegistry.CATEGORY_DEATH_ARENA_OVERVIEW,
+                    "roleinfo.category.death_arena.subtitle",
+                    true
+            );
+        }
         GameMode gameMode = gwc.getGameMode();
         Identifier gameModeId = gameMode != null ? gameMode.identifier : null;
         if (WatheGameModes.MURDER_ID.equals(gameModeId)) {
@@ -586,6 +603,7 @@ public class RoleInfoScreen extends Screen {
                     gameModeId,
                     RoleInfoRegistry.CATEGORY_CLASSIC,
                     RoleInfoRegistry.CATEGORY_CLASSIC_OVERVIEW,
+                    "roleinfo.category.classic.subtitle",
                     true
             );
         }
@@ -594,6 +612,7 @@ public class RoleInfoScreen extends Screen {
                     gameModeId,
                     RoleInfoRegistry.CATEGORY_LOOSE_ENDS,
                     RoleInfoRegistry.CATEGORY_LOOSE_ENDS_OVERVIEW,
+                    "roleinfo.category.loose_ends.subtitle",
                     true
             );
         }
@@ -601,21 +620,22 @@ public class RoleInfoScreen extends Screen {
                 WatheGameModes.MURDER_ID,
                 RoleInfoRegistry.CATEGORY_CLASSIC,
                 RoleInfoRegistry.CATEGORY_CLASSIC_OVERVIEW,
+                "roleinfo.category.classic.subtitle",
                 false
         );
     }
 
     private Text getModeSubtitle() {
-        return isLooseEndsSelection()
-                ? Text.translatable("roleinfo.category.loose_ends.subtitle")
-                : Text.translatable("roleinfo.category.classic.subtitle");
+        return Text.translatable(getCurrentModeContext().subtitleKey());
     }
 
     private boolean isModeCategory(String entryId) {
         return RoleInfoRegistry.CATEGORY_CLASSIC.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_LOOSE_ENDS.equals(entryId)
+                || RoleInfoRegistry.CATEGORY_DEATH_ARENA.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_CLASSIC_OVERVIEW.equals(entryId)
-                || RoleInfoRegistry.CATEGORY_LOOSE_ENDS_OVERVIEW.equals(entryId);
+                || RoleInfoRegistry.CATEGORY_LOOSE_ENDS_OVERVIEW.equals(entryId)
+                || RoleInfoRegistry.CATEGORY_DEATH_ARENA_OVERVIEW.equals(entryId);
     }
 
     private boolean isLooseEndsSelection() {
@@ -856,7 +876,7 @@ public class RoleInfoScreen extends Screen {
     private record RoleEntry(String id, Text label, boolean currentRole) {
     }
 
-    private record ModeContext(Identifier gameModeId, String categoryId, String overviewPageId, boolean recognized) {
+    private record ModeContext(Identifier gameModeId, String categoryId, String overviewPageId, String subtitleKey, boolean recognized) {
     }
 
     private static final class TreeNode {

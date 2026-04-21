@@ -111,6 +111,12 @@ public class LooseEndPlayerComponent implements AutoSyncedComponent {
         this.sync();
     }
 
+    public void stopOpeningPhase() {
+        this.openingPhaseTicks = 0;
+        clearOpeningPhaseState();
+        this.sync();
+    }
+
     public boolean isOpeningPhased() {
         return this.openingPhaseTicks > 0;
     }

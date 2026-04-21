@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.client.gui;
 
-import dev.doctor4t.wathe.api.WatheGameModes;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.client.gui.TimeRenderer;
 import net.minecraft.client.MinecraftClient;
@@ -9,6 +8,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
+import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.looseend.LooseEndsRadarWorldComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +44,7 @@ public final class LooseEndsRadarHudRenderer {
         Text subtitle = Text.translatable(radarComponent.getHudLabelKey());
         int subtitleY = 18;
         context.drawCenteredTextWithShadow(renderer, subtitle, context.getScaledWindowWidth() / 2, subtitleY, LABEL_COLOUR);
+        TopCenterHudAnchor.includeHeight(subtitleY + renderer.fontHeight);
     }
 
     public static boolean shouldReplaceDefaultTimeHud() {
@@ -69,8 +70,9 @@ public final class LooseEndsRadarHudRenderer {
     }
 
     private static boolean shouldRenderFor(GameWorldComponent gameWorld) {
-        return gameWorld.getGameMode() == WatheGameModes.LOOSE_ENDS
-                && gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE;
+        return gameWorld.getGameStatus() == GameWorldComponent.GameStatus.ACTIVE
+                && (NoellesrolesClient.isDeathArenaActiveForClientPlayer()
+                || gameWorld.getGameMode() == dev.doctor4t.wathe.api.WatheGameModes.LOOSE_ENDS);
     }
 
     private static void updateAnimation(int time, float delta) {

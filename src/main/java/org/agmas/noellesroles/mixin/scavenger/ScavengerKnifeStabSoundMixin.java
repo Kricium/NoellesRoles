@@ -29,7 +29,7 @@ public abstract class ScavengerKnifeStabSoundMixin {
         }
 
         Entity target = attacker.getServerWorld().getEntityById(payload.target());
-        if (SwallowedInteractionHelper.blocksTarget(target)) {
+        if (SwallowedInteractionHelper.blocksTargetForViewer(attacker, target)) {
             ci.cancel();
         }
     }
@@ -50,7 +50,9 @@ public abstract class ScavengerKnifeStabSoundMixin {
     private void noellesroles$applyLooseEndKnifeCooldown(KnifeStabPayload payload, ServerPlayNetworking.Context context, CallbackInfo ci) {
         ServerPlayerEntity attacker = context.player();
         Entity target = attacker.getServerWorld().getEntityById(payload.target());
-        if (!(target instanceof PlayerEntity) || SwallowedInteractionHelper.blocksActor(attacker) || SwallowedInteractionHelper.blocksTarget(target)) {
+        if (!(target instanceof PlayerEntity)
+                || SwallowedInteractionHelper.blocksActor(attacker)
+                || SwallowedInteractionHelper.blocksTargetForViewer(attacker, target)) {
             return;
         }
 

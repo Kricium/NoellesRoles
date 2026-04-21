@@ -2,6 +2,8 @@ package org.agmas.noellesroles;
 
 
 import net.minecraft.entity.player.PlayerEntity;
+import org.agmas.noellesroles.deatharena.DeathArenaPlayerComponent;
+import org.agmas.noellesroles.deatharena.DeathArenaWorldComponent;
 import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
@@ -78,6 +80,7 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, CommanderPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CommanderPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, SaintPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(SaintPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, LooseEndPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(LooseEndPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, DeathArenaPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.ALWAYS_COPY).end(DeathArenaPlayerComponent::new);
     }
 
     @Override
@@ -86,5 +89,6 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         worldComponentFactoryRegistry.register(WorldMusicComponent.KEY, WorldMusicComponent::new);
         worldComponentFactoryRegistry.register(HiddenBodiesWorldComponent.KEY, HiddenBodiesWorldComponent::new);
         worldComponentFactoryRegistry.register(LooseEndsRadarWorldComponent.KEY, LooseEndsRadarWorldComponent::new);
+        worldComponentFactoryRegistry.register(DeathArenaWorldComponent.KEY, DeathArenaWorldComponent::new);
     }
 }

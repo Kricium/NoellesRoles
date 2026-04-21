@@ -43,6 +43,7 @@ import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.client.gui.JesterTimeRenderer;
 import org.agmas.noellesroles.client.gui.LooseEndsRadarHudRenderer;
 import org.agmas.noellesroles.client.gui.SpectatorReplayToastOverlay;
+import org.agmas.noellesroles.deatharena.DeathArenaPlayerComponent;
 import org.agmas.noellesroles.client.configscreen.NoellesRolesConfigScreenFactory;
 import org.agmas.noellesroles.client.silencer.SilencedTalkBubbleCleaner;
 import org.agmas.noellesroles.client.sound.SoundPhysicsConfigLockManager;
@@ -63,6 +64,7 @@ import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.client.renderer.EngineerDoorHighlightRenderer;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
+import org.agmas.noellesroles.packet.DeathArenaToggleC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.FerrymanBodyAgeSyncS2CPacket;
 import org.agmas.noellesroles.packet.MorphCorpseToggleC2SPacket;
@@ -114,6 +116,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     public static KeyBinding abilityBind;
     public static KeyBinding ability2Bind;
     public static KeyBinding assistInterfaceBind;
+    public static KeyBinding deathArenaToggleBind;
     public static KeyBinding roleInfoBind;
     public static KeyBinding configScreenBind;
     public static PlayerBodyEntity targetBody;
@@ -132,6 +135,7 @@ public class NoellesrolesClient implements ClientModInitializer {
     private static long nextSpectatorReplayPollTick = Long.MAX_VALUE;
     private static boolean wasDeadSpectatorLastTick = false;
     private static boolean wasAssistInterfacePressed = false;
+    private static boolean wasDeathArenaTogglePressed = false;
     private static boolean wasRoleInfoPressed = false;
     private static boolean wasConfigScreenPressed = false;
     private static int swallowedLockedSelectedSlot = -1;
@@ -150,6 +154,7 @@ public class NoellesrolesClient implements ClientModInitializer {
         abilityBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "category.wathe.keybinds"));
         ability2Bind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".ability2", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_Y, "category.wathe.keybinds"));
         assistInterfaceBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".assist_interface", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "category.wathe.keybinds"));
+        deathArenaToggleBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".death_arena_toggle", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_K, "category.wathe.keybinds"));
         roleInfoBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".role_info", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_U, "category.wathe.keybinds"));
         configScreenBind = KeyBindingHelper.registerKeyBinding(new KeyBinding("key." + Noellesroles.MOD_ID + ".config_screen", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_O, "category.wathe.keybinds"));
         // 加载角色信息配置
@@ -664,7 +669,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                         localPlayer,
                         entity -> entity instanceof PlayerEntity player
                                 && GameFunctions.isPlayerPlayingAndAlive(player)
-                                && !SwallowedInteractionHelper.blocksPlayerTarget(player),
+                                && !SwallowedInteractionHelper.blocksPlayerTargetForViewer(localPlayer, player),
                         maxDistance
                 );
 
@@ -675,7 +680,7 @@ public class NoellesrolesClient implements ClientModInitializer {
                     Optional<PlayerEntity> sleepingPlayer = findSleepingPlayerOnBed(localPlayer.getWorld(), blockHitResult);
                     if (sleepingPlayer.isPresent()
                             && sleepingPlayer.get() != localPlayer
-                            && !SwallowedInteractionHelper.blocksPlayerTarget(sleepingPlayer.get())) {
+                            && !SwallowedInteractionHelper.blocksPlayerTargetForViewer(localPlayer, sleepingPlayer.get())) {
                         crosshairTarget = sleepingPlayer.get();
                         crosshairTargetDistance = eyePos.distanceTo(blockHitResult.getPos());
                     }
@@ -897,6 +902,12 @@ public class NoellesrolesClient implements ClientModInitializer {
             }
             wasAssistInterfacePressed = isAssistPressed;
 
+            boolean isDeathArenaPressed = deathArenaToggleBind != null && deathArenaToggleBind.isPressed();
+            if (isDeathArenaPressed && !wasDeathArenaTogglePressed && MinecraftClient.getInstance().currentScreen == null) {
+                ClientPlayNetworking.send(new DeathArenaToggleC2SPacket());
+            }
+            wasDeathArenaTogglePressed = isDeathArenaPressed;
+
             boolean isConfigScreenPressed = configScreenBind != null && configScreenBind.isPressed();
             if (isConfigScreenPressed && !wasConfigScreenPressed) {
                 MinecraftClient minecraftClient = MinecraftClient.getInstance();
@@ -1038,6 +1049,11 @@ public class NoellesrolesClient implements ClientModInitializer {
 
     public static void markAssistInterfaceKeyHandled() {
         wasAssistInterfacePressed = true;
+    }
+
+    public static boolean isDeathArenaActiveForClientPlayer() {
+        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        return player != null && DeathArenaPlayerComponent.KEY.get(player).isInArena();
     }
 
     public static void markRoleInfoKeyHandled() {

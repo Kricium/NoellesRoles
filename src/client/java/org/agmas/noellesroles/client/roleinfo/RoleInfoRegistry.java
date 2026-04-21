@@ -17,8 +17,10 @@ import java.util.*;
 public class RoleInfoRegistry {
     public static final String CATEGORY_CLASSIC = "category:classic_murder";
     public static final String CATEGORY_LOOSE_ENDS = "category:loose_ends";
+    public static final String CATEGORY_DEATH_ARENA = "category:death_arena";
     public static final String CATEGORY_CLASSIC_OVERVIEW = "category:classic_murder_overview";
     public static final String CATEGORY_LOOSE_ENDS_OVERVIEW = "category:loose_ends_overview";
+    public static final String CATEGORY_DEATH_ARENA_OVERVIEW = "category:death_arena_overview";
     public static final String CATEGORY_PASSENGER = "category:passenger";
     public static final String CATEGORY_KILLER = "category:killer";
     public static final String CATEGORY_NEUTRAL = "category:neutral";
@@ -529,6 +531,20 @@ public class RoleInfoRegistry {
                 "tr:roleinfo.category.loose_ends.name",
                 null,
                 "tr:roleinfo.category.loose_ends.description",
+                null
+        ));
+        m.put(CATEGORY_DEATH_ARENA, new RoleInfoData(
+                "death_arena_category",
+                "tr:roleinfo.category.death_arena.name",
+                null,
+                "tr:roleinfo.category.death_arena.description",
+                null
+        ));
+        m.put(CATEGORY_DEATH_ARENA_OVERVIEW, new RoleInfoData(
+                "death_arena_overview",
+                "tr:roleinfo.category.death_arena.name",
+                null,
+                "tr:roleinfo.category.death_arena.description",
                 null
         ));
         m.put(CATEGORY_PASSENGER, new RoleInfoData(

@@ -1,7 +1,9 @@
 package org.agmas.noellesroles.client.mixin.compat.presencefootsteps;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.util.StealthStateHelper;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,7 +21,14 @@ public class PresenceFootstepsStealthMixin {
 
     @Inject(method = "getStepGenerator", at = @At("HEAD"), cancellable = true)
     private void noellesroles$blockPresenceFootstepsForStealthStates(CallbackInfoReturnable<Optional<?>> cir) {
-        if (this.entity instanceof PlayerEntity player && StealthStateHelper.shouldFullyHidePlayer(player)) {
+        if (!(this.entity instanceof PlayerEntity player)) {
+            return;
+        }
+        PlayerEntity localPlayer = MinecraftClient.getInstance().player;
+        if (StealthStateHelper.shouldFullyHidePlayer(player)
+                || (localPlayer != null
+                && LooseEndPlayerComponent.KEY.get(localPlayer).isOpeningPhased()
+                && !player.getUuid().equals(localPlayer.getUuid()))) {
             cir.setReturnValue(Optional.empty());
         }
     }

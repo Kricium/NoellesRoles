@@ -9,6 +9,7 @@ import net.minecraft.item.Item;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import org.agmas.noellesroles.ModItems;
+import org.agmas.noellesroles.deatharena.DeathArenaStateHelper;
 import org.agmas.noellesroles.looseend.LooseEndsRadarHelper;
 import org.agmas.noellesroles.looseend.LooseEndsRadarWorldComponent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -41,8 +42,34 @@ public abstract class LooseEndsGameModeMixin {
         LooseEndsRadarWorldComponent.KEY.get(world).startRound();
     }
 
+    @Inject(method = "tickServerGameLoop", at = @At("HEAD"), cancellable = true)
+    private void noellesroles$cancelDeathArenaWinLoop(ServerWorld world, GameWorldComponent gameComponent, CallbackInfo ci) {
+        if (!DeathArenaStateHelper.isDeathArenaDimension(world)) {
+            return;
+        }
+
+        noellesroles$tickRadarLoopInternal(world, gameComponent);
+        ci.cancel();
+    }
+
     @Inject(method = "tickServerGameLoop", at = @At("TAIL"))
     private void noellesroles$tickRadarLoop(ServerWorld world, GameWorldComponent gameComponent, CallbackInfo ci) {
+        if (DeathArenaStateHelper.isDeathArenaDimension(world)) {
+            return;
+        }
+
+        noellesroles$tickRadarLoopInternal(world, gameComponent);
+    }
+
+    private static void noellesroles$removeInitialDerringer(ServerPlayerEntity player) {
+        for (int i = 0; i < player.getInventory().size(); i++) {
+            if (player.getInventory().getStack(i).isOf(WatheItems.DERRINGER)) {
+                player.getInventory().setStack(i, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    private static void noellesroles$tickRadarLoopInternal(ServerWorld world, GameWorldComponent gameComponent) {
         if (gameComponent.getGameStatus() != GameWorldComponent.GameStatus.ACTIVE) {
             return;
         }
@@ -77,14 +104,6 @@ public abstract class LooseEndsGameModeMixin {
 
             if (ticksRemaining % 20 == 0) {
                 LooseEndsRadarWorldComponent.KEY.sync(world);
-            }
-        }
-    }
-
-    private static void noellesroles$removeInitialDerringer(ServerPlayerEntity player) {
-        for (int i = 0; i < player.getInventory().size(); i++) {
-            if (player.getInventory().getStack(i).isOf(WatheItems.DERRINGER)) {
-                player.getInventory().setStack(i, ItemStack.EMPTY);
             }
         }
     }

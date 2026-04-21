@@ -11,9 +11,11 @@ import dev.doctor4t.wathe.block.SmallDoorBlock;
 import dev.doctor4t.wathe.block_entity.DoorBlockEntity;
 import dev.doctor4t.wathe.block_entity.SmallDoorBlockEntity;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.cca.MapVariablesWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.cca.PlayerShopComponent;
 import dev.doctor4t.wathe.client.gui.RoleAnnouncementTexts;
+import dev.doctor4t.wathe.config.datapack.MapRegistry;
 import dev.doctor4t.wathe.entity.PlayerBodyEntity;
 import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.game.GameFunctions;
@@ -45,6 +47,8 @@ import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
@@ -55,12 +59,19 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameMode;
+import net.minecraft.world.World;
 import org.agmas.noellesroles.bartender.BartenderPlayerComponent;
 import org.agmas.noellesroles.bartender.BartenderShopHandler;
 import org.agmas.noellesroles.config.NoellesRolesConfig;
+import org.agmas.noellesroles.deatharena.DeathArenaPlayerComponent;
+import org.agmas.noellesroles.deatharena.DeathArenaServerController;
+import org.agmas.noellesroles.deatharena.DeathArenaStateHelper;
+import org.agmas.noellesroles.deatharena.DeathArenaWorldComponent;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
 import org.agmas.noellesroles.packet.AbilityC2SPacket;
 import org.agmas.noellesroles.packet.AssassinGuessRoleC2SPacket;
+import org.agmas.noellesroles.packet.DeathArenaToggleC2SPacket;
 import org.agmas.noellesroles.packet.EngineerDoorHighlightS2CPacket;
 import org.agmas.noellesroles.packet.FerrymanBodyAgeSyncS2CPacket;
 import org.agmas.noellesroles.packet.MorphC2SPacket;
@@ -144,7 +155,6 @@ import java.util.List;
 
 
 public class Noellesroles implements ModInitializer {
-
     public static String MOD_ID = "noellesroles";
 
 
@@ -440,6 +450,7 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(SpectatorInfoRequestC2SPacket.ID, SpectatorInfoRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorReplayDetailRequestC2SPacket.ID, SpectatorReplayDetailRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorAssistTeleportC2SPacket.ID, SpectatorAssistTeleportC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(DeathArenaToggleC2SPacket.ID, DeathArenaToggleC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(FerrymanBodyAgeSyncS2CPacket.ID, FerrymanBodyAgeSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
@@ -487,6 +498,7 @@ public class Noellesroles implements ModInitializer {
             ConfigWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.sync(world);
+            DeathArenaWorldComponent.KEY.get(world).reset();
         });
 
         // 修复：断线重连后清理语音群组 + 同步静语状态
@@ -507,6 +519,10 @@ public class Noellesroles implements ModInitializer {
 
         KillPlayer.BEFORE.register(((victim, killer, deathReason) -> {
             GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(victim.getWorld());
+            if (victim instanceof ServerPlayerEntity serverVictim
+                    && DeathArenaStateHelper.isDeathArenaParticipant(serverVictim)) {
+                DeathArenaPlayerComponent.KEY.get(serverVictim).setPendingRespawn(true);
+            }
             if (gameWorldComponent.isRole(victim, HUNTER)) {
                 removeHunterShotgunDrops(victim);
             }
@@ -996,6 +1012,7 @@ public class Noellesroles implements ModInitializer {
             CommanderPlayerComponent.KEY.get(player).reset();
             SaintPlayerComponent.KEY.get(player).reset();
             LooseEndPlayerComponent.KEY.get(player).reset();
+            DeathArenaPlayerComponent.KEY.get(player).reset();
         });
 
         // Bartender and Recaller get +50 coins when completing tasks
@@ -1175,6 +1192,17 @@ public class Noellesroles implements ModInitializer {
         // 记录受害者和凶手的匹配
         KillPlayer.AFTER.register((victim, killer, deathReason) -> {
             GameWorldComponent gameComponent = GameWorldComponent.KEY.get(victim.getWorld());
+            if (victim instanceof ServerPlayerEntity serverVictim
+                    && victim.getWorld() instanceof ServerWorld serverWorld
+                    && DeathArenaStateHelper.isDeathArenaParticipant(serverVictim)) {
+                for (PlayerBodyEntity body : serverWorld.getEntitiesByType(
+                        TypeFilter.equals(PlayerBodyEntity.class),
+                        serverWorld.getWorldBorder().asVoxelShape().getBoundingBox(),
+                        candidate -> victim.getUuid().equals(candidate.getPlayerUuid()))) {
+                    DeathArenaServerController.rememberArenaBody(serverWorld, body.getUuid());
+                }
+                DeathArenaServerController.handleDeathAfter(serverVictim);
+            }
             if (killer != null && victim.getWorld() instanceof ServerWorld serverWorld) {
                 for (UUID uuid : gameComponent.getAllWithRole(CRIMINAL_REASONER)) {
                     PlayerEntity criminalReasoner = serverWorld.getPlayerByUuid(uuid);
@@ -1256,8 +1284,9 @@ public class Noellesroles implements ModInitializer {
             }
 
             if (killer != null
-                    && gameComponent.getGameMode() == WatheGameModes.LOOSE_ENDS
-                    && gameComponent.isRole(killer, WatheRoles.LOOSE_END)
+                    && killer instanceof ServerPlayerEntity serverKiller
+                    && DeathArenaStateHelper.isLooseEndsLikeWorld(serverKiller.getServerWorld(), gameComponent)
+                    && DeathArenaStateHelper.isLooseEndsLikePlayer(serverKiller, gameComponent)
                     && !killer.getUuid().equals(victim.getUuid())) {
                 PlayerShopComponent.KEY.get(killer).addToBalance(50);
             }
@@ -1583,6 +1612,9 @@ public class Noellesroles implements ModInitializer {
 
         // 游戏结束时触发
         GameEvents.ON_FINISH_FINALIZE.register((world, gameComponent) -> {
+            if (world instanceof ServerWorld serverWorld) {
+                DeathArenaServerController.forceShutdown(serverWorld, true);
+            }
             HiddenBodiesWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.sync(world);
@@ -1605,11 +1637,11 @@ public class Noellesroles implements ModInitializer {
                 return;
             }
 
+            DeathArenaServerController.resetForNewRound(serverWorld.getServer());
+
             for (ServerPlayerEntity player : serverWorld.getPlayers()) {
                 if (gameComponent.isRole(player, WatheRoles.LOOSE_END)) {
-                    PlayerShopComponent.KEY.get(player).addToBalance(50);
-                    player.getItemCooldownManager().set(WatheItems.KNIFE, GameConstants.getInTicks(0, 30));
-                    LooseEndPlayerComponent.KEY.get(player).startOpeningPhase();
+                    DeathArenaStateHelper.applyLooseEndsOpeningState(player, gameComponent);
                 }
             }
         });
@@ -1621,6 +1653,9 @@ public class Noellesroles implements ModInitializer {
                 if (looseEndComponent.isOpeningPhased()) {
                     looseEndComponent.tickOpeningPhaseState();
                 }
+            }
+            if (world instanceof ServerWorld serverWorld) {
+                DeathArenaServerController.tick(serverWorld);
             }
 
             GameWorldComponent gc = GameWorldComponent.KEY.get(world);
@@ -1676,7 +1711,8 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorInfoRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)
+                    || DeathArenaStateHelper.isDeathArenaParticipant(requester)) {
                 return;
             }
 
@@ -1703,7 +1739,8 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorReplayDetailRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)
+                    || DeathArenaStateHelper.isDeathArenaParticipant(requester)) {
                 return;
             }
 
@@ -1726,7 +1763,8 @@ public class Noellesroles implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(SpectatorAssistTeleportC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
-            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)) {
+            if (!SpectatorStateHelper.isInGameRealSpectator(requester, gameWorld)
+                    || DeathArenaStateHelper.isDeathArenaParticipant(requester)) {
                 return;
             }
 
@@ -1752,6 +1790,10 @@ public class Noellesroles implements ModInitializer {
             }
             requester.requestTeleport(deathPos.x, deathPos.y, deathPos.z);
         });
+
+        ServerPlayNetworking.registerGlobalReceiver(DeathArenaToggleC2SPacket.ID, (payload, context) ->
+                context.server().execute(() -> DeathArenaServerController.handleToggle(context.player()))
+        );
 
         ServerPlayNetworking.registerGlobalReceiver(Noellesroles.MORPH_PACKET, (payload, context) -> {
             GameWorldComponent gameWorldComponent = (GameWorldComponent) GameWorldComponent.KEY.get(context.player().getWorld());

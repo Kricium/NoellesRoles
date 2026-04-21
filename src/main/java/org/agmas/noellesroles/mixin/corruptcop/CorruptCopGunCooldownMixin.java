@@ -29,7 +29,7 @@ public abstract class CorruptCopGunCooldownMixin {
         }
 
         Entity target = player.getServerWorld().getEntityById(payload.target());
-        if (SwallowedInteractionHelper.blocksTarget(target)) {
+        if (SwallowedInteractionHelper.blocksTargetForViewer(player, target)) {
             ci.cancel();
         }
     }

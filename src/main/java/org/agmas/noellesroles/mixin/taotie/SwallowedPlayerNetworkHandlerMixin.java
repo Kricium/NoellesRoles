@@ -85,7 +85,7 @@ public class SwallowedPlayerNetworkHandlerMixin {
         }
 
         Entity target = packet.getEntity(this.player.getServerWorld());
-        if (SwallowedInteractionHelper.blocksTarget(target)) {
+        if (SwallowedInteractionHelper.blocksTargetForViewer(this.player, target)) {
             ci.cancel();
         }
     }
