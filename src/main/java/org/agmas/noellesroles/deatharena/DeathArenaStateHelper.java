@@ -142,7 +142,6 @@ public final class DeathArenaStateHelper {
         AbilityPlayerComponent.KEY.get(player).setCooldown(NoellesRolesConfig.HANDLER.instance().generalCooldownTicks);
         LooseEndPlayerComponent.KEY.get(player).reset();
         player.getInventory().clear();
-        player.getEnderChestInventory().clear();
         player.currentScreenHandler.sendContentUpdates();
 
         player.giveItemStack(ModItems.MASTER_KEY.getDefaultStack());

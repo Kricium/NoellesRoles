@@ -1012,7 +1012,10 @@ public class Noellesroles implements ModInitializer {
             CommanderPlayerComponent.KEY.get(player).reset();
             SaintPlayerComponent.KEY.get(player).reset();
             LooseEndPlayerComponent.KEY.get(player).reset();
-            DeathArenaPlayerComponent.KEY.get(player).reset();
+            DeathArenaPlayerComponent deathArenaPlayer = DeathArenaPlayerComponent.KEY.get(player);
+            if (!deathArenaPlayer.isInArena() && !deathArenaPlayer.isPendingRespawn()) {
+                deathArenaPlayer.reset();
+            }
         });
 
         // Bartender and Recaller get +50 coins when completing tasks
