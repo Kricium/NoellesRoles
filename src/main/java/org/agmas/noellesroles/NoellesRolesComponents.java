@@ -34,9 +34,11 @@ import org.agmas.noellesroles.saint.SaintPlayerComponent;
 import org.agmas.noellesroles.survivalmaster.SurvivalMasterPlayerComponent;
 import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.looseend.LooseEndsRadarWorldComponent;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemWorldComponent;
 import org.agmas.noellesroles.music.WorldMusicComponent;
 import org.agmas.noellesroles.scavenger.HiddenBodiesWorldComponent;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.entity.EntityComponentFactoryRegistry;
 import org.ladysnake.cca.api.v3.entity.EntityComponentInitializer;
@@ -80,6 +82,7 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         registry.beginRegistration(PlayerEntity.class, CommanderPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(CommanderPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, SaintPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(SaintPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, LooseEndPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(LooseEndPlayerComponent::new);
+        registry.beginRegistration(PlayerEntity.class, HallucinationPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.NEVER_COPY).end(HallucinationPlayerComponent::new);
         registry.beginRegistration(PlayerEntity.class, DeathArenaPlayerComponent.KEY).respawnStrategy(RespawnCopyStrategy.ALWAYS_COPY).end(DeathArenaPlayerComponent::new);
     }
 
@@ -90,5 +93,6 @@ public class NoellesRolesComponents implements EntityComponentInitializer, World
         worldComponentFactoryRegistry.register(HiddenBodiesWorldComponent.KEY, HiddenBodiesWorldComponent::new);
         worldComponentFactoryRegistry.register(LooseEndsRadarWorldComponent.KEY, LooseEndsRadarWorldComponent::new);
         worldComponentFactoryRegistry.register(DeathArenaWorldComponent.KEY, DeathArenaWorldComponent::new);
+        worldComponentFactoryRegistry.register(MurderMayhemWorldComponent.KEY, MurderMayhemWorldComponent::new);
     }
 }

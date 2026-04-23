@@ -15,6 +15,7 @@ import org.agmas.noellesroles.item.IronManVialItem;
 import org.agmas.noellesroles.item.PoisonNeedleItem;
 import org.agmas.noellesroles.item.PoisonGasBombItem;
 import org.agmas.noellesroles.item.CatalystItem;
+import org.agmas.noellesroles.item.HallucinationMedicineItem;
 import org.agmas.noellesroles.item.PortableRadarItem;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.item.RiotForkItem;
@@ -94,6 +95,10 @@ public class ModItems {
     public static final Item ANTIDOTE = register(
             new AntidoteItem(new Item.Settings().maxCount(1)),
             "antidote"
+    );
+    public static final Item HALLUCINATION_MEDICINE = register(
+            new HallucinationMedicineItem(new Item.Settings().maxCount(1)),
+            "hallucination_medicine"
     );
     public static final Item ADRENALINE = register(
             new AdrenalineItem(new Item.Settings().maxCount(1)),

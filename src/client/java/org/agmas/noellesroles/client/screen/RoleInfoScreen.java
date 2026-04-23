@@ -10,12 +10,15 @@ import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.roleinfo.RoleInfoData;
 import org.agmas.noellesroles.client.roleinfo.RoleInfoRegistry;
+import org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemWorldComponent;
 import org.agmas.noellesroles.util.SpectatorStateHelper;
 
 import java.util.ArrayList;
@@ -113,6 +116,7 @@ public class RoleInfoScreen extends Screen {
                 ? RoleInfoRegistry.resolveText(selected.factionKey)
                 : getModeSubtitle();
         context.drawCenteredTextWithShadow(this.textRenderer, subtitle, this.width / 2, 22, 0xA8A8A8);
+        renderCurrentRoleText(context);
 
         Text hoverTooltip = getHoveredActionTooltip(mouseX, mouseY, layout);
         if (hoverTooltip != null) {
@@ -322,12 +326,38 @@ public class RoleInfoScreen extends Screen {
         if (isModeCategory(selectedEntryId)) {
             return Text.translatable("roleinfo.mode_description_label");
         }
+        if (isEventPage(selectedEntryId)) {
+            return Text.translatable("roleinfo.event_description_label");
+        }
         if (RoleInfoRegistry.CATEGORY_PASSENGER.equals(selectedEntryId)
                 || RoleInfoRegistry.CATEGORY_KILLER.equals(selectedEntryId)
                 || RoleInfoRegistry.CATEGORY_NEUTRAL.equals(selectedEntryId)) {
             return Text.translatable("roleinfo.faction_description_label");
         }
         return Text.translatable("roleinfo.role_description_label");
+    }
+
+    private void renderCurrentRoleText(DrawContext context) {
+        String currentRoleId = getCurrentRoleIdentifier();
+        if (currentRoleId == null) {
+            return;
+        }
+
+        RoleInfoData currentRoleInfo = RoleInfoRegistry.get(currentRoleId);
+        if (currentRoleInfo == null) {
+            return;
+        }
+
+        int roleColor = 0xFFFFCC00;
+        Integer resolvedRoleColor = getRoleColorById(currentRoleId);
+        if (resolvedRoleColor != null) {
+            roleColor = 0xFF000000 | (resolvedRoleColor & 0x00FFFFFF);
+        }
+
+        MutableText currentRoleText = Text.literal("")
+                .append(Text.translatable("roleinfo.current_role.prefix").withColor(0xFFFFCC00))
+                .append(RoleInfoRegistry.resolveText(currentRoleInfo.nameKey).copy().withColor(roleColor));
+        context.drawCenteredTextWithShadow(this.textRenderer, currentRoleText, this.width / 2, this.height - FOOTER_HEIGHT + 8, 0xFFFFFF);
     }
 
     private void refreshVisibleEntries() {
@@ -393,6 +423,7 @@ public class RoleInfoScreen extends Screen {
 
         TreeNode root = new TreeNode("category:root", Text.empty(), true, null);
         TreeNode classic = new TreeNode(RoleInfoRegistry.CATEGORY_CLASSIC, RoleInfoRegistry.resolveText("tr:roleinfo.category.classic.name"), true, null);
+        TreeNode murderMayhem = new TreeNode(RoleInfoRegistry.CATEGORY_MURDER_MAYHEM, RoleInfoRegistry.resolveText("tr:roleinfo.category.murder_mayhem.name"), true, null);
         TreeNode passenger = new TreeNode(RoleInfoRegistry.CATEGORY_PASSENGER, RoleInfoRegistry.resolveText("tr:roleinfo.category.passenger.name"), true, RoleInfoRegistry.CATEGORY_CLASSIC);
         TreeNode killer = new TreeNode(RoleInfoRegistry.CATEGORY_KILLER, RoleInfoRegistry.resolveText("tr:roleinfo.category.killer.name"), true, RoleInfoRegistry.CATEGORY_CLASSIC);
         TreeNode neutral = new TreeNode(RoleInfoRegistry.CATEGORY_NEUTRAL, RoleInfoRegistry.resolveText("tr:roleinfo.category.neutral.name"), true, RoleInfoRegistry.CATEGORY_CLASSIC);
@@ -407,6 +438,13 @@ public class RoleInfoScreen extends Screen {
         classic.children.add(killer);
         classic.children.add(neutral);
 
+        murderMayhem.children.add(new TreeNode(
+                RoleInfoRegistry.EVENT_MURDER_MAYHEM_FOG_OF_WAR,
+                RoleInfoRegistry.resolveText("tr:event.noellesroles.murder_mayhem.fog_of_war"),
+                false,
+                RoleInfoRegistry.CATEGORY_MURDER_MAYHEM
+        ));
+
         RoleInfoData looseEndInfo = RoleInfoRegistry.get(RoleInfoRegistry.ROLE_LOOSE_END);
         if (looseEndInfo != null) {
             looseEnds.children.add(new TreeNode(
@@ -418,6 +456,7 @@ public class RoleInfoScreen extends Screen {
         }
 
         root.children.add(classic);
+        root.children.add(murderMayhem);
         root.children.add(looseEnds);
         root.children.add(deathArena);
         return root;
@@ -452,6 +491,11 @@ public class RoleInfoScreen extends Screen {
         if (!modeContext.recognized()) {
             expandedCategoryIds.clear();
         }
+        if (RoleInfoRegistry.CATEGORY_MURDER_MAYHEM.equals(rootId)) {
+            selectedEntryId = modeContext.overviewPageId();
+            expandedCategoryIds.add(rootId);
+            return;
+        }
         String currentRoleId = getCurrentRoleIdentifier();
         if (currentRoleId == null || RoleInfoRegistry.get(currentRoleId) == null) {
             selectedEntryId = rootId;
@@ -469,7 +513,9 @@ public class RoleInfoScreen extends Screen {
 
         selectedEntryId = currentRoleId;
         expandedCategoryIds.add(rootId);
-        if (modeContext.recognized() && RoleInfoRegistry.CATEGORY_CLASSIC.equals(rootId)) {
+        if (modeContext.recognized()
+                && (RoleInfoRegistry.CATEGORY_CLASSIC.equals(rootId) || RoleInfoRegistry.CATEGORY_MURDER_MAYHEM.equals(rootId))) {
+            expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_CLASSIC);
             RoleInfoData currentRoleInfo = RoleInfoRegistry.get(currentRoleId);
             expandedCategoryIds.add(RoleInfoRegistry.getFactionCategoryId(currentRoleInfo));
         }
@@ -477,6 +523,7 @@ public class RoleInfoScreen extends Screen {
 
     private void expandAllCategories() {
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_CLASSIC);
+        expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_MURDER_MAYHEM);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_LOOSE_ENDS);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_DEATH_ARENA);
         expandedCategoryIds.add(RoleInfoRegistry.CATEGORY_PASSENGER);
@@ -598,6 +645,15 @@ public class RoleInfoScreen extends Screen {
         }
         GameMode gameMode = gwc.getGameMode();
         Identifier gameModeId = gameMode != null ? gameMode.identifier : null;
+        if (RoleInfoRegistry.CATEGORY_MURDER_MAYHEM.equals(RoleInfoRegistry.getModeCategoryId(gameModeId))) {
+            return new ModeContext(
+                    gameModeId,
+                    RoleInfoRegistry.CATEGORY_MURDER_MAYHEM,
+                    getCurrentMurderMayhemOverviewPageId(client),
+                    "roleinfo.category.murder_mayhem.subtitle",
+                    true
+            );
+        }
         if (WatheGameModes.MURDER_ID.equals(gameModeId)) {
             return new ModeContext(
                     gameModeId,
@@ -629,13 +685,32 @@ public class RoleInfoScreen extends Screen {
         return Text.translatable(getCurrentModeContext().subtitleKey());
     }
 
+    private String getCurrentMurderMayhemOverviewPageId(MinecraftClient client) {
+        if (client.player == null) {
+            return RoleInfoRegistry.CATEGORY_MURDER_MAYHEM;
+        }
+
+        MurderMayhemWorldComponent component = MurderMayhemWorldComponent.KEY.get(client.player.getWorld());
+        Identifier currentEventId = component.getCurrentEventId();
+        if (FogOfWarMurderMayhemEvent.ID.equals(currentEventId)) {
+            return RoleInfoRegistry.EVENT_MURDER_MAYHEM_FOG_OF_WAR;
+        }
+
+        return RoleInfoRegistry.CATEGORY_MURDER_MAYHEM;
+    }
+
     private boolean isModeCategory(String entryId) {
         return RoleInfoRegistry.CATEGORY_CLASSIC.equals(entryId)
+                || RoleInfoRegistry.CATEGORY_MURDER_MAYHEM.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_LOOSE_ENDS.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_DEATH_ARENA.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_CLASSIC_OVERVIEW.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_LOOSE_ENDS_OVERVIEW.equals(entryId)
                 || RoleInfoRegistry.CATEGORY_DEATH_ARENA_OVERVIEW.equals(entryId);
+    }
+
+    private boolean isEventPage(String entryId) {
+        return entryId != null && entryId.startsWith("event:");
     }
 
     private boolean isLooseEndsSelection() {

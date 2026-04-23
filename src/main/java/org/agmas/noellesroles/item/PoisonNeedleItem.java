@@ -15,8 +15,12 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 毒针物品
@@ -41,15 +45,26 @@ public class PoisonNeedleItem extends Item {
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
         World world = user.getWorld();
 
-        if (!(entity instanceof PlayerEntity target)) {
-            return ActionResult.PASS;
-        }
-
         if (user.getItemCooldownManager().isCoolingDown(this)) {
             return ActionResult.PASS;
         }
 
         if (!world.isClient) {
+            HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(user);
+            Optional<UUID> dummyId = HallucinationDummyInteractionHelper.getDummyId(entity, user);
+            if (dummyId.isPresent()) {
+                int baseTicks = 20 * 40;
+                if (!hallucinationComponent.applyPoisonToDummy(dummyId.get(), baseTicks, user.getUuid(), Noellesroles.POISON_SOURCE_NEEDLE)) {
+                    return ActionResult.PASS;
+                }
+                user.getItemCooldownManager().set(this, USE_COOLDOWN_TICKS);
+                hallucinationComponent.sync();
+                return ActionResult.SUCCESS;
+            }
+
+            if (!(entity instanceof PlayerEntity target)) {
+                return ActionResult.PASS;
+            }
             if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
                 return ActionResult.PASS;
             }

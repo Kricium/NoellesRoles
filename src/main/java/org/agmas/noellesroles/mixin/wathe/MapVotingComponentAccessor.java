@@ -8,6 +8,9 @@ import java.util.List;
 
 @Mixin(MapVotingComponent.class)
 public interface MapVotingComponentAccessor {
+    @Accessor("availableModes")
+    List<MapVotingComponent.VotingModeEntry> noellesroles$getAvailableModes();
+
     @Accessor("availableMaps")
     List<MapVotingComponent.VotingMapEntry> noellesroles$getAvailableMaps();
 

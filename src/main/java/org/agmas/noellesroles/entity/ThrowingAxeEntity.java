@@ -22,6 +22,7 @@ import net.minecraft.world.World;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.NoellesRolesEntities;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
 
 import org.jetbrains.annotations.Nullable;
 import java.util.HashSet;
@@ -100,6 +101,20 @@ public class ThrowingAxeEntity extends PersistentProjectileEntity {
             Vec3d currentPos = this.getPos();
             Vec3d velocity = this.getVelocity();
             Vec3d nextPos = currentPos.add(velocity);
+            Entity owner = this.getOwner();
+
+            if (owner instanceof ServerPlayerEntity viewer) {
+                HallucinationDummyInteractionHelper.tryKillDummyOnSegment(
+                        viewer,
+                        currentPos,
+                        nextPos,
+                        Noellesroles.DEATH_REASON_THROWING_AXE,
+                        true,
+                        null,
+                        null,
+                        null
+                );
+            }
 
             Box searchBox = this.getBoundingBox().stretch(velocity).expand(1.0);
             for (Entity entity : this.getWorld().getOtherEntities(this, searchBox)) {

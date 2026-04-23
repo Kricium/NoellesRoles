@@ -206,6 +206,14 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         }
     }
 
+    public void removeBombItemOnly() {
+        removeBombFromInventory(this.player);
+        this.player.getInventory().markDirty();
+        if (this.player instanceof ServerPlayerEntity serverPlayer) {
+            serverPlayer.playerScreenHandler.sendContentUpdates();
+        }
+    }
+
     @Override
     public void serverTick() {
         if (!hasBomb) return;

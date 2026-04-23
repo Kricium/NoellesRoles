@@ -118,10 +118,10 @@ public class AssassinScreen extends Screen {
                             this.selectedTarget = selectedTarget;
                             this.clearAndInit();
                         },
-                        0, contentTop, this.width, viewBottom, closeButtonBlocker
+                        0, viewTop, this.width, viewBottom, closeButtonBlocker
                 );
                 widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
-                        0, contentTop, this.width, viewBottom);
+                        0, viewTop, this.width, viewBottom);
                 addDrawableChild(widget);
             }
         } else {

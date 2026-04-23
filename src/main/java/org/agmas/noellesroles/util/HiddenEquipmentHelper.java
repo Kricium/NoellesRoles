@@ -34,6 +34,7 @@ public final class HiddenEquipmentHelper {
         if (stack.isOf(ModItems.DEFENSE_VIAL)) return true;
         if (stack.isOf(ModItems.NEUTRAL_MASTER_KEY)) return true;
         if (stack.isOf(ModItems.ANTIDOTE)) return true;
+        if (stack.isOf(ModItems.HALLUCINATION_MEDICINE)) return true;
         if (stack.isOf(ModItems.IRON_MAN_VIAL)) return true;
         if (stack.isOf(Items.WRITTEN_BOOK)) return true;
 

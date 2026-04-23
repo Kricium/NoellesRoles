@@ -6,6 +6,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
+import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 
 import java.util.*;
@@ -16,9 +17,11 @@ import java.util.*;
  */
 public class RoleInfoRegistry {
     public static final String CATEGORY_CLASSIC = "category:classic_murder";
+    public static final String CATEGORY_MURDER_MAYHEM = "category:murder_mayhem";
     public static final String CATEGORY_LOOSE_ENDS = "category:loose_ends";
     public static final String CATEGORY_DEATH_ARENA = "category:death_arena";
     public static final String CATEGORY_CLASSIC_OVERVIEW = "category:classic_murder_overview";
+    public static final String EVENT_MURDER_MAYHEM_FOG_OF_WAR = "event:murder_mayhem_fog_of_war";
     public static final String CATEGORY_LOOSE_ENDS_OVERVIEW = "category:loose_ends_overview";
     public static final String CATEGORY_DEATH_ARENA_OVERVIEW = "category:death_arena_overview";
     public static final String CATEGORY_PASSENGER = "category:passenger";
@@ -67,6 +70,9 @@ public class RoleInfoRegistry {
     }
 
     public static String getModeCategoryId(Identifier gameModeId) {
+        if (Noellesroles.MURDER_MAYHEM_ID.equals(gameModeId)) {
+            return CATEGORY_MURDER_MAYHEM;
+        }
         if (WatheGameModes.LOOSE_ENDS_ID.equals(gameModeId)) {
             return CATEGORY_LOOSE_ENDS;
         }
@@ -74,6 +80,9 @@ public class RoleInfoRegistry {
     }
 
     public static String getModeOverviewPageId(Identifier gameModeId) {
+        if (Noellesroles.MURDER_MAYHEM_ID.equals(gameModeId)) {
+            return CATEGORY_MURDER_MAYHEM;
+        }
         if (WatheGameModes.LOOSE_ENDS_ID.equals(gameModeId)) {
             return CATEGORY_LOOSE_ENDS_OVERVIEW;
         }
@@ -517,6 +526,20 @@ public class RoleInfoRegistry {
                 "tr:roleinfo.category.classic.name",
                 null,
                 "tr:roleinfo.category.classic.description",
+                null
+        ));
+        m.put(CATEGORY_MURDER_MAYHEM, new RoleInfoData(
+                "murder_mayhem_category",
+                "tr:roleinfo.category.murder_mayhem.name",
+                null,
+                "tr:roleinfo.category.murder_mayhem.description",
+                null
+        ));
+        m.put(EVENT_MURDER_MAYHEM_FOG_OF_WAR, new RoleInfoData(
+                "murder_mayhem_fog_of_war",
+                "tr:event.noellesroles.murder_mayhem.fog_of_war",
+                null,
+                "tr:event_description.noellesroles.murder_mayhem.fog_of_war",
                 null
         ));
         m.put(CATEGORY_LOOSE_ENDS, new RoleInfoData(

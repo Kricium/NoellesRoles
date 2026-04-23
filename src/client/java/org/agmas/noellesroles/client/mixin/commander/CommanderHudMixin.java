@@ -11,6 +11,7 @@ import net.minecraft.util.math.MathHelper;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,6 +28,7 @@ public abstract class CommanderHudMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     public void renderCommanderHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        if (HallucinationHudRenderer.shouldSuppressSkillHintHud()) return;
         ClientPlayerEntity player = HudRenderHelper.getActivePlayer();
         if (player == null) return;
 

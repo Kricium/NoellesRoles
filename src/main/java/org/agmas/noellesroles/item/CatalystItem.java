@@ -18,8 +18,12 @@ import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 催化剂物品
@@ -44,17 +48,28 @@ public class CatalystItem extends Item {
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
         World world = user.getWorld();
 
-        if (!(entity instanceof PlayerEntity target)) {
-            return ActionResult.PASS;
-        }
-
         if (!world.isClient) {
-            if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
+            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(world);
+            if (!gameWorld.isRole(user, Noellesroles.POISONER)) {
                 return ActionResult.PASS;
             }
 
-            GameWorldComponent gameWorld = GameWorldComponent.KEY.get(world);
-            if (!gameWorld.isRole(user, Noellesroles.POISONER)) {
+            HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(user);
+            Optional<UUID> dummyId = HallucinationDummyInteractionHelper.getDummyId(entity, user);
+            if (dummyId.isPresent()) {
+                boolean catalyzed = hallucinationComponent.catalyzeDummyPoison(dummyId.get(), user.getUuid());
+                user.getItemCooldownManager().remove(ModItems.POISON_NEEDLE);
+                stack.decrementUnlessCreative(1, user);
+                if (catalyzed) {
+                    hallucinationComponent.sync();
+                }
+                return ActionResult.SUCCESS;
+            }
+
+            if (!(entity instanceof PlayerEntity target)) {
+                return ActionResult.PASS;
+            }
+            if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
                 return ActionResult.PASS;
             }
 

@@ -30,6 +30,12 @@ public class NoellesRolesConfig {
     @SerialEntry(comment = "Allow Natural deaths to trigger voodoo (deaths without an assigned killer)")
     public boolean voodooNonKillerDeaths = false;
 
+    @SerialEntry(comment = "Show the fog radius HUD for the Fog of War event")
+    public boolean showFogRadiusHud = false;
+
+    @SerialEntry(comment = "Show the hallucination HUD for the Fog of War event")
+    public boolean showHallucinationHud = false;
+
     @SerialEntry(comment = "Show the bottom-left assist interface hint overlay")
     public boolean showAssistInterfaceHint = true;
 
@@ -121,6 +127,8 @@ public class NoellesRolesConfig {
         this.insanePlayersSeeMorphs = other.insanePlayersSeeMorphs;
         this.generalCooldownTicks = other.generalCooldownTicks;
         this.voodooNonKillerDeaths = other.voodooNonKillerDeaths;
+        this.showFogRadiusHud = other.showFogRadiusHud;
+        this.showHallucinationHud = other.showHallucinationHud;
         this.showAssistInterfaceHint = other.showAssistInterfaceHint;
         this.showConfigScreenHint = other.showConfigScreenHint;
         this.preferredServerLabel = other.preferredServerLabel;

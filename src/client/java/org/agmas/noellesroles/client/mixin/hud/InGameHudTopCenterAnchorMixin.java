@@ -4,6 +4,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.client.render.RenderTickCounter;
 import org.agmas.noellesroles.client.gui.DeathArenaHintOverlay;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.gui.TopCenterHudAnchor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,6 +23,7 @@ public abstract class InGameHudTopCenterAnchorMixin {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void noellesroles$renderDeathArenaHint(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
+        HallucinationHudRenderer.render(context, tickCounter);
         DeathArenaHintOverlay.render(context, getTextRenderer());
     }
 }

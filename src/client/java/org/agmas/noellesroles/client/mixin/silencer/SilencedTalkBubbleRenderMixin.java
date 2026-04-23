@@ -2,6 +2,7 @@ package org.agmas.noellesroles.client.mixin.silencer;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import org.agmas.noellesroles.client.hallucination.HallucinationClientVisibilityHelper;
 import org.agmas.noellesroles.client.silencer.TalkBubbleRenderContext;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,6 +29,11 @@ public class SilencedTalkBubbleRenderMixin {
         }
 
         if (SilencedPlayerComponent.isPlayerSilenced(renderedPlayer)) {
+            ci.cancel();
+            return;
+        }
+
+        if (HallucinationClientVisibilityHelper.shouldHidePlayer(client.player, renderedPlayer)) {
             ci.cancel();
             return;
         }
