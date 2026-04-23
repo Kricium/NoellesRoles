@@ -3,6 +3,7 @@ package org.agmas.noellesroles.mixin.taotie;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,14 +20,21 @@ public class SwallowedPlayerEntityMixin {
     private void makeSpectatorsInvisibleToSwallowedPlayers(PlayerEntity viewer, CallbackInfoReturnable<Boolean> cir) {
         Entity thisEntity = (Entity) (Object) this;
 
+        if (thisEntity instanceof PlayerEntity targetPlayer
+                && SwallowedPlayerComponent.isPlayerSwallowed(targetPlayer)
+                && !targetPlayer.getUuid().equals(viewer.getUuid())) {
+            cir.setReturnValue(true);
+            return;
+        }
+
         // 检查查看者是否是被吞的玩家
         SwallowedPlayerComponent viewerSwallowed = SwallowedPlayerComponent.KEY.get(viewer);
         if (!viewerSwallowed.isSwallowed()) {
             return; // 查看者不是被吞的玩家，不做处理
         }
 
-        // 如果当前实体是观察者玩家
-        if (thisEntity instanceof PlayerEntity targetPlayer && targetPlayer.isSpectator()) {
+        // 如果当前实体是观察者玩家或其他被吞玩家
+        if (thisEntity instanceof PlayerEntity targetPlayer && SpectatorStateHelper.isSpectatorLike(targetPlayer)) {
             cir.setReturnValue(true);
         }
     }

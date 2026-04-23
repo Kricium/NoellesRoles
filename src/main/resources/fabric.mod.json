@@ -56,14 +56,18 @@
       "noellesroles:survival_master",
       "noellesroles:engineer",
       "noellesroles:criminal_reasoner",
+      "noellesroles:loose_end",
+      "noellesroles:loose_ends_radar",
       "noellesroles:riot_patrol",
       "noellesroles:hunter",
       "noellesroles:orthopedist",
       "noellesroles:ferryman",
       "noellesroles:commander",
-      "noellesroles:saint",
-      "noellesroles:world_music"
-    ]
+        "noellesroles:saint",
+        "noellesroles:world_music",
+        "noellesroles:death_arena_player",
+        "noellesroles:death_arena_world"
+      ]
   },
   "mixins": [
     "noellesroles.mixins.json",

@@ -18,6 +18,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
+import org.agmas.noellesroles.util.AreaDamageImmunityHelper;
 import org.joml.Vector3f;
 
 import java.util.*;
@@ -118,6 +119,17 @@ public class PoisonGasCloudEntity extends Entity {
         for (ServerPlayerEntity player : serverWorld.getPlayers()) {
             if (!GameFunctions.isPlayerAliveAndSurvival(player)) continue;
             if (gameWorld.isRole(player, Noellesroles.POISONER)) continue;
+            if (AreaDamageImmunityHelper.isImmuneToAreaDamage(player)) {
+                exposureTicks.put(player.getUuid(), 0);
+                if (playersInGas.remove(player.getUuid())) {
+                    PlayerStaminaComponent staminaComp = PlayerStaminaComponent.KEY.get(player);
+                    if (!staminaComp.isInfiniteStamina()) {
+                        staminaComp.setExhausted(false);
+                        staminaComp.setSprintingTicks(76.0f);
+                    }
+                }
+                continue;
+            }
 
             Box box = player.getBoundingBox();
             boolean inGas = false;

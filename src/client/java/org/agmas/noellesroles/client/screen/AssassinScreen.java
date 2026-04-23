@@ -14,10 +14,11 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
-import org.agmas.noellesroles.assassin.AssassinPlayerComponent;
 import org.agmas.noellesroles.client.AssassinRoleWidget;
 import org.agmas.noellesroles.client.AssassinTargetWidget;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.InteractionBlocker;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,11 +64,10 @@ public class AssassinScreen extends Screen {
         targetCloseButton = null;
 
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
-        AssassinPlayerComponent assassinComp = AssassinPlayerComponent.KEY.get(player);
 
         // 基础检查
         if (!gameWorld.isRole(player, Noellesroles.ASSASSIN) ||
-                !GameFunctions.isPlayerPlayingAndAlive(player) || SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) {
+                !GameFunctions.isPlayerPlayingAndAlive(player) || SwallowedPlayerComponent.isPlayerSwallowed(player)) {
             this.close();
             return;
         }
@@ -85,18 +85,25 @@ public class AssassinScreen extends Screen {
             // 获取目标列表
             List<UUID> alivePlayers = gameWorld.getAllAlivePlayers();
             List<UUID> targets = new ArrayList<>(WatheClient.PLAYER_ENTRIES_CACHE.keySet());
-            targets.removeIf(uuid -> uuid.equals(player.getUuid()) || !alivePlayers.contains(uuid));
+            targets.removeIf(uuid -> uuid.equals(player.getUuid())
+                    || !alivePlayers.contains(uuid)
+                    || SwallowedInteractionHelper.blocksPlayerTarget(
+                    player.getWorld().getPlayerByUuid(uuid),
+                    SwallowedInteractionHelper.TargetingRule.ASSASSIN_GUESS_TARGET));
 
             // 动态网格布局：每行最多 TARGET_COLUMNS 个人
             int rows = Math.max(1, (targets.size() + TARGET_COLUMNS - 1) / TARGET_COLUMNS);
             int contentHeight = rows * TARGET_SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
             int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+            int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
             int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
             int viewHeight = Math.max(1, viewBottom - viewTop);
             targetMaxScroll = Math.max(0, contentHeight - viewHeight);
             targetScrollOffset = Math.max(0, Math.min(targetScrollOffset, targetMaxScroll));
             int startX = RoleScreenHelper.getGridStartX(targets.size(), TARGET_COLUMNS, TARGET_SPACING_X, centerX);
-            int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - targetScrollOffset;
+            int startY = contentTop - targetScrollOffset;
+            InteractionBlocker closeButtonBlocker = RoleScreenHelper.getCenteredButtonBlocker(
+                    centerX, RoleScreenHelper.getMenuButtonY(this.height), 80, 20);
 
             for (int i = 0; i < targets.size(); i++) {
                 UUID targetUuid = targets.get(i);
@@ -104,17 +111,17 @@ public class AssassinScreen extends Screen {
                 int col = i % TARGET_COLUMNS;
 
                 AssassinTargetWidget widget = new AssassinTargetWidget(
-                        null,
                         startX + col * TARGET_SPACING_X,
                         startY + row * TARGET_SPACING_Y,
                         targetUuid,
-                        i,
                         (selectedTarget) -> {
                             this.selectedTarget = selectedTarget;
                             this.clearAndInit();
-                        }
+                        },
+                        0, contentTop, this.width, viewBottom, closeButtonBlocker
                 );
-                widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+                widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
+                        0, contentTop, this.width, viewBottom);
                 addDrawableChild(widget);
             }
         } else {
@@ -138,11 +145,11 @@ public class AssassinScreen extends Screen {
                 int row = i / ROLE_COLUMNS;
 
                 AssassinRoleWidget widget = new AssassinRoleWidget(
-                        null,
                         roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X),
                         roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y),
                         allRoles.get(i),
-                        selectedTarget
+                        selectedTarget,
+                        0, roleViewportTop, this.width, roleViewportBottom
                 );
                 roleWidgets.add(widget);
                 addDrawableChild(widget);
@@ -215,6 +222,10 @@ public class AssassinScreen extends Screen {
             RoleScreenHelper.drawCenteredTitle(context, font, Text.translatable("screen.assassin.title.confirm_execution", targetName), centerX, centerY - 118);
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.assassin.subtitle.warning"), centerX, centerY - 102);
         }
+
+        if (selectedTarget == null) {
+            RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
+        }
     }
 
     @Override
@@ -247,7 +258,9 @@ public class AssassinScreen extends Screen {
 
     @Override
     public void close() {
-        this.client.setScreen(null);
+        if (this.client != null) {
+            this.client.setScreen(null);
+        }
     }
 
     private List<Role> getAllGuessableRoles() {
@@ -271,7 +284,8 @@ public class AssassinScreen extends Screen {
             int x = roleListStartX + col * (ROLE_BUTTON_WIDTH + ROLE_GAP_X);
             int y = roleListBaseY + row * (ROLE_BUTTON_HEIGHT + ROLE_GAP_Y) - (int) Math.round(roleScrollOffset);
             widget.setPosition(x, y);
-            widget.visible = y + ROLE_BUTTON_HEIGHT > roleViewportTop && y < roleViewportBottom;
+            widget.visible = RoleScreenHelper.intersectsRect(x, y, widget.getWidth(), widget.getHeight(),
+                    0, roleViewportTop, this.width, roleViewportBottom);
         }
     }
 

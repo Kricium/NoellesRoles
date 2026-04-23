@@ -8,6 +8,7 @@ import org.agmas.noellesroles.ModItems;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.item.RiotShieldItem;
 import org.agmas.noellesroles.riotpatrol.RiotPatrolPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,6 +22,10 @@ public class PlayerAttackMixin {
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void noellesroles$riotShieldKnockback(Entity target, CallbackInfo ci) {
         PlayerEntity player = (PlayerEntity) (Object) this;
+        if (SwallowedInteractionHelper.blocksTargetForViewer(player, target)) {
+            ci.cancel();
+            return;
+        }
         if (target instanceof PlayerEntity targetPlayer) {
             RiotPatrolPlayerComponent targetComponent = RiotPatrolPlayerComponent.KEY.get(targetPlayer);
             if (targetComponent.blocksAttacker(player)) {

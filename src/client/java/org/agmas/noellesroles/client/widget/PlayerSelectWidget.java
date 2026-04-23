@@ -10,6 +10,7 @@ import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.TopmostPlayerOverlayRenderable;
 
 import java.awt.*;
 import java.util.UUID;
@@ -17,7 +18,7 @@ import java.util.UUID;
 /**
  * 玩家选择Widget基类，用于巫毒师、变形者、交换者等角色的玩家选择界面
  */
-public abstract class PlayerSelectWidget extends ButtonWidget {
+public abstract class PlayerSelectWidget extends ButtonWidget implements TopmostPlayerOverlayRenderable {
     public static final int WIDGET_SIZE = 16;
     public static final int SLOT_SIZE = 30;
     public static final int SLOT_OFFSET = 7;
@@ -100,9 +101,6 @@ public abstract class PlayerSelectWidget extends ButtonWidget {
 
         // 选中状态
         if (isSelected()) {
-            Text selectedText = Text.literal("Selected");
-            int textX = this.getX() - 4 - MinecraftClient.getInstance().textRenderer.getWidth(selectedText) / 2;
-            context.drawTooltip(MinecraftClient.getInstance().textRenderer, selectedText, textX, this.getY() - 9);
             drawSlotHighlight(context, this.getX(), this.getY(), 0);
         }
 
@@ -127,6 +125,29 @@ public abstract class PlayerSelectWidget extends ButtonWidget {
     @Override
     public void drawMessage(DrawContext context, TextRenderer textRenderer, int color) {
         // 不绘制按钮文字
+    }
+
+    @Override
+    public boolean shouldRenderTopmostPlayerOverlay() {
+        return this.visible && (this.isHovered() || this.isSelected());
+    }
+
+    @Override
+    public void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer) {
+        if (this.isHovered()) {
+            Text hoverTooltip = getHoverTooltip();
+            if (hoverTooltip != null) {
+                int tooltipX = this.getX() - 4 - textRenderer.getWidth(hoverTooltip) / 2;
+                context.drawTooltip(textRenderer, hoverTooltip, tooltipX, this.getY() - 9);
+                return;
+            }
+        }
+
+        if (this.isSelected()) {
+            Text selectedText = Text.translatable("screen.player_select.selected");
+            int textX = this.getX() - 4 - textRenderer.getWidth(selectedText) / 2;
+            context.drawTooltip(textRenderer, selectedText, textX, this.getY() - 9);
+        }
     }
 
     /**

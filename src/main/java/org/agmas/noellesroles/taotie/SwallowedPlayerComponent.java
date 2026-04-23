@@ -1,6 +1,5 @@
 package org.agmas.noellesroles.taotie;
 
-import dev.doctor4t.wathe.game.GameFunctions;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.RegistryByteBuf;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
 import org.ladysnake.cca.api.v3.component.sync.AutoSyncedComponent;
-import org.ladysnake.cca.api.v3.component.tick.ServerTickingComponent;
 
 import java.util.UUID;
 
@@ -29,6 +27,7 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
     private final PlayerEntity player;
     private boolean isSwallowed = false;
     private UUID swallowedBy = null;
+    private GameMode previousGameMode = GameMode.ADVENTURE;
 
     public static boolean isPlayerSwallowed(PlayerEntity player)
     {
@@ -43,9 +42,12 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         // 重置摄像机到玩家自己
         if (this.isSwallowed && player instanceof ServerPlayerEntity serverPlayer) {
             serverPlayer.setCameraEntity(serverPlayer);
+            serverPlayer.noClip = false;
+            serverPlayer.setInvisible(false);
         }
         this.isSwallowed = false;
         this.swallowedBy = null;
+        this.previousGameMode = GameMode.ADVENTURE;
         this.sync();
     }
 
@@ -66,6 +68,7 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         if (this.swallowedBy != null) {
             buf.writeUuid(this.swallowedBy);
         }
+        buf.writeEnumConstant(this.previousGameMode);
     }
 
     @Override
@@ -76,19 +79,24 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         } else {
             this.swallowedBy = null;
         }
+        this.previousGameMode = buf.readEnumConstant(GameMode.class);
     }
 
     /**
      * Mark this player as swallowed by the given Taotie
-     * Immediately changes game mode to spectator and teleports to Taotie's position
+     * Keeps the player in a fake spectator state and teleports to Taotie's position
      */
     public void setSwallowed(UUID taotieUuid) {
         this.isSwallowed = true;
         this.swallowedBy = taotieUuid;
 
         if (player instanceof ServerPlayerEntity serverPlayer) {
-            // Change to spectator mode
-            serverPlayer.changeGameMode(GameMode.SPECTATOR);
+            this.previousGameMode = serverPlayer.interactionManager.getGameMode();
+            serverPlayer.noClip = true;
+            serverPlayer.setInvisible(true);
+            serverPlayer.setOnGround(true);
+            serverPlayer.setVelocity(Vec3d.ZERO);
+            serverPlayer.fallDistance = 0.0F;
 
             // Teleport to Taotie's position
             if (player.getWorld() instanceof ServerWorld serverWorld) {
@@ -107,7 +115,7 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
 
     /**
      * Release this player from Taotie's stomach
-     * Teleports to release position and changes to adventure mode
+     * Teleports to release position and restores a playable game mode
      */
     public void release(Vec3d position) {
         if (!isSwallowed) return;
@@ -116,15 +124,23 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         if (player instanceof ServerPlayerEntity serverPlayer) {
             // Reset camera to self first
             serverPlayer.setCameraEntity(serverPlayer);
+            serverPlayer.noClip = false;
+            serverPlayer.setInvisible(false);
+            serverPlayer.setOnGround(true);
+            serverPlayer.setVelocity(Vec3d.ZERO);
+            serverPlayer.fallDistance = 0.0F;
 
-            // Change to adventure mode (force all alive players to adventure)
-            serverPlayer.changeGameMode(GameMode.ADVENTURE);
+            GameMode restoredGameMode = this.previousGameMode == GameMode.SPECTATOR
+                    ? GameMode.ADVENTURE
+                    : this.previousGameMode;
+            serverPlayer.changeGameMode(restoredGameMode);
 
             // Teleport to release position
             serverPlayer.teleport((ServerWorld) serverPlayer.getWorld(),
                     position.x, position.y, position.z,
                     serverPlayer.getYaw(), serverPlayer.getPitch());
         }
+        this.previousGameMode = GameMode.ADVENTURE;
         this.sync();
     }
 
@@ -143,6 +159,7 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         if (this.swallowedBy != null) {
             tag.putUuid("swallowedBy", this.swallowedBy);
         }
+        tag.putString("previousGameMode", this.previousGameMode.getName());
     }
 
     @Override
@@ -153,5 +170,6 @@ public class SwallowedPlayerComponent implements AutoSyncedComponent {
         } else {
             this.swallowedBy = null;
         }
+        this.previousGameMode = GameMode.byName(tag.getString("previousGameMode"), GameMode.ADVENTURE);
     }
 }

@@ -18,7 +18,7 @@ public final class CriminalReasonerHudRenderer implements RoleHudRenderer {
                 ? Text.translatable("tip.noellesroles.cooldown", abilityComp.getCooldown() / 20)
                 : Text.translatable("hud.criminal_reasoner.press_key_hint", HudRenderHelper.getAbilityKeyName());
 
-        int requiredReasoningCount = Math.floorDiv(GameWorldComponent.KEY.get(player.getWorld()).getAllPlayers().size(), 3);
+        int requiredReasoningCount = Math.floorDiv(GameWorldComponent.KEY.get(player.getWorld()).getAllPlayers().size(), 4);
         Text progressText = Text.translatable(
                 "hud.criminal_reasoner.progress",
                 comp.getSuccessfulReasoningCount(),

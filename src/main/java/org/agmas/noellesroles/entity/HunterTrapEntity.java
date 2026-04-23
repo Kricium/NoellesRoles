@@ -8,6 +8,8 @@ import dev.doctor4t.wathe.record.GameRecordManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -25,12 +27,17 @@ import net.minecraft.entity.damage.DamageSource;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.hunter.HunterPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.NoCollisionStateHelper;
+import org.agmas.noellesroles.util.SpectatorStateHelper;
 import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 
 import java.util.UUID;
+import java.util.Optional;
 
 public class HunterTrapEntity extends Entity {
     public static final String EVENT_TRIGGERED = "hunter_trap_triggered";
+    private static final TrackedData<Optional<UUID>> OWNER_UUID = DataTracker.registerData(HunterTrapEntity.class, TrackedDataHandlerRegistry.OPTIONAL_UUID);
+    private static final TrackedData<Boolean> POISONED = DataTracker.registerData(HunterTrapEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
     private static final int MAX_LIFESPAN_TICKS = 20 * 60 * 10;
     private static final double TRIGGER_EXPAND_XZ = 0.35;
     private static final double TRIGGER_EXPAND_Y = 0.15;
@@ -51,9 +58,14 @@ public class HunterTrapEntity extends Entity {
 
     public void setOwner(PlayerEntity owner) {
         this.ownerUuid = owner == null ? null : owner.getUuid();
+        this.dataTracker.set(OWNER_UUID, Optional.ofNullable(this.ownerUuid));
     }
 
     public UUID getOwnerUuid() {
+        Optional<UUID> trackedOwner = this.dataTracker.get(OWNER_UUID);
+        if (trackedOwner.isPresent()) {
+            this.ownerUuid = trackedOwner.get();
+        }
         return this.ownerUuid;
     }
 
@@ -90,11 +102,13 @@ public class HunterTrapEntity extends Entity {
     }
 
     public boolean isPoisoned() {
+        this.poisoned = this.dataTracker.get(POISONED);
         return this.poisoned;
     }
 
     public void setPoisoned(boolean poisoned) {
         this.poisoned = poisoned;
+        this.dataTracker.set(POISONED, poisoned);
     }
 
     public UUID getPoisonerUuid() {
@@ -107,6 +121,8 @@ public class HunterTrapEntity extends Entity {
 
     @Override
     protected void initDataTracker(DataTracker.Builder builder) {
+        builder.add(OWNER_UUID, Optional.empty());
+        builder.add(POISONED, false);
     }
 
     @Override
@@ -156,7 +172,9 @@ public class HunterTrapEntity extends Entity {
     }
 
     private boolean canTrigger(PlayerEntity player) {
-        return GameFunctions.isPlayerAliveAndSurvival(player) && !this.isVultureSpeeding(player);
+        return GameFunctions.isPlayerAliveAndSurvival(player)
+                && !this.isVultureSpeeding(player)
+                && !NoCollisionStateHelper.shouldDisableCollision(player);
     }
 
     private void trigger(PlayerEntity player) {
@@ -165,13 +183,14 @@ public class HunterTrapEntity extends Entity {
         component.trap();
         component.addFractureLayer();
 
-        if (this.poisoned) {
-            PlayerEntity owner = this.ownerUuid == null ? null : this.getWorld().getPlayerByUuid(this.ownerUuid);
+        if (this.isPoisoned()) {
+            UUID ownerUuid = this.getOwnerUuid();
+            PlayerEntity owner = ownerUuid == null ? null : this.getWorld().getPlayerByUuid(ownerUuid);
             PlayerPoisonComponent poisonComponent = PlayerPoisonComponent.KEY.get(player);
             UUID actualPoisonerUuid = this.poisonerUuid != null ? this.poisonerUuid : (owner == null ? null : owner.getUuid());
             poisonComponent.setPoisonTicks(20 * 40, actualPoisonerUuid, Noellesroles.POISON_SOURCE_TRAP);
             // 将猎人和下毒者信息存储在受害者身上，死亡时才发放奖励
-            HunterPlayerComponent.KEY.get(player).setTrapPoisonInfo(this.ownerUuid, this.poisonerUuid);
+            HunterPlayerComponent.KEY.get(player).setTrapPoisonInfo(ownerUuid, this.poisonerUuid);
         }
 
         this.getWorld().playSound(null, this.getBlockPos(), SoundEvents.BLOCK_CHAIN_BREAK, SoundCategory.PLAYERS, 0.8F, 0.8F);
@@ -185,6 +204,9 @@ public class HunterTrapEntity extends Entity {
             return false;
         }
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorld.isRole(player, WatheRoles.LOOSE_END)) {
+            return player.getUuid().equals(this.getOwnerUuid());
+        }
         return gameWorld.canUseKillerFeatures(player)
             || this.isInGameSpectator(player, gameWorld)
             || gameWorld.isRole(player, WatheRoles.VIGILANTE)
@@ -200,6 +222,10 @@ public class HunterTrapEntity extends Entity {
         }
 
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(player.getWorld());
+        if (gameWorld.isRole(player, WatheRoles.LOOSE_END)) {
+            return player.canSee(this);
+        }
+
         if (gameWorld.canUseKillerFeatures(player) || this.isInGameSpectator(player, gameWorld)) {
             return true;
         }
@@ -216,9 +242,7 @@ public class HunterTrapEntity extends Entity {
     }
 
     private boolean isInGameSpectator(PlayerEntity player, GameWorldComponent gameWorld) {
-        return player.isSpectator()
-            && gameWorld.isRunning()
-            && !SwallowedPlayerComponent.isPlayerSwallowed(player)
+        return SpectatorStateHelper.isInGameRealSpectator(player, gameWorld)
             && (!gameWorld.hasAnyRole(player) || gameWorld.isPlayerDead(player.getUuid()));
     }
 
@@ -248,7 +272,8 @@ public class HunterTrapEntity extends Entity {
 
         var event = GameRecordManager.event(EVENT_TRIGGERED)
             .target(serverTarget);
-        PlayerEntity owner = this.ownerUuid == null ? null : serverWorld.getPlayerByUuid(this.ownerUuid);
+        UUID ownerUuid = this.getOwnerUuid();
+        PlayerEntity owner = ownerUuid == null ? null : serverWorld.getPlayerByUuid(ownerUuid);
         if (owner instanceof ServerPlayerEntity serverOwner) {
             event.actor(serverOwner);
         }
@@ -273,8 +298,9 @@ public class HunterTrapEntity extends Entity {
     }
 
     public void unregisterFromOwner() {
-        if (!this.getWorld().isClient && this.ownerUuid != null) {
-            PlayerEntity owner = this.getWorld().getPlayerByUuid(this.ownerUuid);
+        UUID ownerUuid = this.getOwnerUuid();
+        if (!this.getWorld().isClient && ownerUuid != null) {
+            PlayerEntity owner = this.getWorld().getPlayerByUuid(ownerUuid);
             if (owner != null) {
                 HunterPlayerComponent.KEY.get(owner).unregisterTrap(this.getUuid());
             }
@@ -284,8 +310,10 @@ public class HunterTrapEntity extends Entity {
     @Override
     protected void readCustomDataFromNbt(NbtCompound nbt) {
         this.ownerUuid = nbt.containsUuid("owner") ? nbt.getUuid("owner") : null;
+        this.dataTracker.set(OWNER_UUID, Optional.ofNullable(this.ownerUuid));
         this.poisonerUuid = nbt.containsUuid("poisoner") ? nbt.getUuid("poisoner") : null;
         this.poisoned = nbt.getBoolean("poisoned");
+        this.dataTracker.set(POISONED, this.poisoned);
         this.armTicks = nbt.getInt("armTicks");
         if (nbt.contains("supportPos")) {
             this.supportPos = BlockPos.fromLong(nbt.getLong("supportPos"));
@@ -294,8 +322,9 @@ public class HunterTrapEntity extends Entity {
 
     @Override
     protected void writeCustomDataToNbt(NbtCompound nbt) {
-        if (this.ownerUuid != null) {
-            nbt.putUuid("owner", this.ownerUuid);
+        UUID ownerUuid = this.getOwnerUuid();
+        if (ownerUuid != null) {
+            nbt.putUuid("owner", ownerUuid);
         }
         if (this.poisonerUuid != null) {
             nbt.putUuid("poisoner", this.poisonerUuid);

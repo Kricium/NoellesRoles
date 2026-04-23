@@ -9,6 +9,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.util.SkinTextures;
 import net.minecraft.util.Identifier;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import org.agmas.noellesroles.ConfigWorldComponent;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.morphling.MorphlingPlayerComponent;
@@ -24,8 +25,9 @@ public abstract class MorphlingRendererMixin {
 
     @Inject(method = "getTexture(Lnet/minecraft/client/network/AbstractClientPlayerEntity;)Lnet/minecraft/util/Identifier;", at = @At("HEAD"), cancellable = true)
     void b(AbstractClientPlayerEntity abstractClientPlayerEntity, CallbackInfoReturnable<Identifier> cir) {
+        ConfigWorldComponent config = ConfigWorldComponent.KEY.get(abstractClientPlayerEntity.getWorld());
         if (WatheClient.moodComponent != null) {
-            if ((ConfigWorldComponent.KEY.get(abstractClientPlayerEntity.getWorld())).insaneSeesMorphs
+            if (config.insaneSeesMorphs
                     && WatheClient.moodComponent.isLowerThanDepressed()
                     && NoellesrolesClient.SHUFFLED_PLAYER_ENTRIES_CACHE.containsKey(abstractClientPlayerEntity.getUuid())) {
 
@@ -39,6 +41,9 @@ public abstract class MorphlingRendererMixin {
                     }
                 }
             }
+        }
+        if (!GameWorldComponent.KEY.get(abstractClientPlayerEntity.getWorld()).isRunning()) {
+            return;
         }
         var morphComponent = MorphlingPlayerComponent.KEY.get(abstractClientPlayerEntity);
         if (morphComponent.getMorphTicks() > 0) {
@@ -73,8 +78,9 @@ public abstract class MorphlingRendererMixin {
 
     @WrapOperation(method = "renderArm", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getSkinTextures()Lnet/minecraft/client/util/SkinTextures;"))
     SkinTextures b(AbstractClientPlayerEntity instance, Operation<SkinTextures> original) {
+        ConfigWorldComponent config = ConfigWorldComponent.KEY.get(instance.getWorld());
         if (WatheClient.moodComponent != null) {
-            if ((ConfigWorldComponent.KEY.get(instance.getWorld())).insaneSeesMorphs
+            if (config.insaneSeesMorphs
                     && WatheClient.moodComponent.isLowerThanDepressed()
                     && NoellesrolesClient.SHUFFLED_PLAYER_ENTRIES_CACHE.containsKey(instance.getUuid())) {
 
@@ -87,6 +93,9 @@ public abstract class MorphlingRendererMixin {
                     }
                 }
             }
+        }
+        if (!GameWorldComponent.KEY.get(instance.getWorld()).isRunning()) {
+            return original.call(instance);
         }
         var morphComponent = MorphlingPlayerComponent.KEY.get(instance);
         if (morphComponent.getMorphTicks() > 0) {

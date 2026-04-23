@@ -30,6 +30,24 @@ public class NoellesRolesConfig {
     @SerialEntry(comment = "Allow Natural deaths to trigger voodoo (deaths without an assigned killer)")
     public boolean voodooNonKillerDeaths = false;
 
+    @SerialEntry(comment = "Show the bottom-left assist interface hint overlay")
+    public boolean showAssistInterfaceHint = true;
+
+    @SerialEntry(comment = "Show the bottom-left config screen hint overlay")
+    public boolean showConfigScreenHint = true;
+
+    @SerialEntry(comment = "Custom label shown in the handmade config screen example")
+    public String preferredServerLabel = "NoellesRoles";
+
+    @SerialEntry(comment = "Visual theme preset used by the handmade config screen example")
+    public UiThemePreset uiThemePreset = UiThemePreset.MODERN;
+
+    @SerialEntry(comment = "Map registry id used by Death Arena for loading spawn rooms and map enhancements.")
+    public String deathArenaMapId = "wathe:yangguan_siwang";
+
+    @SerialEntry(comment = "World dimension id used by Death Arena. If blank, the dimension from deathArenaMapId will be used.")
+    public String deathArenaDimensionId = "wathe:yangguan_siwang";
+
     @SerialEntry(comment = "Lock Sound Physics Remastered config to the server-defined values while connected")
     public boolean lockSoundPhysicsRemasteredConfig = true;
 
@@ -92,4 +110,32 @@ public class NoellesRolesConfig {
             Map.entry("maxUUIDWordCheck", "0"),
             Map.entry("showOwnBubble", "true")
     ));
+
+    public NoellesRolesConfig copy() {
+        NoellesRolesConfig copy = new NoellesRolesConfig();
+        copy.copyFrom(this);
+        return copy;
+    }
+
+    public void copyFrom(NoellesRolesConfig other) {
+        this.insanePlayersSeeMorphs = other.insanePlayersSeeMorphs;
+        this.generalCooldownTicks = other.generalCooldownTicks;
+        this.voodooNonKillerDeaths = other.voodooNonKillerDeaths;
+        this.showAssistInterfaceHint = other.showAssistInterfaceHint;
+        this.showConfigScreenHint = other.showConfigScreenHint;
+        this.preferredServerLabel = other.preferredServerLabel;
+        this.uiThemePreset = other.uiThemePreset;
+        this.deathArenaMapId = other.deathArenaMapId;
+        this.deathArenaDimensionId = other.deathArenaDimensionId;
+        this.lockSoundPhysicsRemasteredConfig = other.lockSoundPhysicsRemasteredConfig;
+        this.soundPhysicsRemasteredLockedValues = new LinkedHashMap<>(other.soundPhysicsRemasteredLockedValues);
+        this.lockTalkBubblesConfig = other.lockTalkBubblesConfig;
+        this.talkBubblesLockedValues = new LinkedHashMap<>(other.talkBubblesLockedValues);
+    }
+
+    public enum UiThemePreset {
+        MODERN,
+        COMPACT,
+        CINEMATIC
+    }
 }
