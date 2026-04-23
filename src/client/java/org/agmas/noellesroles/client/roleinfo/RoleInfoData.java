@@ -141,6 +141,16 @@ public class RoleInfoData {
         return addSharedSkillWithSharedTrigger(skillId, null, "shared.trigger.passive");
     }
 
+    public RoleInfoData addEventEffect(String effectId, String nameKey, String effectKey) {
+        SkillInfoData s = new SkillInfoData();
+        s.nameKey = nameKey;
+        s.triggerKey = null;
+        s.triggerKeybind = null;
+        s.effectKey = effectKey;
+        skills.put(effectId, s);
+        return this;
+    }
+
     private RoleInfoData addSharedSkillWithKeys(String skillId, String triggerKeybind, String nameKey, String triggerKey, String effectKey) {
         SkillInfoData s = new SkillInfoData();
         s.nameKey = nameKey;

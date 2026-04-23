@@ -541,6 +541,14 @@ public class RoleInfoRegistry {
                 null,
                 "tr:event_description.noellesroles.murder_mayhem.fog_of_war",
                 null
+        ).addEventEffect(
+                "fog",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.fog.name",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.fog.effect"
+        ).addEventEffect(
+                "hallucination",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.hallucination.name",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.hallucination.effect"
         ));
         m.put(CATEGORY_LOOSE_ENDS, new RoleInfoData(
                 "loose_ends_category",

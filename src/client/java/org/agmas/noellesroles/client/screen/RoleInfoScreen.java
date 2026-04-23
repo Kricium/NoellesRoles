@@ -259,15 +259,22 @@ public class RoleInfoScreen extends Screen {
             context.fill(x, y, x + contentWidth, y + 1, 0xFF2B2B2B);
             y += SECTION_GAP;
 
-            context.drawTextWithShadow(font, Text.translatable("roleinfo.skills_header"), x, y, 0xFFFFAA00);
+            boolean eventPage = isEventPage(selectedEntryId);
+            context.drawTextWithShadow(font,
+                    Text.translatable(eventPage ? "roleinfo.event_effects_header" : "roleinfo.skills_header"),
+                    x,
+                    y,
+                    0xFFFFAA00);
             y += DETAIL_LINE_HEIGHT + SECTION_GAP;
 
             for (RoleInfoData.SkillInfoData skill : info.skills.values()) {
                 Text skillName = Text.literal("| ").append(RoleInfoRegistry.resolveText(skill.nameKey));
                 y = drawWrappedText(context, font, skillName, x, y, contentWidth, 0xFF00CCFF);
 
-                Text triggerLabel = Text.translatable("roleinfo.skill.trigger_label", RoleInfoRegistry.getTriggerText(skill));
-                y = drawWrappedText(context, font, triggerLabel, x + 8, y, contentWidth - 8, 0xFF666666);
+                if (!eventPage && skill.triggerKey != null) {
+                    Text triggerLabel = Text.translatable("roleinfo.skill.trigger_label", RoleInfoRegistry.getTriggerText(skill));
+                    y = drawWrappedText(context, font, triggerLabel, x + 8, y, contentWidth - 8, 0xFF666666);
+                }
 
                 Text effectLabel = Text.translatable("roleinfo.skill.effect_label", RoleInfoRegistry.resolveText(skill.effectKey));
                 y = drawWrappedText(context, font, effectLabel, x + 8, y, contentWidth - 8, 0xFFBBBBBB);
