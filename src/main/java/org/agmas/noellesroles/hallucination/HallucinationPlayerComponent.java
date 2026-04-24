@@ -4,7 +4,10 @@ import dev.doctor4t.wathe.game.GameConstants;
 import dev.doctor4t.wathe.api.WatheRoles;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.cca.GameTimeComponent;
+import dev.doctor4t.wathe.index.WatheItems;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
@@ -57,6 +60,8 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
     public static final int FAKE_SANITY_TICKS = GameConstants.getInTicks(3, 0);
     public static final int HIDDEN_UI_TICKS = GameConstants.getInTicks(3, 0);
     public static final int KILLER_DUMMY_BODY_TICKS = GameConstants.TIME_TO_DECOMPOSITION + GameConstants.DECOMPOSING_TIME;
+    private static final double DUMMY_MELEE_DISTANCE_SQUARED = 16.0D;
+    private static final double DUMMY_GUN_DISTANCE_SQUARED = 30.0D * 30.0D;
 
     private final PlayerEntity player;
     private final Map<HallucinationEffectId, HallucinationActiveEntry> activeEffects = new EnumMap<>(HallucinationEffectId.class);
@@ -688,8 +693,8 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
             removeEffect(effectId);
         });
 
-        dirty |= tickUuidTimerMap(this.fakeBodies);
-        dirty |= tickArtifactTimerMap(this.pendingFakeBodyRemovalTicks, this.fakeBodies);
+        dirty |= tickUuidTimerMap(this.fakeBodies, this.fakeBodyDeathReasons);
+        dirty |= tickArtifactTimerMap(this.pendingFakeBodyRemovalTicks, this.fakeBodies, this.fakeBodyDeathReasons);
         dirty |= tickArtifactTimerMap(this.pendingDummyRemovalTicks, this.dummies, this.killerDummyRewards);
         dirty |= tickDummyStatuses();
         dirty |= tickUuidTimerMap(this.hiddenPlayers);
@@ -753,6 +758,9 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
     }
 
     public boolean handleDummyHit(HallucinationDummyHitC2SPacket payload) {
+        if (payload == null || !canHitDummy(payload.dummyId(), payload.deathReason())) {
+            return false;
+        }
         return handleDummyRemoval(payload.dummyId(), new DummyDeathContext(payload.deathReason(), true, null, null, null));
     }
 
@@ -760,14 +768,80 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
         if (payload == null) {
             return false;
         }
+        UUID dummyId = payload.dummyId();
         return switch (payload.action()) {
-            case MELEE_SHOVE -> shoveDummy(payload.dummyId(), this.player, this.player.getMainHandStack().isOf(ModItems.RIOT_SHIELD) ? 0.75D : 0.45D);
-            case POISON_NEEDLE_USE -> applyPoisonToDummy(payload.dummyId(), 20 * 40, this.player.getUuid(), Noellesroles.POISON_SOURCE_NEEDLE);
-            case CATALYST_USE -> catalyzeDummyPoison(payload.dummyId(), this.player.getUuid());
-            case ANTIDOTE_USE -> cureDummyPoison(payload.dummyId());
-            case TIMED_BOMB_PLACE -> placeBombOnDummy(payload.dummyId(), this.player);
-            case TIMED_BOMB_TRANSFER -> transferBombToDummy(payload.dummyId(), this.player);
+            case MELEE_SHOVE -> canUseDummyMelee(dummyId)
+                    && canShoveDummy()
+                    && shoveDummy(dummyId, this.player, this.player.getMainHandStack().isOf(ModItems.RIOT_SHIELD) ? 0.75D : 0.45D);
+            case POISON_NEEDLE_USE -> canUseDummyMelee(dummyId)
+                    && isHoldingReady(ModItems.POISON_NEEDLE)
+                    && applyPoisonToDummy(dummyId, 20 * 40, this.player.getUuid(), Noellesroles.POISON_SOURCE_NEEDLE);
+            case CATALYST_USE -> canUseDummyMelee(dummyId)
+                    && isHoldingReady(ModItems.CATALYST)
+                    && GameWorldComponent.KEY.get(this.player.getWorld()).isRole(this.player, Noellesroles.POISONER)
+                    && catalyzeDummyPoison(dummyId, this.player.getUuid());
+            case ANTIDOTE_USE -> canUseDummyMelee(dummyId)
+                    && isHoldingReady(ModItems.ANTIDOTE)
+                    && getDummyPoisonState(dummyId).isPresent()
+                    && cureDummyPoison(dummyId);
+            case TIMED_BOMB_PLACE -> canUseDummyMelee(dummyId)
+                    && isHoldingReady(ModItems.TIMED_BOMB)
+                    && placeBombOnDummy(dummyId, this.player);
+            case TIMED_BOMB_TRANSFER -> canUseDummyMelee(dummyId)
+                    && isHoldingReady(ModItems.TIMED_BOMB)
+                    && transferBombToDummy(dummyId, this.player);
         };
+    }
+
+    private boolean canHitDummy(UUID dummyId, Identifier deathReason) {
+        Optional<HallucinationDummyState> dummy = getDummy(dummyId);
+        if (dummy.isEmpty() || deathReason == null) {
+            return false;
+        }
+
+        if (GameConstants.DeathReasons.KNIFE.equals(deathReason)) {
+            return isDummyWithinDistance(dummy.get(), DUMMY_MELEE_DISTANCE_SQUARED)
+                    && isHoldingReady(WatheItems.KNIFE);
+        }
+        if (GameConstants.DeathReasons.BAT.equals(deathReason)) {
+            return isDummyWithinDistance(dummy.get(), DUMMY_MELEE_DISTANCE_SQUARED)
+                    && isHoldingReady(WatheItems.BAT);
+        }
+        if (GameConstants.DeathReasons.GUN.equals(deathReason)) {
+            ItemStack stack = this.player.getMainHandStack();
+            if (stack.isOf(ModItems.DOUBLE_BARREL_SHOTGUN)) {
+                double range = DoubleBarrelShotgunItem.RANGE;
+                return isDummyWithinDistance(dummy.get(), range * range)
+                        && !this.player.getItemCooldownManager().isCoolingDown(ModItems.DOUBLE_BARREL_SHOTGUN)
+                        && DoubleBarrelShotgunItem.getLoadedShells(stack) > 0;
+            }
+            return isDummyWithinDistance(dummy.get(), DUMMY_GUN_DISTANCE_SQUARED)
+                    && isHoldingReady(WatheItems.REVOLVER);
+        }
+        return false;
+    }
+
+    private boolean canUseDummyMelee(UUID dummyId) {
+        return getDummy(dummyId)
+                .map(dummy -> isDummyWithinDistance(dummy, DUMMY_MELEE_DISTANCE_SQUARED))
+                .orElse(false);
+    }
+
+    private boolean canShoveDummy() {
+        ItemStack stack = this.player.getMainHandStack();
+        if (stack.isOf(ModItems.RIOT_SHIELD)) {
+            return !this.player.getItemCooldownManager().isCoolingDown(ModItems.RIOT_SHIELD);
+        }
+        return stack.isOf(WatheItems.KNIFE) || stack.isOf(ModItems.POISON_NEEDLE);
+    }
+
+    private boolean isHoldingReady(Item item) {
+        return this.player.getMainHandStack().isOf(item)
+                && !this.player.getItemCooldownManager().isCoolingDown(item);
+    }
+
+    private boolean isDummyWithinDistance(HallucinationDummyState dummy, double maxDistanceSquared) {
+        return dummy != null && this.player.squaredDistanceTo(dummy.position()) <= maxDistanceSquared;
     }
 
     public boolean handleDummyRemoval(UUID dummyId, DummyDeathContext context) {
@@ -922,6 +996,26 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
         return true;
     }
 
+    private static boolean tickUuidTimerMap(Map<UUID, Integer> map, Map<UUID, ?> metadata) {
+        List<UUID> expired = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> entry : map.entrySet()) {
+            int next = entry.getValue() - 1;
+            if (next <= 0) {
+                expired.add(entry.getKey());
+            } else {
+                entry.setValue(next);
+            }
+        }
+        if (expired.isEmpty()) {
+            return false;
+        }
+        expired.forEach(uuid -> {
+            map.remove(uuid);
+            metadata.remove(uuid);
+        });
+        return true;
+    }
+
     private static boolean tickArtifactTimerMap(Map<UUID, Integer> pendingMap, Map<UUID, Integer> artifacts) {
         List<UUID> expired = new ArrayList<>();
         for (Map.Entry<UUID, Integer> entry : pendingMap.entrySet()) {
@@ -938,6 +1032,29 @@ public class HallucinationPlayerComponent implements AutoSyncedComponent {
         expired.forEach(uuid -> {
             pendingMap.remove(uuid);
             artifacts.remove(uuid);
+        });
+        return true;
+    }
+
+    private static boolean tickArtifactTimerMap(Map<UUID, Integer> pendingMap,
+                                                Map<UUID, Integer> artifacts,
+                                                Map<UUID, ?> metadata) {
+        List<UUID> expired = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> entry : pendingMap.entrySet()) {
+            int next = entry.getValue() - 1;
+            if (next <= 0) {
+                expired.add(entry.getKey());
+            } else {
+                entry.setValue(next);
+            }
+        }
+        if (expired.isEmpty()) {
+            return false;
+        }
+        expired.forEach(uuid -> {
+            pendingMap.remove(uuid);
+            artifacts.remove(uuid);
+            metadata.remove(uuid);
         });
         return true;
     }
