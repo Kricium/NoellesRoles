@@ -19,7 +19,10 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.util.UseAction;
 import net.minecraft.world.World;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class AntidoteItem extends Item {
@@ -45,6 +48,19 @@ public class AntidoteItem extends Item {
         }
 
         // Target must be a player
+        HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(user);
+        Optional<UUID> dummyId = HallucinationDummyInteractionHelper.getDummyId(entity, user);
+        if (dummyId.isPresent()) {
+            if (hallucinationComponent.getDummyPoisonState(dummyId.get()).isEmpty()) {
+                return ActionResult.PASS;
+            }
+            NbtCompound nbt = new NbtCompound();
+            nbt.putUuid("hallucinationDummy", dummyId.get());
+            stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+            user.setCurrentHand(hand);
+            return ActionResult.CONSUME;
+        }
+
         if (!(entity instanceof PlayerEntity target)) {
             return ActionResult.PASS;
         }
@@ -105,25 +121,33 @@ public class AntidoteItem extends Item {
 
         // Get stored target
         UUID targetUuid = getTargetUuid(stack);
-        if (targetUuid == null) {
+        UUID dummyId = getDummyUuid(stack);
+        if (targetUuid == null && dummyId == null) {
             user.stopUsingItem();
             return;
         }
 
-        // Check if target still exists and in range
-        PlayerEntity target = world.getPlayerByUuid(targetUuid);
-        if (target == null || user.squaredDistanceTo(target) > MAX_DISTANCE_SQ) {
-            user.stopUsingItem();
-            clearTargetUuid(stack);
-            return;
-        }
+        if (dummyId != null && user instanceof PlayerEntity player) {
+            HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(player);
+            if (hallucinationComponent.getDummy(dummyId).isEmpty() || hallucinationComponent.getDummyPoisonState(dummyId).isEmpty()) {
+                user.stopUsingItem();
+                clearTargetUuid(stack);
+                return;
+            }
+        } else {
+            PlayerEntity target = world.getPlayerByUuid(targetUuid);
+            if (target == null || user.squaredDistanceTo(target) > MAX_DISTANCE_SQ) {
+                user.stopUsingItem();
+                clearTargetUuid(stack);
+                return;
+            }
 
-        // Check if target is still poisoned
-        PlayerPoisonComponent poisonComp = PlayerPoisonComponent.KEY.get(target);
-        if (poisonComp.poisonTicks <= 0) {
-            user.stopUsingItem();
-            clearTargetUuid(stack);
-            return;
+            PlayerPoisonComponent poisonComp = PlayerPoisonComponent.KEY.get(target);
+            if (poisonComp.poisonTicks <= 0) {
+                user.stopUsingItem();
+                clearTargetUuid(stack);
+                return;
+            }
         }
     }
 
@@ -139,7 +163,19 @@ public class AntidoteItem extends Item {
 
         // Get stored target
         UUID targetUuid = getTargetUuid(stack);
-        if (targetUuid == null) {
+        UUID dummyId = getDummyUuid(stack);
+        if (targetUuid == null && dummyId == null) {
+            return stack;
+        }
+
+        if (dummyId != null) {
+            HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(player);
+            if (hallucinationComponent.cureDummyPoison(dummyId)) {
+                world.playSound(null, player.getBlockPos(), SoundEvents.ENTITY_PLAYER_BURP, SoundCategory.PLAYERS, 1.0F, 1.2F);
+                player.getItemCooldownManager().set(this, COOLDOWN_TICKS);
+                hallucinationComponent.sync();
+            }
+            clearTargetUuid(stack);
             return stack;
         }
 
@@ -201,6 +237,17 @@ public class AntidoteItem extends Item {
             NbtCompound nbt = customData.copyNbt();
             if (nbt.containsUuid("target")) {
                 return nbt.getUuid("target");
+            }
+        }
+        return null;
+    }
+
+    private UUID getDummyUuid(ItemStack stack) {
+        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        if (customData != null) {
+            NbtCompound nbt = customData.copyNbt();
+            if (nbt.containsUuid("hallucinationDummy")) {
+                return nbt.getUuid("hallucinationDummy");
             }
         }
         return null;

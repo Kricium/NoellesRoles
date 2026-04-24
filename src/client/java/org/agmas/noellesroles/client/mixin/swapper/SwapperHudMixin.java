@@ -10,6 +10,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.util.HudRenderHelper;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,6 +26,7 @@ public abstract class SwapperHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     private void noellesroles$renderSwapperHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (MinecraftClient.getInstance().player == null) return;
+        if (HallucinationHudRenderer.shouldSuppressSkillHintHud()) return;
         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) return;
 
         GameWorldComponent gameWorld = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());

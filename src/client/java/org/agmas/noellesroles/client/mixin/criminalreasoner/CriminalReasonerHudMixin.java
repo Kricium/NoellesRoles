@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.criminalreasoner.CriminalReasonerPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,6 +26,7 @@ public abstract class CriminalReasonerHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     public void renderCriminalReasonerHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (MinecraftClient.getInstance().player == null) return;
+        if (HallucinationHudRenderer.shouldSuppressSkillHintHud()) return;
         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) return;
 
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());

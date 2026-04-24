@@ -108,10 +108,10 @@ public class CriminalReasonerScreen extends Screen {
                         selectedSuspect = null;
                         this.clearAndInit();
                     },
-                    0, contentTop, this.width, viewBottom, closeButtonBlocker
+                    0, viewTop, this.width, viewBottom, closeButtonBlocker
             );
             widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
-                    0, contentTop, this.width, viewBottom);
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
     }
@@ -137,11 +137,11 @@ public class CriminalReasonerScreen extends Screen {
         int aliveGridY = aliveHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
         InteractionBlocker backButtonBlocker = new InteractionBlocker(centerX - 86, RoleScreenHelper.getMenuButtonY(this.height), centerX - 6, RoleScreenHelper.getMenuButtonY(this.height) + 20);
         InteractionBlocker confirmButtonBlocker = new InteractionBlocker(centerX + 6, RoleScreenHelper.getMenuButtonY(this.height), centerX + 86, RoleScreenHelper.getMenuButtonY(this.height) + 20);
-        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, contentTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
+        addSuspectSection(aliveSuspects, Text.translatable("screen.criminal_reasoner.section.alive"), centerX, aliveHeaderY, aliveGridY, viewTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
 
         int deadHeaderY = aliveGridY + aliveRows * SUSPECT_SPACING_Y + SUSPECT_SECTION_GAP;
         int deadGridY = deadHeaderY + SUSPECT_SECTION_HEADER_HEIGHT;
-        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY, contentTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
+        addSuspectSection(deadSuspects, Text.translatable("screen.criminal_reasoner.section.dead"), centerX, deadHeaderY, deadGridY, viewTop, viewBottom, backButtonBlocker, confirmButtonBlocker);
 
         int buttonY = RoleScreenHelper.getMenuButtonY(this.height);
 

@@ -16,8 +16,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.World;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
+import org.agmas.noellesroles.hallucination.HallucinationDummyState;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 import org.agmas.noellesroles.util.AreaDamageImmunityHelper;
 import org.joml.Vector3f;
 
@@ -41,6 +45,7 @@ public class PoisonGasCloudEntity extends Entity {
     private final List<BlockPos> gasBlockList = new ArrayList<>();
     private Set<BlockPos> frontier = new HashSet<>();
     private final Map<UUID, Integer> exposureTicks = new HashMap<>();
+    private final Map<UUID, Integer> dummyExposureTicks = new HashMap<>();
     private final Set<UUID> playersInGas = new HashSet<>();
     private UUID ownerUuid;
     private int age = 0;
@@ -179,6 +184,31 @@ public class PoisonGasCloudEntity extends Entity {
         }
 
         // 粒子效果
+        if (ownerUuid != null) {
+            ServerPlayerEntity owner = serverWorld.getServer().getPlayerManager().getPlayer(ownerUuid);
+            if (owner != null) {
+                HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(owner);
+                Set<UUID> seenDummyIds = new HashSet<>();
+                for (HallucinationDummyState dummy : hallucinationComponent.getDummyStates()) {
+                    seenDummyIds.add(dummy.id());
+                    if (isDummyInGas(dummy.position())) {
+                        int ticks = dummyExposureTicks.getOrDefault(dummy.id(), 0) + 1;
+                        dummyExposureTicks.put(dummy.id(), ticks);
+                        if (ticks >= EXPOSURE_THRESHOLD) {
+                            hallucinationComponent.applyPoisonToDummy(dummy.id(), 20 * 20, ownerUuid, Noellesroles.POISON_SOURCE_GAS_BOMB);
+                            dummyExposureTicks.put(dummy.id(), 0);
+                            hallucinationComponent.sync();
+                        }
+                    } else {
+                        dummyExposureTicks.put(dummy.id(), 0);
+                    }
+                }
+                dummyExposureTicks.keySet().removeIf(dummyId -> !seenDummyIds.contains(dummyId));
+            } else {
+                dummyExposureTicks.clear();
+            }
+        }
+
         if (!gasBlockList.isEmpty()) {
             int particleCount = 4 + serverWorld.random.nextInt(3); // 4-6个粒子
             for (int i = 0; i < particleCount; i++) {
@@ -210,6 +240,21 @@ public class PoisonGasCloudEntity extends Entity {
             }
         }
         playersInGas.clear();
+        dummyExposureTicks.clear();
+    }
+
+    private boolean isDummyInGas(Vec3d dummyPosition) {
+        Box box = HallucinationDummyInteractionHelper.getDummyBox(dummyPosition);
+        for (int x = MathHelper.floor(box.minX); x <= MathHelper.floor(box.maxX); x++) {
+            for (int y = MathHelper.floor(box.minY); y <= MathHelper.floor(box.maxY); y++) {
+                for (int z = MathHelper.floor(box.minZ); z <= MathHelper.floor(box.maxZ); z++) {
+                    if (gasBlocks.contains(new BlockPos(x, y, z))) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     private double getCrossSection(Box box, Direction.Axis moveAxis) {

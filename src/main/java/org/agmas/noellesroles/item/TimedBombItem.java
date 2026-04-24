@@ -13,8 +13,12 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.agmas.noellesroles.bomber.BomberPlayerComponent;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 定时炸弹物品
@@ -36,23 +40,41 @@ public class TimedBombItem extends Item {
     public ActionResult useOnEntity(ItemStack stack, PlayerEntity user, LivingEntity entity, Hand hand) {
         World world = user.getWorld();
 
-        // 只处理玩家目标
-        if (!(entity instanceof PlayerEntity target)) {
-            return ActionResult.PASS;
-        }
-
         // 服务端处理
         if (!world.isClient) {
-
-            if(user.getItemCooldownManager().isCoolingDown(this)) {
-                return ActionResult.PASS;
-            }
-
-            if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
+            if (user.getItemCooldownManager().isCoolingDown(this)) {
                 return ActionResult.PASS;
             }
 
             BomberPlayerComponent userComponent = BomberPlayerComponent.KEY.get(user);
+            HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(user);
+            Optional<UUID> dummyId = HallucinationDummyInteractionHelper.getDummyId(entity, user);
+
+            if (dummyId.isPresent()) {
+                if (userComponent.isBeeping()) {
+                    if (hallucinationComponent.transferBombToDummy(dummyId.get(), user)) {
+                        return ActionResult.CONSUME;
+                    }
+                    return ActionResult.PASS;
+                }
+                if (!hallucinationComponent.placeBombOnDummy(dummyId.get(), user)) {
+                    return ActionResult.PASS;
+                }
+                if (GameWorldComponent.KEY.get(world).isRole(user, WatheRoles.LOOSE_END)) {
+                    user.getItemCooldownManager().set(this, 20 * 30);
+                }
+                stack.decrementUnlessCreative(1, user);
+                hallucinationComponent.sync();
+                return ActionResult.CONSUME;
+            }
+
+            if (!(entity instanceof PlayerEntity target)) {
+                return ActionResult.PASS;
+            }
+            if (!GameFunctions.isPlayerAliveAndSurvival(target)) {
+                return ActionResult.PASS;
+            }
+
             BomberPlayerComponent targetComponent = BomberPlayerComponent.KEY.get(target);
 
             // 这确保即使是炸弹客拿到炸弹后也能正常传递

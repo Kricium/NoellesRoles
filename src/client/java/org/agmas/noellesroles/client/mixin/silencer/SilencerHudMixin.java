@@ -12,6 +12,7 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.silencer.SilencerPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,6 +28,7 @@ public abstract class SilencerHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     public void silencerHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (MinecraftClient.getInstance().player == null) return;
+        if (HallucinationHudRenderer.shouldSuppressSkillHintHud()) return;
         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) return;
         if (SwallowedPlayerComponent.isPlayerSwallowed(MinecraftClient.getInstance().player)) return;
 

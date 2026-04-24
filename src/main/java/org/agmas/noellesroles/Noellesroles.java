@@ -11,6 +11,7 @@ import dev.doctor4t.wathe.block.SmallDoorBlock;
 import dev.doctor4t.wathe.block_entity.DoorBlockEntity;
 import dev.doctor4t.wathe.block_entity.SmallDoorBlockEntity;
 import dev.doctor4t.wathe.cca.GameWorldComponent;
+import dev.doctor4t.wathe.cca.GameTimeComponent;
 import dev.doctor4t.wathe.cca.MapVariablesWorldComponent;
 import dev.doctor4t.wathe.cca.PlayerPoisonComponent;
 import dev.doctor4t.wathe.cca.PlayerShopComponent;
@@ -29,6 +30,7 @@ import dev.doctor4t.wathe.record.replay.DefaultReplayFormatters;
 import dev.doctor4t.wathe.record.replay.ReplayEventFormatter;
 import dev.doctor4t.wathe.record.replay.ReplayRegistry;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
@@ -36,6 +38,7 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
+import net.minecraft.block.BedBlock;
 import net.minecraft.entity.EntityStatuses;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -58,6 +61,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
@@ -84,6 +88,11 @@ import org.agmas.noellesroles.vulture.VulturePlayerComponent;
 import org.agmas.noellesroles.jester.JesterPlayerComponent;
 import org.agmas.noellesroles.looseend.LooseEndPlayerComponent;
 import org.agmas.noellesroles.looseend.LooseEndsRadarWorldComponent;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemEvent;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemEventRegistry;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemGameMode;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemHelper;
+import org.agmas.noellesroles.murdermayhem.MurderMayhemWorldComponent;
 import org.agmas.noellesroles.pathogen.InfectedPlayerComponent;
 import org.agmas.noellesroles.pathogen.PathogenPlayerComponent;
 import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
@@ -124,10 +133,21 @@ import org.agmas.noellesroles.packet.CriminalReasonerReasonC2SPacket;
 import org.agmas.noellesroles.engineer.EngineerPlayerComponent;
 import org.agmas.noellesroles.ferryman.FerrymanHelper;
 import org.agmas.noellesroles.ferryman.FerrymanPlayerComponent;
+import org.agmas.noellesroles.hallucination.HallucinationEffectId;
+import org.agmas.noellesroles.hallucination.HallucinationHelper;
+import org.agmas.noellesroles.hallucination.KillRewardContext;
+import org.agmas.noellesroles.hallucination.KillRewardResolver;
+import org.agmas.noellesroles.hallucination.KillRewardResult;
+import org.agmas.noellesroles.hallucination.HallucinationPlayerComponent;
+import org.agmas.noellesroles.hallucination.HallucinationShopHandler;
 import org.agmas.noellesroles.commander.CommanderHelper;
 import org.agmas.noellesroles.saint.SaintHelper;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownEntryAccessor;
 import org.agmas.noellesroles.mixin.accessor.ItemCooldownManagerAccessor;
+import org.agmas.noellesroles.packet.HallucinationDummyHitC2SPacket;
+import org.agmas.noellesroles.packet.HallucinationDummyUseC2SPacket;
+import org.agmas.noellesroles.packet.HallucinationDummyStateS2CPacket;
+import org.agmas.noellesroles.packet.HallucinationSoundS2CPacket;
 import org.agmas.noellesroles.util.BodyTargetHelper;
 import org.agmas.noellesroles.util.RoleUtils;
 import org.agmas.noellesroles.util.SpectatorStateHelper;
@@ -153,8 +173,12 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
+import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.server.command.CommandManager.literal;
+
 
 public class Noellesroles implements ModInitializer {
+    private static final int MURDER_MAYHEM_INTRO_TOTAL_TICKS = 380;
     public static String MOD_ID = "noellesroles";
 
 
@@ -197,6 +221,9 @@ public class Noellesroles implements ModInitializer {
     public static Identifier FERRYMAN_ID = Identifier.of(MOD_ID, "ferryman");
     public static Identifier COMMANDER_ID = Identifier.of(MOD_ID, "commander");
     public static Identifier SAINT_ID = Identifier.of(MOD_ID, "saint");
+    public static final Identifier MURDER_MAYHEM_ID = Identifier.of(MOD_ID, "murder_mayhem");
+    public static final dev.doctor4t.wathe.api.GameMode MURDER_MAYHEM =
+            WatheGameModes.registerGameMode(MURDER_MAYHEM_ID, new MurderMayhemGameMode(MURDER_MAYHEM_ID));
 
     // 炸弹死亡原因
     public static Identifier DEATH_REASON_BOMB = Identifier.of(MOD_ID, "bomb");
@@ -451,8 +478,12 @@ public class Noellesroles implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(SpectatorReplayDetailRequestC2SPacket.ID, SpectatorReplayDetailRequestC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(SpectatorAssistTeleportC2SPacket.ID, SpectatorAssistTeleportC2SPacket.CODEC);
         PayloadTypeRegistry.playC2S().register(DeathArenaToggleC2SPacket.ID, DeathArenaToggleC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(HallucinationDummyHitC2SPacket.ID, HallucinationDummyHitC2SPacket.CODEC);
+        PayloadTypeRegistry.playC2S().register(HallucinationDummyUseC2SPacket.ID, HallucinationDummyUseC2SPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(EngineerDoorHighlightS2CPacket.ID, EngineerDoorHighlightS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(FerrymanBodyAgeSyncS2CPacket.ID, FerrymanBodyAgeSyncS2CPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(HallucinationDummyStateS2CPacket.ID, HallucinationDummyStateS2CPacket.CODEC);
+        PayloadTypeRegistry.playS2C().register(HallucinationSoundS2CPacket.ID, HallucinationSoundS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(RoleBroadcastS2CPacket.ID, RoleBroadcastS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SpectatorInfoSyncS2CPacket.ID, SpectatorInfoSyncS2CPacket.CODEC);
         PayloadTypeRegistry.playS2C().register(SpectatorReplayDetailSyncS2CPacket.ID, SpectatorReplayDetailSyncS2CPacket.CODEC);
@@ -470,6 +501,7 @@ public class Noellesroles implements ModInitializer {
         CommanderShopHandler.register();
         SilencerShopHandler.register();
         LooseEndShopHandler.register();
+        HallucinationShopHandler.register();
 
         // 毒师手持毒针时允许攻击玩家
         AllowPlayerPunching.EVENT.register((attacker, victim) ->
@@ -499,6 +531,8 @@ public class Noellesroles implements ModInitializer {
             LooseEndsRadarWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.sync(world);
             DeathArenaWorldComponent.KEY.get(world).reset();
+            MurderMayhemWorldComponent.KEY.get(world).reset();
+            MurderMayhemWorldComponent.KEY.sync(world);
         });
 
         // 修复：断线重连后清理语音群组 + 同步静语状态
@@ -512,6 +546,108 @@ public class Noellesroles implements ModInitializer {
                 ConfigWorldComponent.KEY.get(player.getServerWorld()).sync();
             });
         });
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
+                literal("fogradius")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .then(argument("radius", com.mojang.brigadier.arguments.IntegerArgumentType.integer(
+                                org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent.MIN_FOG_RADIUS,
+                                org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent.MAX_FOG_RADIUS
+                        )).executes(context -> {
+                            ServerWorld world = context.getSource().getWorld();
+                            GameWorldComponent gameComponent = GameWorldComponent.KEY.get(world);
+                            if (!MurderMayhemHelper.isMurderMayhem(gameComponent.getGameMode())) {
+                                context.getSource().sendError(Text.literal("当前世界不是迷乱谋杀模式。"));
+                                return 0;
+                            }
+
+                            MurderMayhemWorldComponent component = MurderMayhemWorldComponent.KEY.get(world);
+                            if (!(component.getCurrentEvent() instanceof org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent)) {
+                                context.getSource().sendError(Text.literal("当前事件不是战争迷雾。"));
+                                return 0;
+                            }
+
+                            int radius = com.mojang.brigadier.arguments.IntegerArgumentType.getInteger(context, "radius");
+                            component.setFogRadius(radius);
+                            MurderMayhemWorldComponent.KEY.sync(world);
+                            context.getSource().sendFeedback(
+                                    () -> Text.literal("已将当前对局迷雾半径调整为 " + radius + "。"),
+                                    true
+                            );
+                            return 1;
+                        }))
+        ));
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> dispatcher.register(
+                literal("hallucination")
+                        .requires(source -> source.hasPermissionLevel(2))
+                        .then(literal("give")
+                                .then(argument("targets", net.minecraft.command.argument.EntityArgumentType.players())
+                                        .then(argument("effect", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                                .executes(context -> {
+                                                    var targets = net.minecraft.command.argument.EntityArgumentType.getPlayers(context, "targets");
+                                                    String rawEffect = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "effect");
+                                                    boolean all = "all".equalsIgnoreCase(rawEffect);
+                                                    int changed = 0;
+                                                    for (ServerPlayerEntity target : targets) {
+                                                        HallucinationPlayerComponent component = HallucinationPlayerComponent.KEY.get(target);
+                                                        if (all) {
+                                                            for (HallucinationEffectId effectId : HallucinationEffectId.values()) {
+                                                                if (component.canApply(effectId)) {
+                                                                    HallucinationHelper.apply(target, target.getServerWorld(), GameWorldComponent.KEY.get(target.getWorld()), component, effectId);
+                                                                    changed++;
+                                                                }
+                                                            }
+                                                            component.sync();
+                                                            continue;
+                                                        }
+
+                                                        HallucinationEffectId effectId = HallucinationEffectId.byId(rawEffect).orElse(null);
+                                                        if (effectId != null && component.canApply(effectId)) {
+                                                            HallucinationHelper.apply(target, target.getServerWorld(), GameWorldComponent.KEY.get(target.getWorld()), component, effectId);
+                                                            component.sync();
+                                                            changed++;
+                                                        }
+                                                    }
+                                                    if (changed <= 0) {
+                                                        context.getSource().sendError(Text.translatable("command.noellesroles.hallucination.no_change"));
+                                                        return 0;
+                                                    }
+                                                    final int resultCount = changed;
+                                                    context.getSource().sendFeedback(() -> Text.translatable("command.noellesroles.hallucination.give.success", resultCount), true);
+                                                    return changed;
+                                                }))))
+                        .then(literal("clear")
+                                .then(argument("targets", net.minecraft.command.argument.EntityArgumentType.players())
+                                        .then(argument("effect", com.mojang.brigadier.arguments.StringArgumentType.word())
+                                                .executes(context -> {
+                                                    var targets = net.minecraft.command.argument.EntityArgumentType.getPlayers(context, "targets");
+                                                    String rawEffect = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "effect");
+                                                    boolean all = "all".equalsIgnoreCase(rawEffect);
+                                                    int changed = 0;
+                                                    for (ServerPlayerEntity target : targets) {
+                                                        HallucinationPlayerComponent component = HallucinationPlayerComponent.KEY.get(target);
+                                                        if (all) {
+                                                            if (component.clearAllHallucinations(false)) {
+                                                                component.sync();
+                                                                changed++;
+                                                            }
+                                                            continue;
+                                                        }
+                                                        HallucinationEffectId effectId = HallucinationEffectId.byId(rawEffect).orElse(null);
+                                                        if (effectId != null && component.removeEffect(effectId)) {
+                                                            component.sync();
+                                                            changed++;
+                                                        }
+                                                    }
+                                                    if (changed <= 0) {
+                                                        context.getSource().sendError(Text.translatable("command.noellesroles.hallucination.no_change"));
+                                                        return 0;
+                                                    }
+                                                    final int resultCount = changed;
+                                                    context.getSource().sendFeedback(() -> Text.translatable("command.noellesroles.hallucination.clear.success", resultCount), true);
+                                                    return changed;
+                                                }))))
+        ));
 
         // Master key should drop on death, except for Loose End's starting key
         ShouldDropOnDeath.EVENT.register((stack, victim) -> stack.isOf(ModItems.MASTER_KEY)
@@ -742,6 +878,15 @@ public class Noellesroles implements ModInitializer {
         UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
             if (hand != Hand.MAIN_HAND) {
                 return net.minecraft.util.ActionResult.PASS;
+            }
+            if (!world.isClient
+                    && world.getBlockState(hitResult.getBlockPos()).getBlock() instanceof BedBlock
+                    && HallucinationHelper.hasSleepCooldown(player)) {
+                player.sendMessage(Text.translatable(
+                        "hallucination.sleep.cooldown",
+                        HallucinationHelper.getSleepCooldownSeconds(player)
+                ), true);
+                return net.minecraft.util.ActionResult.SUCCESS;
             }
 
             Box box = new Box(hitResult.getBlockPos()).expand(1.5);
@@ -1012,6 +1157,7 @@ public class Noellesroles implements ModInitializer {
             CommanderPlayerComponent.KEY.get(player).reset();
             SaintPlayerComponent.KEY.get(player).reset();
             LooseEndPlayerComponent.KEY.get(player).reset();
+            HallucinationPlayerComponent.KEY.get(player).reset();
             DeathArenaPlayerComponent deathArenaPlayer = DeathArenaPlayerComponent.KEY.get(player);
             if (!deathArenaPlayer.isInArena() && !deathArenaPlayer.isPendingRespawn()) {
                 deathArenaPlayer.reset();
@@ -1194,7 +1340,30 @@ public class Noellesroles implements ModInitializer {
 
         // 记录受害者和凶手的匹配
         KillPlayer.AFTER.register((victim, killer, deathReason) -> {
+            if (victim instanceof ServerPlayerEntity serverVictim) {
+                HallucinationPlayerComponent hallucinationComponent = HallucinationPlayerComponent.KEY.get(serverVictim);
+                if (hallucinationComponent.clearAllHallucinations(false)) {
+                    hallucinationComponent.sync();
+                }
+            }
             GameWorldComponent gameComponent = GameWorldComponent.KEY.get(victim.getWorld());
+            if (victim.getWorld() instanceof ServerWorld serverWorld
+                    && MurderMayhemHelper.isMurderMayhem(gameComponent.getGameMode())) {
+                MurderMayhemWorldComponent murderMayhemComponent = MurderMayhemWorldComponent.KEY.get(serverWorld);
+                if (murderMayhemComponent.getCurrentEvent() instanceof org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent
+                        && serverWorld.getRandom().nextBoolean()) {
+                    int newRadius = MathHelper.clamp(
+                            murderMayhemComponent.getFogRadius() - 1,
+                            org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent.MIN_FOG_RADIUS,
+                            org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent.MAX_FOG_RADIUS
+                    );
+                    if (newRadius != murderMayhemComponent.getFogRadius()) {
+                        murderMayhemComponent.setFogRadius(newRadius);
+                        MurderMayhemWorldComponent.KEY.sync(serverWorld);
+                    }
+                }
+            }
+
             if (victim instanceof ServerPlayerEntity serverVictim
                     && victim.getWorld() instanceof ServerWorld serverWorld
                     && DeathArenaStateHelper.isDeathArenaParticipant(serverVictim)) {
@@ -1234,6 +1403,25 @@ public class Noellesroles implements ModInitializer {
                 event.record();
             }
 
+            BomberPlayerComponent bomberPlayerComponent = BomberPlayerComponent.KEY.get(victim);
+            KillRewardResult rewardResult = KillRewardResolver.resolve(new KillRewardContext(
+                    victim,
+                    killer,
+                    false,
+                    deathReason,
+                    bomberPlayerComponent.hasBomb() ? bomberPlayerComponent.getBomberUuid() : null,
+                    PlayerPoisonComponent.KEY.get(victim).poisoner,
+                    null
+            ));
+            if (killer != null) {
+                if (rewardResult.moneyDelta() != 0) {
+                    PlayerShopComponent.KEY.get(killer).addToBalance(rewardResult.moneyDelta());
+                }
+                if (rewardResult.timeDeltaSeconds() > 0) {
+                    GameTimeComponent.KEY.get(victim.getWorld()).addTime(rewardResult.timeDeltaSeconds() * 20);
+                }
+            }
+
             // 连环杀手处理：击杀目标奖励和目标更换
             if (victim.getWorld() instanceof ServerWorld serverWorld) {
                 for (UUID uuid : gameComponent.getAllWithRole(SERIAL_KILLER)) {
@@ -1245,7 +1433,6 @@ public class Noellesroles implements ModInitializer {
                         if (serialKillerComp.isCurrentTarget(victim.getUuid())) {
                             // 如果是连环杀手亲自击杀的，给予额外金钱奖励
                             if (killer != null && killer.getUuid().equals(serialKiller.getUuid())) {
-                                PlayerShopComponent.KEY.get(killer).addToBalance(SerialKillerPlayerComponent.getBonusMoney());
                                 // 计算减半的刀CD并标记（在serverTick中执行，因为KnifeStabPayload会在AFTER之后设置CD）
                                 if (deathReason == GameConstants.DeathReasons.KNIFE) {
                                     int totalPlayers = serverWorld.getPlayers().size();
@@ -1263,35 +1450,6 @@ public class Noellesroles implements ModInitializer {
                         }
                     }
                 }
-            }
-
-            BomberPlayerComponent bomberPlayerComponent = BomberPlayerComponent.KEY.get(victim);
-            // 炸弹客击杀奖励
-            if (killer != null && gameComponent.isRole(killer, BOMBER) && deathReason == DEATH_REASON_BOMB) {
-                PlayerShopComponent.KEY.get(killer).addToBalance(50);
-            } else if (bomberPlayerComponent.hasBomb()) {
-                PlayerEntity bomber = victim.getWorld().getPlayerByUuid(bomberPlayerComponent.getBomberUuid());
-                if (GameFunctions.isPlayerPlayingAndAlive(bomber)) {
-                    if (gameComponent.isRole(bomber, WatheRoles.LOOSE_END)) {
-                        PlayerShopComponent.KEY.get(bomber).addToBalance(25);
-                    } else if ((deathReason == GameConstants.DeathReasons.FELL_OUT_OF_TRAIN || deathReason == GameConstants.DeathReasons.ESCAPED)) {
-                        PlayerShopComponent.KEY.get(bomber).addToBalance(150);
-                    } else {
-                        PlayerShopComponent.KEY.get(bomber).addToBalance(100);
-                    }
-                }
-            }
-
-            if (killer != null && gameComponent.isRole(killer, COMMANDER)) {
-                PlayerShopComponent.KEY.get(killer).addToBalance(-25);
-            }
-
-            if (killer != null
-                    && killer instanceof ServerPlayerEntity serverKiller
-                    && DeathArenaStateHelper.isLooseEndsLikeWorld(serverKiller.getServerWorld(), gameComponent)
-                    && DeathArenaStateHelper.isLooseEndsLikePlayer(serverKiller, gameComponent)
-                    && !killer.getUuid().equals(victim.getUuid())) {
-                PlayerShopComponent.KEY.get(killer).addToBalance(50);
             }
 
             // 毒捕兽夹致死奖励：被毒死时给猎人和下毒者加钱
@@ -1615,6 +1773,13 @@ public class Noellesroles implements ModInitializer {
 
         // 游戏结束时触发
         GameEvents.ON_FINISH_FINALIZE.register((world, gameComponent) -> {
+            MurderMayhemWorldComponent murderMayhemComponent = MurderMayhemWorldComponent.KEY.get(world);
+            MurderMayhemEvent currentEvent = murderMayhemComponent.getCurrentEvent();
+            if (currentEvent != null && world instanceof ServerWorld serverWorld) {
+                currentEvent.onRoundFinalize(serverWorld, gameComponent);
+            }
+            murderMayhemComponent.reset();
+            MurderMayhemWorldComponent.KEY.sync(world);
             if (world instanceof ServerWorld serverWorld) {
                 DeathArenaServerController.forceShutdown(serverWorld, true);
             }
@@ -1642,6 +1807,19 @@ public class Noellesroles implements ModInitializer {
 
             DeathArenaServerController.resetForNewRound(serverWorld.getServer());
 
+            if (MurderMayhemHelper.isMurderMayhem(gameComponent.getGameMode())) {
+                MurderMayhemWorldComponent murderMayhemComponent = MurderMayhemWorldComponent.KEY.get(world);
+                MurderMayhemEvent event = MurderMayhemEventRegistry.selectRandom(serverWorld);
+                murderMayhemComponent.setCurrentEventId(event.id());
+                murderMayhemComponent.startIntroWindow(MURDER_MAYHEM_INTRO_TOTAL_TICKS);
+                event.onRoundInitialized(serverWorld, gameComponent);
+                MurderMayhemWorldComponent.KEY.sync(world);
+            } else {
+                MurderMayhemWorldComponent murderMayhemComponent = MurderMayhemWorldComponent.KEY.get(world);
+                murderMayhemComponent.reset();
+                MurderMayhemWorldComponent.KEY.sync(world);
+            }
+
             for (ServerPlayerEntity player : serverWorld.getPlayers()) {
                 if (gameComponent.isRole(player, WatheRoles.LOOSE_END)) {
                     DeathArenaStateHelper.applyLooseEndsOpeningState(player, gameComponent);
@@ -1663,6 +1841,26 @@ public class Noellesroles implements ModInitializer {
 
             GameWorldComponent gc = GameWorldComponent.KEY.get(world);
             if (!gc.isRunning()) return;
+            if (world instanceof ServerWorld serverWorld && MurderMayhemHelper.isMurderMayhem(gc.getGameMode())) {
+                MurderMayhemWorldComponent murderMayhemComponent = MurderMayhemWorldComponent.KEY.get(world);
+                boolean shouldSync = false;
+                if (murderMayhemComponent.tickIntroWindow()) {
+                    shouldSync = true;
+                }
+                MurderMayhemEvent currentEvent = murderMayhemComponent.getCurrentEvent();
+                if (currentEvent != null && currentEvent.onRoundTick(serverWorld, gc)) {
+                    shouldSync = true;
+                }
+                if (shouldSync) {
+                    MurderMayhemWorldComponent.KEY.sync(world);
+                }
+                if (murderMayhemComponent.getCurrentEvent() instanceof org.agmas.noellesroles.murdermayhem.FogOfWarMurderMayhemEvent) {
+                    for (ServerPlayerEntity player : serverWorld.getPlayers()) {
+                        HallucinationHelper.tickPlayer(player, serverWorld, gc, murderMayhemComponent);
+                        HallucinationHelper.tickSleepRecovery(player);
+                    }
+                }
+            }
             if (world.getServer().getTicks() % 5 != 0) return;
             checkAndTriggerMomentsForWorld(world);
 
@@ -1711,6 +1909,32 @@ public class Noellesroles implements ModInitializer {
     }
 
     public void registerPackets() {
+        ServerPlayNetworking.registerGlobalReceiver(HallucinationDummyHitC2SPacket.ID, (payload, context) -> {
+            ServerPlayerEntity requester = context.player();
+            context.server().execute(() -> {
+                HallucinationPlayerComponent component = HallucinationPlayerComponent.KEY.get(requester);
+                if (component.handleDummyHit(payload)) {
+                    ServerPlayNetworking.send(
+                            requester,
+                            new HallucinationDummyStateS2CPacket(
+                                    List.of(),
+                                    List.of(payload.dummyId()),
+                                    component.getFakeBodyIds(),
+                                    component.getFakeBodyDeathReasons()
+                            )
+                    );
+                }
+            });
+        });
+        ServerPlayNetworking.registerGlobalReceiver(HallucinationDummyUseC2SPacket.ID, (payload, context) -> {
+            ServerPlayerEntity requester = context.player();
+            context.server().execute(() -> {
+                HallucinationPlayerComponent component = HallucinationPlayerComponent.KEY.get(requester);
+                if (component.handleDummyUse(payload)) {
+                    component.sync();
+                }
+            });
+        });
         ServerPlayNetworking.registerGlobalReceiver(SpectatorInfoRequestC2SPacket.ID, (payload, context) -> {
             ServerPlayerEntity requester = context.player();
             GameWorldComponent gameWorld = GameWorldComponent.KEY.get(requester.getWorld());
@@ -2919,6 +3143,7 @@ public class Noellesroles implements ModInitializer {
         // ===== 物品使用格式化器 =====
 
         Identifier fineDrinkId = Registries.ITEM.getId(ModItems.FINE_DRINK);
+        Identifier hallucinationMedicineId = Registries.ITEM.getId(ModItems.HALLUCINATION_MEDICINE);
         Identifier timedBombId = Registries.ITEM.getId(ModItems.TIMED_BOMB);
         Identifier antidoteId = Registries.ITEM.getId(ModItems.ANTIDOTE);
         Identifier ironManVialId = Registries.ITEM.getId(ModItems.IRON_MAN_VIAL);
@@ -2940,6 +3165,19 @@ public class Noellesroles implements ModInitializer {
                 return Text.translatable("replay.item_use.noellesroles.fine_drink.place", actorText);
             }
             return Text.translatable("replay.item_use.noellesroles.fine_drink.drink", actorText);
+        });
+
+        ReplayRegistry.registerItemUseFormatter(hallucinationMedicineId, (event, match, world) -> {
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            if (actorUuid == null) return null;
+            Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            String action = data.getString("action");
+            if ("place".equals(action)) {
+                return Text.translatable("replay.item_use.noellesroles.hallucination_medicine.place", actorText);
+            }
+            return Text.translatable("replay.item_use.noellesroles.hallucination_medicine.drink", actorText);
         });
 
         // 定时炸弹 - 传递
@@ -3045,6 +3283,15 @@ public class Noellesroles implements ModInitializer {
             if (actorUuid == null) return null;
             Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
             return Text.translatable("replay.platter_take.noellesroles.fine_drink", actorText);
+        });
+
+        ReplayRegistry.registerPlatterTakeFormatter(hallucinationMedicineId, (event, match, world) -> {
+            var playerInfoCache = ReplayGenerator.getPlayerInfoCache(match);
+            NbtCompound data = event.data();
+            UUID actorUuid = data.containsUuid("actor") ? data.getUuid("actor") : null;
+            if (actorUuid == null) return null;
+            Text actorText = ReplayGenerator.formatPlayerName(actorUuid, playerInfoCache);
+            return Text.translatable("replay.platter_take.noellesroles.hallucination_medicine", actorText);
         });
 
         // 催化剂

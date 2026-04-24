@@ -86,10 +86,10 @@ public class RoleTargetMenuScreen extends Screen {
                     target,
                     isSelected(target.uuid()),
                     this::handleSelection,
-                    0, contentTop, this.width, viewBottom
+                    0, viewTop, this.width, viewBottom
             );
             widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
-                    0, contentTop, this.width, viewBottom);
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
 

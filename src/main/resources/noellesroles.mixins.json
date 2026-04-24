@@ -7,6 +7,7 @@
   "mixins": [
     "bartender.CocktailItemMixin",
     "bartender.DefenseVialApplyMixin",
+    "hallucination.HallucinationMedicinePlateMixin",
     "collision.EntityCollisionMixin",
     "collision.LivingEntityCollisionMixin",
     "noisemaker.NoisemakerKillMixin",
@@ -51,6 +52,7 @@
     "wathe.GameRecordManagerDeathMixin",
     "wathe.GrenadeEntityMixin",
     "wathe.LooseEndsGameModeMixin",
+    "wathe.MapRegistryGameModeAliasMixin",
     "wathe.MapVotingComponentAccessor",
     "wathe.MapRegistryAccessor",
     "wathe.MapVotingComponentMixin",

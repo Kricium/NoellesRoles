@@ -5,6 +5,7 @@ import dev.doctor4t.wathe.client.gui.HudHeaderLayout;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import dev.doctor4t.wathe.client.gui.TimeRenderer;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.gui.TopCenterHudAnchor;
 import org.agmas.noellesroles.client.gui.LooseEndsRadarHudRenderer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,8 @@ public abstract class WatheTimeRendererMixin {
             )
     )
     private static boolean noellesroles$skipDefaultTimeRenderer(TimeRenderer.TimeNumberRenderer instance, TextRenderer renderer, DrawContext context, int x, int y, int colour, float delta) {
-        return !LooseEndsRadarHudRenderer.shouldReplaceDefaultTimeHud();
+        return !LooseEndsRadarHudRenderer.shouldReplaceDefaultTimeHud()
+                && !HallucinationHudRenderer.shouldSuppressTimeHud();
     }
 
 }

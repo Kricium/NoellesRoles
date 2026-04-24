@@ -11,6 +11,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.taotie.TaotiePlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,6 +27,7 @@ public abstract class TaotieHudMixin {
     @Inject(method = "render", at = @At("TAIL"))
     public void taotieHud(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         if (MinecraftClient.getInstance().player == null) return;
+        if (HallucinationHudRenderer.shouldSuppressSkillHintHud()) return;
         if (!GameFunctions.isPlayerPlayingAndAlive(MinecraftClient.getInstance().player)) return;
 
         GameWorldComponent gameWorldComponent = GameWorldComponent.KEY.get(MinecraftClient.getInstance().player.getWorld());

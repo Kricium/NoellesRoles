@@ -1,0 +1,17 @@
+{
+  "vertex": "fog_of_war_post",
+  "fragment": "fog_of_war_post",
+  "samplers": [
+    { "name": "DepthSampler" }
+  ],
+  "uniforms": [
+    { "name": "ModelViewMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "InverseWorldProjMat", "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "ColorModulator", "type": "float", "count": 4, "values": [ 1.0, 1.0, 1.0, 1.0 ] },
+    { "name": "DepthParams", "type": "float", "count": 4, "values": [ 0.05, 128.0, 0.0, 0.0 ] },
+    { "name": "FogRange", "type": "float", "count": 4, "values": [ 3.0, 5.0, 10.0, 12.5 ] },
+    { "name": "FogStrength", "type": "float", "count": 4, "values": [ 0.22, 0.72, 1.0, 1.0 ] },
+    { "name": "FogColor", "type": "float", "count": 4, "values": [ 0.847, 0.847, 0.816, 1.0 ] }
+  ]
+}

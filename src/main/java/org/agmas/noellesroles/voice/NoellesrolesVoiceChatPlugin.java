@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.world.GameMode;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.hallucination.HallucinationHelper;
 import org.agmas.noellesroles.noisemaker.NoisemakerPlayerComponent;
 import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
@@ -353,6 +354,22 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
             }
         }
     }
+
+    public <T extends Packet> void blockVoiceToHiddenHallucinationTargets(SoundPacketEvent<T> event) {
+        if (event.getReceiverConnection() == null
+                || event.getReceiverConnection().getPlayer() == null
+                || event.getReceiverConnection().getPlayer().getPlayer() == null
+                || event.getSenderConnection() == null
+                || event.getSenderConnection().getPlayer() == null
+                || event.getSenderConnection().getPlayer().getPlayer() == null) {
+            return;
+        }
+        ServerPlayerEntity receiver = (ServerPlayerEntity) event.getReceiverConnection().getPlayer().getPlayer();
+        ServerPlayerEntity speaker = (ServerPlayerEntity) event.getSenderConnection().getPlayer().getPlayer();
+        if (HallucinationHelper.shouldHideVoiceFor(receiver, speaker)) {
+            event.cancel();
+        }
+    }
     @Override
     public void registerEvents(EventRegistration registration) {
         registration.registerEvent(MicrophonePacketEvent.class, this::paranoidEvent);
@@ -368,6 +385,8 @@ public class NoellesrolesVoiceChatPlugin implements VoicechatPlugin {
 
         registration.registerEvent(EntitySoundPacketEvent.class, this::blockVoiceToSilencedPlayers);
         registration.registerEvent(LocationalSoundPacketEvent.class, this::blockVoiceToSilencedPlayers);
+        registration.registerEvent(EntitySoundPacketEvent.class, this::blockVoiceToHiddenHallucinationTargets);
+        registration.registerEvent(LocationalSoundPacketEvent.class, this::blockVoiceToHiddenHallucinationTargets);
 
         VoicechatPlugin.super.registerEvents(registration);
     }

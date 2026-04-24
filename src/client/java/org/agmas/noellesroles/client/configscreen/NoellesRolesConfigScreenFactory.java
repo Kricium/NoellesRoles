@@ -98,6 +98,22 @@ public final class NoellesRolesConfigScreenFactory {
                                         state -> state.noellesRolesConfig().voodooNonKillerDeaths,
                                         state -> state.noellesRolesConfig().voodooNonKillerDeaths,
                                         (state, value) -> state.noellesRolesConfig().voodooNonKillerDeaths = value
+                                ),
+                                ConfigOptionDefinition.toggle(
+                                        "show_fog_radius_hud",
+                                        Text.translatable("config_screen.option.show_fog_radius_hud"),
+                                        Text.translatable("config_screen.option.show_fog_radius_hud.description"),
+                                        state -> state.noellesRolesConfig().showFogRadiusHud,
+                                        state -> state.noellesRolesConfig().showFogRadiusHud,
+                                        (state, value) -> state.noellesRolesConfig().showFogRadiusHud = value
+                                ),
+                                ConfigOptionDefinition.toggle(
+                                        "show_hallucination_hud",
+                                        Text.translatable("config_screen.option.show_hallucination_hud"),
+                                        Text.translatable("config_screen.option.show_hallucination_hud.description"),
+                                        state -> state.noellesRolesConfig().showHallucinationHud,
+                                        state -> state.noellesRolesConfig().showHallucinationHud,
+                                        (state, value) -> state.noellesRolesConfig().showHallucinationHud = value
                                 )
                         )
                 ),

@@ -63,10 +63,12 @@
       "noellesroles:orthopedist",
       "noellesroles:ferryman",
       "noellesroles:commander",
+      "noellesroles:hallucination",
         "noellesroles:saint",
         "noellesroles:world_music",
         "noellesroles:death_arena_player",
-        "noellesroles:death_arena_world"
+        "noellesroles:death_arena_world",
+        "noellesroles:murder_mayhem"
       ]
   },
   "mixins": [
