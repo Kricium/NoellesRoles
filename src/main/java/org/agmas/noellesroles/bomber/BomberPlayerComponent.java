@@ -24,6 +24,7 @@ import org.agmas.noellesroles.ModSounds;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
 import org.agmas.noellesroles.taotie.TaotiePlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 import org.jetbrains.annotations.NotNull;
 import org.ladysnake.cca.api.v3.component.ComponentKey;
 import org.ladysnake.cca.api.v3.component.ComponentRegistry;
@@ -141,7 +142,7 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
         }
 
         // 检查目标是否存活
-        if (!GameFunctions.isPlayerPlayingAndAlive(target) || SwallowedPlayerComponent.isPlayerSwallowed(target)) {
+        if (!GameFunctions.isPlayerPlayingAndAlive(target) || SwallowedInteractionHelper.blocksPlayerTarget(target)) {
             return;
         }
 
@@ -202,6 +203,14 @@ public class BomberPlayerComponent implements AutoSyncedComponent, ServerTicking
                 player.getInventory().removeStack(i, 1);
                 break;
             }
+        }
+    }
+
+    public void removeBombItemOnly() {
+        removeBombFromInventory(this.player);
+        this.player.getInventory().markDirty();
+        if (this.player instanceof ServerPlayerEntity serverPlayer) {
+            serverPlayer.playerScreenHandler.sendContentUpdates();
         }
     }
 

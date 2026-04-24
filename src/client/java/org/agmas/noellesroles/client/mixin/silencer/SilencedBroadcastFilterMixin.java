@@ -1,7 +1,8 @@
 package org.agmas.noellesroles.client.mixin.silencer;
 
 import dev.doctor4t.wathe.client.gui.WalkieTalkieBroadcastRenderer;
-import org.agmas.noellesroles.client.NoellesrolesClient;
+import net.minecraft.client.MinecraftClient;
+import org.agmas.noellesroles.silencer.SilencedPlayerComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -17,7 +18,8 @@ public class SilencedBroadcastFilterMixin {
 
     @Inject(method = "addMessage", at = @At("HEAD"), cancellable = true, remap = false)
     private static void noellesroles$filterSilencedBroadcast(String message, CallbackInfo ci) {
-        if (NoellesrolesClient.isClientSilenced) {
+        if (MinecraftClient.getInstance().player != null
+                && SilencedPlayerComponent.isPlayerSilenced(MinecraftClient.getInstance().player)) {
             ci.cancel();
         }
     }

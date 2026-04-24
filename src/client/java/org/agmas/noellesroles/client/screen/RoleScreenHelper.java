@@ -1,14 +1,25 @@
 package org.agmas.noellesroles.client.screen;
 
+import com.mojang.authlib.GameProfile;
+import dev.doctor4t.wathe.client.WatheClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.Element;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.util.DefaultSkinHelper;
+import net.minecraft.client.util.SkinTextures;
 import net.minecraft.text.Text;
+
+import java.util.UUID;
 
 public final class RoleScreenHelper {
     public static final int MENU_CONTENT_SHIFT_Y = 10;
     public static final int MENU_BUTTON_Y_OFFSET = 42;
     public static final int MENU_BACKGROUND_OVERLAY_COLOR = 0xB0000000;
     public static final int MENU_BAR_HEIGHT = 20;
+    public static final int PLAYER_WIDGET_FRAME_OFFSET = 7;
+    public static final int PLAYER_WIDGET_FRAME_SIZE = 30;
 
     private static final int MENU_TITLE_SHIFT_Y = 5;
     private static final int MENU_TITLE_OFFSET_Y = 115;
@@ -41,9 +52,8 @@ public final class RoleScreenHelper {
         return centerX - ((Math.min(itemCount, columns) * spacingX) / 2) + 9;
     }
 
-    public static int getGridStartY(int itemCount, int columns, int spacingY, int centerY) {
-        int totalRows = (itemCount + columns - 1) / columns;
-        return centerY - (totalRows * spacingY / 2) + 20;
+    public static int getGridRowCount(int itemCount, int columns) {
+        return (itemCount + columns - 1) / columns;
     }
 
     public static int getMenuTitleY(int centerY) {
@@ -62,11 +72,104 @@ public final class RoleScreenHelper {
         return height / 2 - MENU_VIEW_TOP_OFFSET - MENU_TITLE_SHIFT_Y;
     }
 
+    public static int getMenuContentTop(int height) {
+        return getMenuViewTop(height) + MENU_CONTENT_SHIFT_Y;
+    }
+
     public static int getMenuViewBottom(int height) {
         return height - MENU_BUTTON_Y_OFFSET - MENU_VIEW_BOTTOM_GAP;
     }
 
     public static int getMenuButtonY(int height) {
         return height - MENU_BUTTON_Y_OFFSET;
+    }
+
+    public static InteractionBlocker getCenteredButtonBlocker(int centerX, int y, int width, int height) {
+        int halfWidth = width / 2;
+        return new InteractionBlocker(centerX - halfWidth, y, centerX - halfWidth + width, y + height);
+    }
+
+    public static boolean intersectsRect(int x, int y, int width, int height, int left, int top, int right, int bottom) {
+        return x < right && x + width > left && y < bottom && y + height > top;
+    }
+
+    public static boolean containsPoint(double x, double y, int left, int top, int right, int bottom) {
+        return x >= left && x < right && y >= top && y < bottom;
+    }
+
+    public static boolean isPointWithinPlayerWidgetFrame(double x, double y, int widgetX, int widgetY,
+                                                         int clipLeft, int clipTop, int clipRight, int clipBottom,
+                                                         InteractionBlocker... blockers) {
+        int frameLeft = Math.max(widgetX - PLAYER_WIDGET_FRAME_OFFSET, clipLeft);
+        int frameTop = Math.max(widgetY - PLAYER_WIDGET_FRAME_OFFSET, clipTop);
+        int frameRight = Math.min(widgetX - PLAYER_WIDGET_FRAME_OFFSET + PLAYER_WIDGET_FRAME_SIZE, clipRight);
+        int frameBottom = Math.min(widgetY - PLAYER_WIDGET_FRAME_OFFSET + PLAYER_WIDGET_FRAME_SIZE, clipBottom);
+        if (!containsPoint(x, y, frameLeft, frameTop, frameRight, frameBottom)) {
+            return false;
+        }
+        if (blockers != null) {
+            for (InteractionBlocker blocker : blockers) {
+                if (blocker != null && blocker.contains(x, y)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static boolean intersectsPlayerWidgetFrame(int widgetX, int widgetY,
+                                                      int clipLeft, int clipTop, int clipRight, int clipBottom) {
+        return intersectsRect(
+                widgetX - PLAYER_WIDGET_FRAME_OFFSET,
+                widgetY - PLAYER_WIDGET_FRAME_OFFSET,
+                PLAYER_WIDGET_FRAME_SIZE,
+                PLAYER_WIDGET_FRAME_SIZE,
+                clipLeft,
+                clipTop,
+                clipRight,
+                clipBottom
+        );
+    }
+
+    public static void drawSlotHighlight(DrawContext context, int x, int y, int z, int color) {
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y, x + 16, y + 14, color, color, z);
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 14, x + 15, y + 15, color, color, z);
+        context.fillGradient(RenderLayer.getGuiOverlay(), x, y + 15, x + 14, y + 16, color, color, z);
+    }
+
+    public static Text getPlayerName(UUID targetUuid, Text fallbackText) {
+        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+        if (entry != null && entry.getDisplayName() != null) {
+            return entry.getDisplayName();
+        }
+        return entry != null ? Text.literal(entry.getProfile().getName()) : fallbackText;
+    }
+
+    public static SkinTextures getPlayerSkinTextures(UUID targetUuid) {
+        PlayerListEntry entry = WatheClient.PLAYER_ENTRIES_CACHE.get(targetUuid);
+        if (entry != null) {
+            return entry.getSkinTextures();
+        }
+        return DefaultSkinHelper.getSkinTextures(new GameProfile(targetUuid, "Unknown"));
+    }
+
+    public static void renderTopmostPlayerOverlays(DrawContext context, TextRenderer font, Iterable<? extends Element> children) {
+        for (Element child : children) {
+            if (child instanceof TopmostPlayerOverlayRenderable overlay && overlay.shouldRenderTopmostPlayerOverlay()) {
+                overlay.renderTopmostPlayerOverlay(context, font);
+            }
+        }
+    }
+
+    public interface TopmostPlayerOverlayRenderable {
+        boolean shouldRenderTopmostPlayerOverlay();
+
+        void renderTopmostPlayerOverlay(DrawContext context, TextRenderer textRenderer);
+    }
+
+    public record InteractionBlocker(int left, int top, int right, int bottom) {
+        public boolean contains(double x, double y) {
+            return RoleScreenHelper.containsPoint(x, y, left, top, right, bottom);
+        }
     }
 }

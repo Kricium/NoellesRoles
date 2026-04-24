@@ -27,6 +27,7 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
     private boolean won = false;
     private final List<UUID> eatenBodies = new ArrayList<>();
     private int highlightTicks = 0;
+    private double highlightRange = 0.0D;
 
     public VulturePlayerComponent(PlayerEntity player) {
         this.player = player;
@@ -38,6 +39,7 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
         this.won = false;
         this.eatenBodies.clear();
         this.highlightTicks = 0;
+        this.highlightRange = 0.0D;
         this.sync();
     }
 
@@ -96,6 +98,33 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
 
     public void setHighlightTicks(int ticks) {
         this.highlightTicks = ticks;
+        if (ticks <= 0) {
+            this.highlightRange = 0.0D;
+        }
+        this.sync();
+    }
+
+    public double getHighlightRange() {
+        return highlightRange;
+    }
+
+    public boolean hasActiveHighlight() {
+        return this.highlightTicks > 0;
+    }
+
+    public boolean isEntityWithinHighlightRange(PlayerEntity target) {
+        if (!hasActiveHighlight() || target == null || target == this.player) {
+            return false;
+        }
+        if (this.highlightRange <= 0.0D) {
+            return true;
+        }
+        return this.player.squaredDistanceTo(target) <= this.highlightRange * this.highlightRange;
+    }
+
+    public void activateHighlight(int ticks, double range) {
+        this.highlightTicks = Math.max(ticks, 0);
+        this.highlightRange = this.highlightTicks > 0 ? Math.max(range, 0.0D) : 0.0D;
         this.sync();
     }
 
@@ -103,6 +132,9 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
     public void clientTick() {
         if (this.highlightTicks > 0) {
             this.highlightTicks--;
+            if (this.highlightTicks == 0) {
+                this.highlightRange = 0.0D;
+            }
         }
     }
 
@@ -111,6 +143,7 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
         if (this.highlightTicks > 0) {
             this.highlightTicks--;
             if (this.highlightTicks == 0) {
+                this.highlightRange = 0.0D;
                 this.sync();
             }
         }
@@ -122,6 +155,7 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
         tag.putInt("bodiesRequired", this.bodiesRequired);
         tag.putBoolean("won", this.won);
         tag.putInt("highlightTicks", this.highlightTicks);
+        tag.putDouble("highlightRange", this.highlightRange);
 
         NbtList eatenList = new NbtList();
         for (UUID uuid : this.eatenBodies) {
@@ -136,6 +170,7 @@ public class VulturePlayerComponent implements AutoSyncedComponent, ServerTickin
         this.bodiesRequired = tag.contains("bodiesRequired") ? tag.getInt("bodiesRequired") : 0;
         this.won = tag.getBoolean("won");
         this.highlightTicks = tag.contains("highlightTicks") ? tag.getInt("highlightTicks") : 0;
+        this.highlightRange = this.highlightTicks > 0 && tag.contains("highlightRange") ? tag.getDouble("highlightRange") : 0.0D;
 
         this.eatenBodies.clear();
         if (tag.contains("eatenBodies")) {

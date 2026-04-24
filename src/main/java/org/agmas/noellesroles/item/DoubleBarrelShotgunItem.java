@@ -27,6 +27,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
+import org.agmas.noellesroles.hallucination.HallucinationDummyInteractionHelper;
 
 import java.util.List;
 
@@ -66,6 +67,23 @@ public class DoubleBarrelShotgunItem extends Item {
             nbt.putInt(LOADED_SHELLS_KEY, Math.max(0, remainingShells));
             nbt.remove(RELOAD_WINDOW_UNTIL_KEY);
             stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+
+            Vec3d eyePos = user.getEyePos();
+            Vec3d look = user.getRotationVec(1.0F);
+            Vec3d end = eyePos.add(look.multiply(RANGE));
+
+            if (user instanceof ServerPlayerEntity serverUser) {
+                HallucinationDummyInteractionHelper.tryKillDummyOnSegment(
+                        serverUser,
+                        eyePos,
+                        end,
+                        GameConstants.DeathReasons.GUN,
+                        true,
+                        null,
+                        null,
+                        null
+                );
+            }
 
             PlayerEntity target = findTarget(user);
             if (target instanceof ServerPlayerEntity serverTarget && user instanceof ServerPlayerEntity serverUser) {

@@ -21,6 +21,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
     public static final ComponentKey<ConfigWorldComponent> KEY = ComponentRegistry.getOrCreate(Identifier.of(Noellesroles.MOD_ID, "config"), ConfigWorldComponent.class);
     public boolean insaneSeesMorphs = true;
     public boolean naturalVoodoosAllowed = false;
+    public boolean showFogRadiusHud = false;
+    public boolean showHallucinationHud = false;
     public boolean lockSoundPhysicsRemasteredConfig = false;
     public final Map<String, String> soundPhysicsRemasteredLockedValues = new LinkedHashMap<>();
     public boolean lockTalkBubblesConfig = false;
@@ -45,6 +47,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
     private void refreshFromConfig() {
         insaneSeesMorphs = NoellesRolesConfig.HANDLER.instance().insanePlayersSeeMorphs;
         naturalVoodoosAllowed = NoellesRolesConfig.HANDLER.instance().voodooNonKillerDeaths;
+        showFogRadiusHud = NoellesRolesConfig.HANDLER.instance().showFogRadiusHud;
+        showHallucinationHud = NoellesRolesConfig.HANDLER.instance().showHallucinationHud;
         lockSoundPhysicsRemasteredConfig = NoellesRolesConfig.HANDLER.instance().lockSoundPhysicsRemasteredConfig;
         soundPhysicsRemasteredLockedValues.clear();
         soundPhysicsRemasteredLockedValues.putAll(NoellesRolesConfig.HANDLER.instance().soundPhysicsRemasteredLockedValues);
@@ -58,6 +62,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         // 同步配置数据到客户端
         buf.writeBoolean(this.insaneSeesMorphs);
         buf.writeBoolean(this.naturalVoodoosAllowed);
+        buf.writeBoolean(this.showFogRadiusHud);
+        buf.writeBoolean(this.showHallucinationHud);
         buf.writeBoolean(this.lockSoundPhysicsRemasteredConfig);
         buf.writeVarInt(this.soundPhysicsRemasteredLockedValues.size());
         this.soundPhysicsRemasteredLockedValues.forEach((key, value) -> {
@@ -77,6 +83,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         // 从服务端接收配置数据
         this.insaneSeesMorphs = buf.readBoolean();
         this.naturalVoodoosAllowed = buf.readBoolean();
+        this.showFogRadiusHud = buf.readBoolean();
+        this.showHallucinationHud = buf.readBoolean();
         this.lockSoundPhysicsRemasteredConfig = buf.readBoolean();
         this.soundPhysicsRemasteredLockedValues.clear();
         int size = buf.readVarInt();
@@ -95,6 +103,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
         this.refreshFromConfig();
         tag.putBoolean("insaneSeesMorphs", this.insaneSeesMorphs);
         tag.putBoolean("naturalVoodoosAllowed", this.naturalVoodoosAllowed);
+        tag.putBoolean("showFogRadiusHud", this.showFogRadiusHud);
+        tag.putBoolean("showHallucinationHud", this.showHallucinationHud);
         tag.putBoolean("lockSoundPhysicsRemasteredConfig", this.lockSoundPhysicsRemasteredConfig);
         NbtCompound soundPhysicsTag = new NbtCompound();
         this.soundPhysicsRemasteredLockedValues.forEach(soundPhysicsTag::putString);
@@ -108,6 +118,8 @@ public class ConfigWorldComponent implements AutoSyncedComponent {
     public void readFromNbt(@NotNull NbtCompound tag, RegistryWrapper.WrapperLookup registryLookup) {
         if (tag.contains("insaneSeesMorphs"))   this.insaneSeesMorphs = tag.getBoolean("insaneSeesMorphs");
         if (tag.contains("naturalVoodoosAllowed"))   this.naturalVoodoosAllowed = tag.getBoolean("naturalVoodoosAllowed");
+        if (tag.contains("showFogRadiusHud")) this.showFogRadiusHud = tag.getBoolean("showFogRadiusHud");
+        if (tag.contains("showHallucinationHud")) this.showHallucinationHud = tag.getBoolean("showHallucinationHud");
         if (tag.contains("lockSoundPhysicsRemasteredConfig")) this.lockSoundPhysicsRemasteredConfig = tag.getBoolean("lockSoundPhysicsRemasteredConfig");
         if (tag.contains("soundPhysicsRemasteredLockedValues", NbtElement.COMPOUND_TYPE)) {
             this.soundPhysicsRemasteredLockedValues.clear();

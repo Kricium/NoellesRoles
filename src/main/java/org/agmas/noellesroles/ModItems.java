@@ -8,12 +8,15 @@ import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.item.AntidoteItem;
+import org.agmas.noellesroles.item.AdrenalineItem;
 import org.agmas.noellesroles.item.FineDrinkItem;
 import org.agmas.noellesroles.item.TimedBombItem;
 import org.agmas.noellesroles.item.IronManVialItem;
 import org.agmas.noellesroles.item.PoisonNeedleItem;
 import org.agmas.noellesroles.item.PoisonGasBombItem;
 import org.agmas.noellesroles.item.CatalystItem;
+import org.agmas.noellesroles.item.HallucinationMedicineItem;
+import org.agmas.noellesroles.item.PortableRadarItem;
 import org.agmas.noellesroles.item.RepairToolItem;
 import org.agmas.noellesroles.item.RiotForkItem;
 import org.agmas.noellesroles.item.RiotShieldItem;
@@ -21,6 +24,7 @@ import org.agmas.noellesroles.item.ThrowingAxeItem;
 import org.agmas.noellesroles.item.HunterTrapItem;
 import org.agmas.noellesroles.item.DoubleBarrelShotgunItem;
 import org.agmas.noellesroles.item.DoubleBarrelShellItem;
+import org.agmas.noellesroles.item.MedicalSplintItem;
 import org.agmas.noellesroles.item.BaseSpiritItem;
 import org.agmas.noellesroles.item.IngredientItem;
 import org.agmas.noellesroles.item.ingredient.*;
@@ -92,6 +96,14 @@ public class ModItems {
             new AntidoteItem(new Item.Settings().maxCount(1)),
             "antidote"
     );
+    public static final Item HALLUCINATION_MEDICINE = register(
+            new HallucinationMedicineItem(new Item.Settings().maxCount(1)),
+            "hallucination_medicine"
+    );
+    public static final Item ADRENALINE = register(
+            new AdrenalineItem(new Item.Settings().maxCount(1)),
+            "adrenaline"
+    );
     public static final Item POISON_NEEDLE = register(
             new PoisonNeedleItem(new Item.Settings().maxCount(1)),
             "poison_needle"
@@ -115,6 +127,14 @@ public class ModItems {
     public static final Item RIOT_FORK = register(
             new RiotForkItem(new Item.Settings().maxCount(1)),
             "riot_fork"
+    );
+    public static final Item PORTABLE_RADAR = register(
+            new PortableRadarItem(new Item.Settings().maxCount(1)),
+            "portable_radar"
+    );
+    public static final Item MEDICAL_SPLINT = register(
+            new MedicalSplintItem(new Item.Settings().maxCount(1)),
+            "medical_splint"
     );
     public static final Item HUNTER_TRAP = register(
             new HunterTrapItem(new Item.Settings().maxCount(16)),

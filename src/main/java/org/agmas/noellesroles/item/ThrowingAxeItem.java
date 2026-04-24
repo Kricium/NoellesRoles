@@ -1,5 +1,7 @@
 package org.agmas.noellesroles.item;
 
+import dev.doctor4t.wathe.api.WatheRoles;
+import dev.doctor4t.wathe.cca.GameWorldComponent;
 import dev.doctor4t.wathe.record.GameRecordManager;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -22,6 +24,7 @@ import org.agmas.noellesroles.entity.ThrowingAxeEntity;
 import java.util.List;
 
 public class ThrowingAxeItem extends Item {
+    private static final int LOOSE_END_COOLDOWN_TICKS = 20 * 30;
 
     public ThrowingAxeItem(Settings settings) {
         super(settings);
@@ -61,6 +64,9 @@ public class ThrowingAxeItem extends Item {
         }
 
         stack.decrementUnlessCreative(1, player);
+        if (!world.isClient && GameWorldComponent.KEY.get(world).isRole(player, WatheRoles.LOOSE_END)) {
+            player.getItemCooldownManager().set(this, LOOSE_END_COOLDOWN_TICKS);
+        }
         player.incrementStat(Stats.USED.getOrCreateStat(this));
     }
 

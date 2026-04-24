@@ -14,9 +14,11 @@ import net.minecraft.text.Text;
 import org.agmas.noellesroles.AbilityPlayerComponent;
 import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.CommanderTargetWidget;
+import org.agmas.noellesroles.client.screen.RoleScreenHelper.InteractionBlocker;
 import org.agmas.noellesroles.commander.CommanderPlayerComponent;
 import org.agmas.noellesroles.packet.CommanderMarkC2SPacket;
 import org.agmas.noellesroles.taotie.SwallowedPlayerComponent;
+import org.agmas.noellesroles.util.SwallowedInteractionHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,18 +60,22 @@ public class CommanderScreen extends Screen {
         List<UUID> alivePlayers = gameWorld.getAllAlivePlayers();
         targets.removeIf(uuid -> uuid.equals(this.player.getUuid())
                 || !alivePlayers.contains(uuid)
-                || commanderComp.isThreatTarget(uuid));
+                || commanderComp.isThreatTarget(uuid)
+                || SwallowedInteractionHelper.blocksPlayerTarget(this.player.getWorld().getPlayerByUuid(uuid)));
 
         int centerX = this.width / 2;
         int rows = Math.max(1, (targets.size() + COLUMNS - 1) / COLUMNS);
         int contentHeight = rows * SPACING_Y + RoleScreenHelper.MENU_CONTENT_SHIFT_Y;
         int viewTop = RoleScreenHelper.getMenuViewTop(this.height);
+        int contentTop = RoleScreenHelper.getMenuContentTop(this.height);
         int viewBottom = RoleScreenHelper.getMenuViewBottom(this.height);
         int viewHeight = Math.max(1, viewBottom - viewTop);
         maxScroll = Math.max(0, contentHeight - viewHeight);
         scrollOffset = Math.max(0, Math.min(scrollOffset, maxScroll));
         int startX = RoleScreenHelper.getGridStartX(targets.size(), COLUMNS, SPACING_X, centerX);
-        int startY = viewTop + RoleScreenHelper.MENU_CONTENT_SHIFT_Y - scrollOffset;
+        int startY = contentTop - scrollOffset;
+        int buttonY = RoleScreenHelper.getMenuButtonY(this.height);
+        InteractionBlocker closeButtonBlocker = new InteractionBlocker(centerX - 40, buttonY, centerX + 40, buttonY + 20);
 
         for (int i = 0; i < targets.size(); i++) {
             UUID targetUuid = targets.get(i);
@@ -82,13 +88,15 @@ public class CommanderScreen extends Screen {
                     selectedUuid -> {
                         ClientPlayNetworking.send(new CommanderMarkC2SPacket(selectedUuid));
                         this.close();
-                    });
-            widget.visible = widget.getY() + 16 > viewTop && widget.getY() < viewBottom;
+                    },
+                    0, viewTop, this.width, viewBottom, closeButtonBlocker);
+            widget.visible = RoleScreenHelper.intersectsPlayerWidgetFrame(widget.getX(), widget.getY(),
+                    0, viewTop, this.width, viewBottom);
             addDrawableChild(widget);
         }
 
         addDrawableChild(ButtonWidget.builder(Text.translatable("screen.commander.button.close"), button -> this.close())
-                .dimensions(centerX - 40, RoleScreenHelper.getMenuButtonY(this.height), 80, 20)
+                .dimensions(centerX - 40, buttonY, 80, 20)
                 .build());
     }
 
@@ -117,6 +125,7 @@ public class CommanderScreen extends Screen {
             RoleScreenHelper.drawCenteredSubTitle(context, font, Text.translatable("screen.commander.current_targets", joined), centerX, RoleScreenHelper.getMenuStatusY(centerY));
         }
 
+        RoleScreenHelper.renderTopmostPlayerOverlays(context, font, this.children());
     }
 
     @Override

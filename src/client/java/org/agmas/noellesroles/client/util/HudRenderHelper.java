@@ -9,6 +9,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.text.Text;
 import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.client.gui.HallucinationHudRenderer;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 import org.agmas.noellesroles.client.util.rolehud.AssassinHudRenderer;
 import org.agmas.noellesroles.client.util.rolehud.CommanderHudRenderer;
@@ -79,6 +80,9 @@ public final class HudRenderHelper {
      * Returns the new drawY (above the drawn line) for stacking multiple lines.
      */
     public static int drawBottomRight(DrawContext context, TextRenderer renderer, Text text, int drawY, int color) {
+        if (shouldHideBottomRightSkillHud()) {
+            return drawY;
+        }
         drawY -= measure(renderer, text);
         context.drawTextWithShadow(renderer, text, context.getScaledWindowWidth() - renderer.getWidth(text), drawY, color);
         return drawY;
@@ -150,5 +154,9 @@ public final class HudRenderHelper {
         return NoellesrolesClient.ability2Bind == null
                 ? Text.empty()
                 : NoellesrolesClient.ability2Bind.getBoundKeyLocalizedText();
+    }
+
+    private static boolean shouldHideBottomRightSkillHud() {
+        return HallucinationHudRenderer.shouldSuppressSkillHintHud();
     }
 }

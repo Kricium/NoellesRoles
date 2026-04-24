@@ -1,9 +1,12 @@
 package org.agmas.noellesroles.client.roleinfo;
 
+import dev.doctor4t.wathe.api.WatheGameModes;
 import dev.doctor4t.wathe.client.WatheClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Language;
+import org.agmas.noellesroles.Noellesroles;
 import org.agmas.noellesroles.client.NoellesrolesClient;
 
 import java.util.*;
@@ -13,13 +16,28 @@ import java.util.*;
  * Uses hardcoded in-mod registrations only.
  */
 public class RoleInfoRegistry {
+    public static final String CATEGORY_CLASSIC = "category:classic_murder";
+    public static final String CATEGORY_MURDER_MAYHEM = "category:murder_mayhem";
+    public static final String CATEGORY_LOOSE_ENDS = "category:loose_ends";
+    public static final String CATEGORY_DEATH_ARENA = "category:death_arena";
+    public static final String CATEGORY_CLASSIC_OVERVIEW = "category:classic_murder_overview";
+    public static final String EVENT_MURDER_MAYHEM_FOG_OF_WAR = "event:murder_mayhem_fog_of_war";
+    public static final String CATEGORY_LOOSE_ENDS_OVERVIEW = "category:loose_ends_overview";
+    public static final String CATEGORY_DEATH_ARENA_OVERVIEW = "category:death_arena_overview";
+    public static final String CATEGORY_PASSENGER = "category:passenger";
+    public static final String CATEGORY_KILLER = "category:killer";
+    public static final String CATEGORY_NEUTRAL = "category:neutral";
+    public static final String ROLE_LOOSE_END = "wathe:loose_end";
+
     private static Map<String, RoleInfoData> roleInfoMap = new LinkedHashMap<>();
+    private static Map<String, RoleInfoData> categoryInfoMap = new LinkedHashMap<>();
 
     /**
      * Load hardcoded role info. Call once during client initialization.
      */
     public static void load() {
         roleInfoMap = createDefaults();
+        categoryInfoMap = createCategoryPages();
     }
 
     /**
@@ -29,8 +47,46 @@ public class RoleInfoRegistry {
         return roleInfoMap.get(roleIdentifier);
     }
 
+    public static RoleInfoData getPage(String pageIdentifier) {
+        RoleInfoData categoryPage = categoryInfoMap.get(pageIdentifier);
+        return categoryPage != null ? categoryPage : roleInfoMap.get(pageIdentifier);
+    }
+
     public static Map<String, RoleInfoData> getAll() {
         return Collections.unmodifiableMap(roleInfoMap);
+    }
+
+    public static String getFactionCategoryId(RoleInfoData roleInfoData) {
+        if (roleInfoData == null || roleInfoData.factionKey == null) {
+            return CATEGORY_PASSENGER;
+        }
+        if (roleInfoData.factionKey.endsWith(".killer")) {
+            return CATEGORY_KILLER;
+        }
+        if (roleInfoData.factionKey.endsWith(".neutral")) {
+            return CATEGORY_NEUTRAL;
+        }
+        return CATEGORY_PASSENGER;
+    }
+
+    public static String getModeCategoryId(Identifier gameModeId) {
+        if (Noellesroles.MURDER_MAYHEM_ID.equals(gameModeId)) {
+            return CATEGORY_MURDER_MAYHEM;
+        }
+        if (WatheGameModes.LOOSE_ENDS_ID.equals(gameModeId)) {
+            return CATEGORY_LOOSE_ENDS;
+        }
+        return CATEGORY_CLASSIC;
+    }
+
+    public static String getModeOverviewPageId(Identifier gameModeId) {
+        if (Noellesroles.MURDER_MAYHEM_ID.equals(gameModeId)) {
+            return CATEGORY_MURDER_MAYHEM;
+        }
+        if (WatheGameModes.LOOSE_ENDS_ID.equals(gameModeId)) {
+            return CATEGORY_LOOSE_ENDS_OVERVIEW;
+        }
+        return CATEGORY_CLASSIC_OVERVIEW;
     }
 
     /**
@@ -42,7 +98,8 @@ public class RoleInfoRegistry {
         return switch (keybindId) {
             case "ability" -> NoellesrolesClient.abilityBind.getBoundKeyLocalizedText().getString();
             case "ability2" -> NoellesrolesClient.ability2Bind.getBoundKeyLocalizedText().getString();
-            case "assist_interface", "role_info" -> NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
+            case "assist_interface" -> NoellesrolesClient.assistInterfaceBind.getBoundKeyLocalizedText().getString();
+            case "role_info" -> NoellesrolesClient.roleInfoBind.getBoundKeyLocalizedText().getString();
             case "inventory" -> mc.options.inventoryKey.getBoundKeyLocalizedText().getString();
             case "use" -> mc.options.useKey.getBoundKeyLocalizedText().getString();
             case "attack" -> mc.options.attackKey.getBoundKeyLocalizedText().getString();
@@ -127,6 +184,9 @@ public class RoleInfoRegistry {
     }
 
     private static String factionLabelKeyForRole(String roleId) {
+        if ("loose_end".equals(roleId)) {
+            return "faction.wathe.none";
+        }
         return switch (inferFaction(roleId)) {
             case "killer" -> "shared.faction.killer";
             case "neutral" -> "shared.faction.neutral";
@@ -135,6 +195,9 @@ public class RoleInfoRegistry {
     }
 
     private static String winConditionKeyForRole(String roleId) {
+        if ("loose_end".equals(roleId)) {
+            return "roleinfo.win_condition.loose_end";
+        }
         String faction = inferFaction(roleId);
         if ("neutral".equals(faction)) {
             return neutralWinConditionKey(roleId);
@@ -187,6 +250,15 @@ public class RoleInfoRegistry {
                 .addSharedNamedPassiveSkillWithSharedEffect("passenger", "shared.name.passenger", "shared.effect.passenger") // 乘客基础能力
                 .addSkillWithSharedNameAndTrigger("gun", null, "shared.name.revolver", "shared.trigger.initial_item") // 持有手枪
                 .addPassiveSkill("trap_vision")); // 可见猎人捕兽夹
+
+        // 亡命徒
+        m.put(ROLE_LOOSE_END, new RoleInfoData(
+                "loose_end",
+                "tr:announcement.role.loose_end",
+                null,
+                "tr:announcement.loose_ends.goal",
+                "tr:roleinfo.win_condition.loose_end"
+        ));
 
         // ===================== 杀手阵营 =====================
 
@@ -437,6 +509,96 @@ public class RoleInfoRegistry {
                 .addActiveUseSkill("ferry", "ability")
                 .addSkill("netherwalker", "ability"));
 
+        return m;
+    }
+
+    private static Map<String, RoleInfoData> createCategoryPages() {
+        Map<String, RoleInfoData> m = new LinkedHashMap<>();
+        m.put(CATEGORY_CLASSIC, new RoleInfoData(
+                "classic_murder_category",
+                "tr:roleinfo.category.classic.name",
+                null,
+                "tr:roleinfo.category.classic.description",
+                null
+        ));
+        m.put(CATEGORY_CLASSIC_OVERVIEW, new RoleInfoData(
+                "classic_murder_overview",
+                "tr:roleinfo.category.classic.name",
+                null,
+                "tr:roleinfo.category.classic.description",
+                null
+        ));
+        m.put(CATEGORY_MURDER_MAYHEM, new RoleInfoData(
+                "murder_mayhem_category",
+                "tr:roleinfo.category.murder_mayhem.name",
+                null,
+                "tr:roleinfo.category.murder_mayhem.description",
+                null
+        ));
+        m.put(EVENT_MURDER_MAYHEM_FOG_OF_WAR, new RoleInfoData(
+                "murder_mayhem_fog_of_war",
+                "tr:event.noellesroles.murder_mayhem.fog_of_war",
+                null,
+                "tr:event_description.noellesroles.murder_mayhem.fog_of_war",
+                null
+        ).addEventEffect(
+                "fog",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.fog.name",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.fog.effect"
+        ).addEventEffect(
+                "hallucination",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.hallucination.name",
+                "tr:roleinfo.event_effect.murder_mayhem_fog_of_war.hallucination.effect"
+        ));
+        m.put(CATEGORY_LOOSE_ENDS, new RoleInfoData(
+                "loose_ends_category",
+                "tr:roleinfo.category.loose_ends.name",
+                null,
+                "tr:roleinfo.category.loose_ends.description",
+                null
+        ));
+        m.put(CATEGORY_LOOSE_ENDS_OVERVIEW, new RoleInfoData(
+                "loose_ends_overview",
+                "tr:roleinfo.category.loose_ends.name",
+                null,
+                "tr:roleinfo.category.loose_ends.description",
+                null
+        ));
+        m.put(CATEGORY_DEATH_ARENA, new RoleInfoData(
+                "death_arena_category",
+                "tr:roleinfo.category.death_arena.name",
+                null,
+                "tr:roleinfo.category.death_arena.description",
+                null
+        ));
+        m.put(CATEGORY_DEATH_ARENA_OVERVIEW, new RoleInfoData(
+                "death_arena_overview",
+                "tr:roleinfo.category.death_arena.name",
+                null,
+                "tr:roleinfo.category.death_arena.description",
+                null
+        ));
+        m.put(CATEGORY_PASSENGER, new RoleInfoData(
+                "passenger_category",
+                "tr:roleinfo.category.passenger.name",
+                null,
+                "tr:roleinfo.category.passenger.description",
+                "tr:roleinfo.win_condition.default.innocent"
+        ));
+        m.put(CATEGORY_KILLER, new RoleInfoData(
+                "killer_category",
+                "tr:roleinfo.category.killer.name",
+                null,
+                "tr:roleinfo.category.killer.description",
+                "tr:roleinfo.win_condition.default.killer"
+        ));
+        m.put(CATEGORY_NEUTRAL, new RoleInfoData(
+                "neutral_category",
+                "tr:roleinfo.category.neutral.name",
+                null,
+                "tr:roleinfo.category.neutral.description",
+                "tr:roleinfo.win_condition.default.neutral"
+        ));
         return m;
     }
 }

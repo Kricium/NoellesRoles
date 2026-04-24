@@ -236,6 +236,7 @@ public class TaotiePlayerComponent implements AutoSyncedComponent, ServerTicking
 
         targetSwallowed.setSwallowed(taotie.getUuid());
         swallowedPlayers.add(target.getUuid());
+        syncSwallowedPlayersToTaotie();
 
         // Set up voice chat group
         NoellesrolesVoiceChatPlugin.addToStomachGroup(taotie, target);
@@ -505,6 +506,8 @@ public class TaotiePlayerComponent implements AutoSyncedComponent, ServerTicking
 
     @Override
     public void serverTick() {
+        syncSwallowedPlayersToTaotie();
+
         // Decrease swallow cooldown
         if (swallowCooldown > 0) {
             swallowCooldown--;
@@ -525,6 +528,35 @@ public class TaotiePlayerComponent implements AutoSyncedComponent, ServerTicking
             }
 
             // If moment completed, win condition is checked in CheckWinCondition event
+        }
+    }
+
+    private void syncSwallowedPlayersToTaotie() {
+        if (!(player instanceof ServerPlayerEntity taotie) || !(player.getWorld() instanceof ServerWorld serverWorld)) {
+            return;
+        }
+
+        for (UUID uuid : swallowedPlayers) {
+            PlayerEntity swallowed = serverWorld.getPlayerByUuid(uuid);
+            if (!(swallowed instanceof ServerPlayerEntity serverSwallowed)) {
+                continue;
+            }
+
+            SwallowedPlayerComponent swallowedComponent = SwallowedPlayerComponent.KEY.get(serverSwallowed);
+            if (!swallowedComponent.isSwallowed()) {
+                continue;
+            }
+
+            if (!serverSwallowed.getUuid().equals(taotie.getUuid())
+                    && (serverSwallowed.squaredDistanceTo(taotie) > 0.01
+                    || serverSwallowed.getCameraEntity() != taotie)) {
+                serverSwallowed.teleport(serverWorld, taotie.getX(), taotie.getY(), taotie.getZ(),
+                        serverSwallowed.getYaw(), serverSwallowed.getPitch());
+                serverSwallowed.setCameraEntity(taotie);
+                serverSwallowed.setVelocity(Vec3d.ZERO);
+            }
+            serverSwallowed.noClip = true;
+            serverSwallowed.setInvisible(true);
         }
     }
 
