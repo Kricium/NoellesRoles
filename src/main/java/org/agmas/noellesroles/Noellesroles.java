@@ -1252,14 +1252,14 @@ public class Noellesroles implements ModInitializer {
             }
 
             // 犯罪推理学家胜利判定优先于普通杀手胜利：
-            // 1. 正确推理次数达到当局玩家人数的四分之一（向下取整）
+            // 1. 正确推理次数达到当局玩家人数的四分之一（向上取整）
             // 2. 除自身以外所有人都已死亡
             for (UUID uuid : gameComponent.getAllWithRole(CRIMINAL_REASONER)) {
                 ServerPlayerEntity criminalReasoner = (ServerPlayerEntity) world.getPlayerByUuid(uuid);
                 if (!GameFunctions.isPlayerPlayingAndAlive(criminalReasoner)) continue;
 
                 CriminalReasonerPlayerComponent criminalReasonerComponent = CriminalReasonerPlayerComponent.KEY.get(criminalReasoner);
-                int requiredReasoningCount = Math.floorDiv(gameComponent.getAllPlayers().size(), 4);
+                int requiredReasoningCount = (int) Math.ceil(gameComponent.getAllPlayers().size() / 4.0D);
                 if (requiredReasoningCount > 0 && criminalReasonerComponent.getSuccessfulReasoningCount() >= requiredReasoningCount) {
                     return CheckWinCondition.WinResult.neutralWin(criminalReasoner);
                 }
