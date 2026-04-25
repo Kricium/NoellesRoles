@@ -30,6 +30,10 @@ public final class KillRewardResolver {
         int money = 0;
         int timeDeltaSeconds = 0;
 
+        if (victim != null && gameWorld.isRole(killer, WatheRoles.LOOSE_END)) {
+            money += BASE_KILL_MONEY;
+        }
+
         if (victim != null && gameWorld.isInnocent(killer) && !suppressesCivilianKillTime(context, gameWorld)) {
             timeDeltaSeconds += BASE_CIVILIAN_KILL_TIME_SECONDS;
         }
