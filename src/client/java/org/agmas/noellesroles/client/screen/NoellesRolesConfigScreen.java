@@ -209,7 +209,7 @@ public class NoellesRolesConfigScreen extends Screen {
             return;
         }
         restoreRestrictedValuesFromSnapshot();
-        this.workingCopy.apply();
+        this.workingCopy.apply(canEditRestrictedSettings());
         this.savedSnapshot = this.workingCopy.copy();
     }
 
