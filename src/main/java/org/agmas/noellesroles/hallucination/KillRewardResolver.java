@@ -27,7 +27,7 @@ public final class KillRewardResolver {
             return resolveHallucinationDummyReward(context, gameWorld);
         }
 
-        int money = BASE_KILL_MONEY;
+        int money = 0;
         int timeDeltaSeconds = 0;
 
         if (victim != null && gameWorld.isInnocent(killer) && !suppressesCivilianKillTime(context, gameWorld)) {
