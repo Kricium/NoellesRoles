@@ -1782,15 +1782,13 @@ public class Noellesroles implements ModInitializer {
             MurderMayhemWorldComponent.KEY.sync(world);
             if (world instanceof ServerWorld serverWorld) {
                 DeathArenaServerController.forceShutdown(serverWorld, true);
+                DeathArenaServerController.cleanupArenaArtifacts(serverWorld.getServer());
             }
             HiddenBodiesWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.get(world).reset();
             LooseEndsRadarWorldComponent.KEY.sync(world);
             if (world instanceof ServerWorld serverWorld) {
                 for (var entity : serverWorld.getEntitiesByType(TypeFilter.equals(org.agmas.noellesroles.entity.ThrowingAxeEntity.class), e -> true)) {
-                    entity.discard();
-                }
-                for (var entity : serverWorld.getEntitiesByType(TypeFilter.equals(org.agmas.noellesroles.entity.HunterTrapEntity.class), e -> true)) {
                     entity.discard();
                 }
             }
