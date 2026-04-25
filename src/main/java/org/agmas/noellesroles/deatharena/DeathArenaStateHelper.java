@@ -151,7 +151,7 @@ public final class DeathArenaStateHelper {
         PlayerShopComponent shop = PlayerShopComponent.KEY.get(player);
         shop.initializeShop(ShopUtils.getShopEntriesForPlayer(player));
         shop.balance = 0;
-        shop.addToBalance(50);
+        shop.addToBalance(100);
         shop.sync();
 
         player.clearStatusEffects();
